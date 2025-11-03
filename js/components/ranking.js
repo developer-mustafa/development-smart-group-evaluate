@@ -240,6 +240,8 @@ function _renderRankingList(rankedStudents) {
                 <div class="text-xl font-bold ${scoreColor}">${score}%</div>
                 <div class="text-xs text-gray-500 dark:text-gray-400">${evals} টি মূল্যায়ন</div>
             </div>
+
+            <button class="view-rank-details-btn btn btn-outline btn-sm" data-student-id="${student.id}" aria-label="পূর্ণ ফলাফল দেখুন">দেখুন</button>
         </div>
         `;
     })

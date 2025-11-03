@@ -1,8 +1,5 @@
 // js/config/firebase.js
 
-// === Firebase মডিউল ইম্পোর্ট করবেন না ===
-// আমরা ধরে নিচ্ছি 'firebase' অবজেক্টটি index.html-এর CDN <script> ট্যাগ থেকে গ্লোবালি লোড হয়েছে।
-
 let app;
 let auth;
 let db;

@@ -52,7 +52,19 @@ class StateManager {
           studentSearch: '',
         },
         statistics: {
-          taskFilter: '',
+          taskFilter: 'all',
+          groupFilter: 'all',
+          evaluationType: 'all',
+          viewMode: 'table',
+          showPendingOnly: false,
+        },
+        analysis: {
+          groupFilter: 'all',
+          taskFilter: 'all',
+          evaluationType: 'all',
+          viewMode: 'table',
+          showFullOnly: false,
+          criteriaView: 'topic',
         },
         adminManagement: {
           searchTerm: '',

@@ -133,11 +133,11 @@
                 </button>
                  <button data-page="graph-analysis" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-pink-100 dark:hover:bg-pink-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-pink-400">
                     <i class="fas fa-chart-line w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">গ্রাফ বিশ্লেষণ</span>
+                    <span class="flex-1 text-left text-sm font-medium">মূল্যায়ন বিশ্লেষণ</span>
                 </button>
                  <button data-page="statistics" class="nav-btn w-full flex items-center space-x-3 p-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-cyan-400">
                     <i class="fas fa-calculator w-5 text-center text-gray-500 dark:text-gray-400" aria-hidden="true"></i>
-                    <span class="flex-1 text-left text-sm font-medium">পরিসংখ্যান</span>
+                    <span class="flex-1 text-left text-sm font-medium">গ্রুপ পরিসংখ্যান</span>
                 </button>
 
                  <hr class="my-3 border-gray-300 dark:border-gray-600 private-tab-divider hidden">
@@ -212,14 +212,7 @@
 
                 <div id="page-group-analysis" class="page space-y-6 hidden">
                      <h2 class="text-2xl font-bold mb-4">ফলাফল সামারি (গ্রুপ ভিত্তিক)</h2>
-                     <div class="card">
-                         <div class="card-header">রিপোর্ট এক্সপোর্ট</div>
-                         <div class="card-body grid grid-cols-1 md:grid-cols-3 gap-4">
-                             <button id="exportAllGroupsPdfBtn" class="btn btn-danger w-full"><i class="fas fa-file-pdf mr-2"></i>সমস্ত গ্রুপ PDF</button>
-                             <button id="exportSelectedGroupPdfBtn" class="btn btn-info w-full"><i class="fas fa-download mr-2"></i>নির্বাচিত গ্রুপ PDF</button>
-                             <button id="printGroupAnalysisBtn" class="btn btn-success w-full"><i class="fas fa-print mr-2"></i>প্রিন্ট রিপোর্ট</button>
-                         </div>
-                     </div>
+                   
                       <div class="card card-body">
                          <label for="analysisGroupSelect" class="label">গ্রুপ নির্বাচন করুন:</label>
                          <select id="analysisGroupSelect" class="form-select w-full md:w-1/2"></select>

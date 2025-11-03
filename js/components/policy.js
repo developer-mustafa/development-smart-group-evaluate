@@ -1,156 +1,208 @@
 // js/components/policy.js
 
 // Dependencies
-let stateManager, uiManager, helpers, app;
+let uiManager, helpers;
 
 // DOM Elements
 const elements = {};
 
-// --- Policy Content ---
-// This data is based on your PDF slides (pages 21-24)
-// You can edit this array to change the policy content.
-const policyData = [
+// LocalStorage keys
+const LS_KEYS = { EXPANDED_SET: 'policy_expanded_indices_v2' };
+
+/** =========================
+ *  Editable Policy Content
+ *  ========================= */
+let policyData = [
   {
-    title: '১. টিম গঠন (Team Formation)',
+    title: '১) টিম গঠন (Team Formation)',
     icon: 'fas fa-users-cog',
     content: `
-            <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400">
-                [cite_start]<li>প্রতি গ্রুপে ৪-৬ জন শিক্ষার্থী থাকবে (আদর্শ ৫ জন)। [cite: 158]</li>
-                [cite_start]<li>ছেলে শিক্ষার্থী দিয়ে ছেলেদের একাধিক গ্রুপ ও মেয়েদের দিয়ে একাধিক গ্রুপ হবে। [cite: 159]</li>
-                [cite_start]<li>প্রতিটি শিক্ষার্থীর ১ টি করে গ্রুপ দায়িত্ব থাকবে। [cite: 159]</li>
-                [cite_start]<li>গ্রুপ স্টাডি সহজে করতে ১ বেঞ্চে একই গ্রুপের ৫ জন সদস্য বসার চেষ্টা করতে হবে। [cite: 160]</li>
-            </ul>
-        `,
+      <ul>
+        <li>প্রতি গ্রুপে ৪–৬ জন শিক্ষার্থী থাকবে (আদর্শ ৫ জন)।</li>
+        <li>ছেলে ও মেয়ে শিক্ষার্থীদের জন্য আলাদা গ্রুপ গঠন করা হবে।</li>
+        <li>প্রতিটি শিক্ষার্থীর একটি নির্দিষ্ট গ্রুপ-দায়িত্ব থাকবে।</li>
+        <li>গ্রুপ স্টাডি সহজ করতে একই বেঞ্চে একই গ্রুপের সদস্যরা বসতে চেষ্টা করবে।</li>
+      </ul>
+    `,
   },
   {
-    title: '২. দায়িত্ব বণ্টন (Role Distribution)',
+    title: '২) দায়িত্ব বণ্টন (Role Distribution)',
     icon: 'fas fa-sitemap',
     content: `
-            <h5 class="font-semibold text-gray-700 dark:text-white mb-2">প্রধান দায়িত্বসমূহ:</h5>
-            <ul class="list-disc list-inside space-y-3 text-gray-600 dark:text-gray-400">
-                [cite_start]<li><strong>টিম লিডার (টিমের প্রধান):</strong> নেতৃত্ব দেওয়া, সদস্যদের সাথে নিয়মিত যোগাযোগ রাখা, শিক্ষকদের সাথে সহযোগিতা চাওয়া, এবং দায়িত্ব পর্যবেক্ষণ করা। [cite: 175, 176, 177]</li>
-                [cite_start]<li><strong>টাইম কিপার (সময় নিয়ন্ত্রক):</strong> বাড়ির কাজের তদারকি করা, সময়মতো অংশগ্রহণ নিশ্চিত করা, এবং সাপ্তাহিক উপস্থিতির পরিসংখ্যান তৈরী করা। [cite: 179, 180, 181]</li>
-                [cite_start]<li><strong>রিসোর্স ম্যানেজার (ডকুমেন্ট সংরক্ষক):</strong> সকল পরীক্ষার শীট, নোটস ও রিপোর্ট রেকর্ড সংরক্ষণ করা, এবং ফলাফল অনুযায়ী সদস্যদের সতর্ক করা। [cite: 190, 191, 192]</li>
-                [cite_start]<li><strong>রিপোর্টার (উপস্থাপক):</strong> গ্রুপের কাজের রিপোর্ট রাখা, অনুপস্থিত সদস্যের দায়িত্ব পালন করা, এবং যেকোনো অনুষ্ঠানে উপস্থাপনার দায়িত্ব পালন করা। [cite: 194, 195, 196]</li>
-                [cite_start]<li><strong>পিস মেকার (শৃঙ্খলা নিয়ন্ত্রক):</strong> ক্লাসের ও টিমের শৃঙ্খলা বজায় রাখা, মত-বিরোধ বিষয়ে পরামর্শে শান্তি নিশ্চিত করা, এবং সদস্যদের উৎসাহ প্রদান করা। [cite: 203, 204, 205, 206]</li>
-            </ul>
-        `,
+      <h5>প্রধান দায়িত্বসমূহ</h5>
+      <ul>
+        <li><strong>টিম লিডার:</strong> নেতৃত্ব, সদস্য যোগাযোগ, শিক্ষক সমন্বয়, দায়িত্ব পর্যবেক্ষণ।</li>
+        <li><strong>টাইম কিপার:</strong> সময়ানুবর্তিতা নিশ্চিতকরণ, সাপ্তাহিক উপস্থিতির পরিসংখ্যান।</li>
+        <li><strong>রিসোর্স ম্যানেজার:</strong> শীট/নোট/রিপোর্ট সংরক্ষণ ও ফলাফলের ভিত্তিতে নির্দেশনা।</li>
+        <li><strong>রিপোর্টার:</strong> কাজের রিপোর্ট রাখা ও প্রয়োজনে উপস্থাপনা করা।</li>
+        <li><strong>পিস মেকার:</strong> শৃঙ্খলা বজায় রাখা, মতবিরোধে মীমাংসা ও উৎসাহ প্রদান।</li>
+      </ul>
+    `,
   },
   {
-    title: '৩. মূল্যায়ন পদ্ধতি (Evaluation System)',
+    title: '৩) মূল্যায়ন পদ্ধতি (Evaluation System)',
     icon: 'fas fa-clipboard-check',
     content: `
-            <p class="text-gray-600 dark:text-gray-400 mb-4">প্রতিটি টাস্কের মূল্যায়ন নিম্নলিখিত খাতগুলোর উপর ভিত্তি করে হবে (মোট ১০০ নম্বর):</p>
-            <ul class="list-decimal list-inside space-y-2 font-medium">
-                [cite_start]<li>এসাইনমেন্ট / টাস্ক নম্বর: <strong class="text-blue-600 dark:text-blue-400">২০ নম্বর</strong> [cite: 215]</li>
-                [cite_start]<li>টিম নম্বর: <strong class="text-purple-600 dark:text-purple-400">১৫ নম্বর</strong> [cite: 217]</li>
-                <li>MCQ নম্বর: <strong class="text-green-600 dark:text-green-400">৪০ নম্বর</strong> (শিক্ষক কর্তৃক নির্ধারিত)</li>
-                [cite_start]<li>অতিরিক্ত ক্রাইটেরিয়া: <strong class="text-orange-600 dark:text-orange-400">২৫ নম্বর</strong> [cite: 214]</li>
-            </ul>
-            <h5 class="font-semibold text-gray-700 dark:text-white mt-4 mb-2">অতিরিক্ত ক্রাইটেরিয়া ব্রেকডাউন (সর্বোচ্চ ২৫):</h5>
-            <ul class="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400">
-                [cite_start]<li>ভালো করে শিখেছি: +১০ নম্বর [cite: 228]</li>
-                [cite_start]<li>শুধু বুঝেছি: +৫ নম্বর [cite: 227]</li>
-                [cite_start]<li>এখনো এই টপিক পারিনা: -৫ নম্বর [cite: 227]</li>
-                [cite_start]<li>সাপ্তাহিক নিয়মিত উপস্থিতি: +১০ নম্বর [cite: 231]</li>
-                [cite_start]<li>সপ্তাহে প্রতিদিন বাড়ির কাজ করেছি: +৫ নম্বর [cite: 230]</li>
-            </ul>
-        `,
+      <p>প্রতি টাস্কের মোট নম্বর ১০০। মূল্যায়নের খাতসমূহ:</p>
+      <ol>
+        <li>এসাইনমেন্ট/টাস্ক নম্বর: <strong>২০</strong></li>
+        <li>টিম নম্বর: <strong>১৫</strong></li>
+        <li>MCQ নম্বর: <strong>৪০</strong> (বা শিক্ষক নির্ধারণ করবেন)</li>
+        <li>অতিরিক্ত ক্রাইটেরিয়া: <strong>২৫</strong></li>
+      </ol>
+      <h5>অতিরিক্ত ক্রাইটেরিয়া – ব্রেকডাউন (সর্বোচ্চ ২৫)</h5>
+      <ul>
+        <li>“ভালো করে শিখেছি”: +১০</li>
+        <li>“শুধু বুঝেছি”: +৫</li>
+        <li>“এখনো পারিনি”: −৫</li>
+        <li>সাপ্তাহিক নিয়মিত উপস্থিতি: +১০</li>
+        <li>সপ্তাহে প্রতিদিন বাড়ির কাজ: +৫</li>
+      </ul>
+    `,
   },
   {
-    title: '৪. র‍্যাঙ্কিং ও পুরস্কার (Ranking & Rewards)',
+    title: '৪) র‌্যাঙ্কিং ও পুরস্কার (Ranking & Rewards)',
     icon: 'fas fa-trophy',
     content: `
-            <ul class="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400">
-                [cite_start]<li>কমপক্ষে ২টি মূল্যায়নে অংশগ্রহণকারী শিক্ষার্থীদের গড় স্কোরের ভিত্তিতে র‍্যাঙ্কিং করা হবে। [cite: 284]</li>
-                <li>স্কোর সমান হলে, যে বেশি সংখ্যক মূল্যায়নে অংশ নিয়েছে সে এগিয়ে থাকবে।</li>
-                [cite_start]<li>গ্রুপ ভিত্তিক র‍্যাঙ্কিং করা হবে এবং সেরা ৩টি গ্রুপকে মাসিক পুরস্কার দেওয়া হবে। [cite: 248, 287]</li>
-                [cite_start]<li>সেরা টপ ১০ শিক্ষার্থীকে বিশেষ মূল্যায়ন ও পুরস্কৃত করা হবে। [cite: 249, 287]</li>
-                [cite_start]<li>প্রতি এসাইনমেন্টের ফলাফল পরবর্তী র‍্যাঙ্কিংয়ে প্রভাব ফেলবে। [cite: 288]</li>
-            </ul>
-        `,
+      <ul>
+        <li>কমপক্ষে ২টি মূল্যায়নে অংশগ্রহণকারীদের গড় স্কোরের ভিত্তিতে র‌্যাঙ্ক নির্ধারণ।</li>
+        <li>স্কোর সমান হলে অধিক মূল্যায়নে অংশ নেওয়া শিক্ষার্থী অগ্রাধিকার পাবে।</li>
+        <li>গ্রুপভিত্তিক র‌্যাঙ্কিং; সেরা ৩টি গ্রুপ মাসিক পুরস্কার পাবে।</li>
+        <li>সেরা টপ ১০ শিক্ষার্থীকে বিশেষ স্বীকৃতি ও পুরস্কার।</li>
+        <li>প্রতিটি অ্যাসাইনমেন্টের ফলাফল পরবর্তী র‌্যাঙ্কিংকে প্রভাবিত করবে।</li>
+      </ul>
+    `,
   },
 ];
 
-/**
- * Initializes the Policy component.
- * @param {object} dependencies - Passed from app.js.
- * @returns {object} - Public methods.
- */
+/** ================
+ *  Public API
+ *  ================ */
 export function init(dependencies) {
   uiManager = dependencies.managers.uiManager;
-  // No other dependencies needed for this static component
+  helpers = dependencies.utils;
 
   _cacheDOMElements();
   _setupEventListeners();
-
   console.log('✅ Policy component initialized.');
 
-  return {
-    render,
-  };
+  return { render, setPolicyData, expandAll, collapseAll };
 }
 
-/**
- * Renders the Policy page (#page-group-policy).
- * This function builds the policy sections dynamically from the `policyData` array.
- */
 export function render() {
   if (!elements.page) {
-    console.error('❌ Policy render failed: Page element #page-group-policy not found.');
+    console.error('Policy render failed: #page-group-policy not found.');
     return;
   }
-  console.log('Rendering Group Policy page...');
-
   if (!elements.policySectionsContainer) {
-    console.error('❌ Policy render failed: #policySections container not found.');
-    uiManager.displayEmptyMessage(elements.page, 'পলিসি কন্টেইনার খুঁজে পাওয়া যায়নি।');
+    console.error('Policy render failed: #policySections not found.');
+    uiManager.displayEmptyMessage(elements.page, 'এই মুহূর্তে নীতিমালা দেখানো যাচ্ছে না।');
     return;
   }
 
-  uiManager.clearContainer(elements.policySectionsContainer); // Clear previous content
-
-  if (!policyData || policyData.length === 0) {
-    uiManager.displayEmptyMessage(elements.policySectionsContainer, 'কোনো পলিসি তথ্য যোগ করা হয়নি।');
+  uiManager.clearContainer(elements.policySectionsContainer);
+  if (!Array.isArray(policyData) || policyData.length === 0) {
+    uiManager.displayEmptyMessage(elements.policySectionsContainer, 'নীতিমালা তথ্য পাওয়া যায়নি।');
     return;
   }
 
-  let html = '';
+  const expandedSet = _getExpandedSet();
+  let html = `
+    <div class="flex items-center justify-end gap-2 mb-3">
+      <button id="btnExpandAll" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">সব খোলা</button>
+      <button id="btnCollapseAll" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition">সব বন্ধ</button>
+    </div>
+  `;
+
   policyData.forEach((section, index) => {
+    const id = `policy-${index}`;
+    const isExpanded = expandedSet.has(index);
     html += `
-            <div classclass="card overflow-hidden">
-                <button 
-                    class="policy-header w-full flex justify-between items-center p-4 text-left bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    onclick="window.smartEvaluator.components.policy.togglePolicySection(${index})"
-                    aria-expanded="false"
-                    aria-controls="policyContent-${index}"
-                >
-                    <h4 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
-                        <i class="${section.icon || 'fas fa-shield-alt'} w-6 text-center mr-3 text-blue-500"></i>
-                        ${helpers.ensureBengaliText(section.title)}
-                    </h4>
-                    <i id="policyIcon-${index}" class="fas fa-chevron-down text-gray-500 dark:text-gray-400 transition-transform duration-300"></i>
-                </button>
-                
-                <div id="policyContent-${index}" class="policy-content hidden p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                    <div class="prose prose-sm dark:prose-invert max-w-none">
-                         ${section.content} </div>
-                </div>
+      <section class="card overflow-hidden border border-gray-200 dark:border-gray-700 rounded-xl mb-3">
+        <h3>
+          <button
+            type="button"
+            class="policy-header w-full flex justify-between items-center p-4 text-left bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            data-index="${index}"
+            aria-controls="${id}-content"
+            aria-expanded="${isExpanded ? 'true' : 'false'}"
+          >
+            <span class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+              <i class="${section.icon || 'fas fa-shield-alt'} w-6 text-center mr-3 text-blue-500"></i>
+              ${_formatText(section.title)}
+            </span>
+            <i class="chev fas fa-chevron-down text-gray-500 dark:text-gray-400 transition-transform duration-300 ${
+              isExpanded ? 'rotate-180' : ''
+            }"></i>
+          </button>
+        </h3>
+        <div
+          id="${id}-content"
+          class="policy-content overflow-hidden ${isExpanded ? '' : 'hidden'}"
+          data-anim="true"
+          style="${isExpanded ? 'height:auto;opacity:1;' : 'height:0;opacity:0;'}"
+        >
+          <div class="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+            <div class="prose prose-sm dark:prose-invert max-w-none">
+              ${_renderContent(section.content)}
             </div>
-        `;
+          </div>
+        </div>
+      </section>
+    `;
   });
 
   elements.policySectionsContainer.innerHTML = html;
-
-  // Expose toggle function globally via app instance
-  if (!window.smartEvaluator.components) window.smartEvaluator.components = {};
-  window.smartEvaluator.components.policy = { togglePolicySection };
 }
 
-/**
- * Caches DOM elements for the Policy page.
- * @private
- */
+export function togglePolicySection(index) {
+  const btn = elements.policySectionsContainer?.querySelector(`.policy-header[data-index="${index}"]`);
+  if (!btn) return;
+  const contentId = btn.getAttribute('aria-controls');
+  const content = document.getElementById(contentId);
+  const icon = btn.querySelector('.chev');
+  const willExpand = btn.getAttribute('aria-expanded') !== 'true';
+
+  btn.setAttribute('aria-expanded', String(willExpand));
+  icon?.classList.toggle('rotate-180', willExpand);
+
+  _animateAccordion(content, willExpand);
+
+  const set = _getExpandedSet();
+  if (willExpand) set.add(Number(index));
+  else set.delete(Number(index));
+  _setExpandedSet(set);
+}
+
+export function setPolicyData(nextArray) {
+  if (Array.isArray(nextArray)) {
+    policyData = nextArray.map((s) => ({
+      ...s,
+      // ensure clean strings
+      title: _formatText(s.title),
+      icon: s.icon,
+      content: _formatText(s.content),
+    }));
+    render();
+  } else {
+    console.warn('setPolicyData expects an array.');
+  }
+}
+
+export function expandAll() {
+  const set = new Set(Array.from(policyData, (_, i) => i));
+  _setExpandedSet(set);
+  render();
+}
+
+export function collapseAll() {
+  _setExpandedSet(new Set());
+  render();
+}
+
+/** ================
+ *  Private
+ *  ================ */
 function _cacheDOMElements() {
   elements.page = document.getElementById('page-group-policy');
   if (elements.page) {
@@ -160,37 +212,164 @@ function _cacheDOMElements() {
   }
 }
 
-/**
- * Sets up event listeners for the Policy page.
- * (Using onclick in render() for simplicity, but could use delegation)
- * @private
- */
 function _setupEventListeners() {
-  // Event delegation could be used here instead of inline onclick
-  // uiManager.addListener(elements.policySectionsContainer, 'click', (e) => {
-  //     const header = e.target.closest('.policy-header');
-  //     if (header) {
-  //         const index = header.dataset.index; // Would need to add data-index attribute
-  //         togglePolicySection(index);
-  //     }
-  // });
+  if (!elements.page) return;
+
+  // Delegated click: toggle sections / expand-collapse all
+  elements.page.addEventListener('click', (e) => {
+    const btn = e.target.closest('.policy-header');
+    if (btn && elements.policySectionsContainer?.contains(btn)) {
+      const idx = Number(btn.dataset.index);
+      togglePolicySection(idx);
+      return;
+    }
+    if (e.target.id === 'btnExpandAll') {
+      expandAll();
+      return;
+    }
+    if (e.target.id === 'btnCollapseAll') {
+      collapseAll();
+    }
+  });
+
+  // Keyboard support for header toggle
+  elements.page.addEventListener('keydown', (e) => {
+    const btn = e.target.closest('.policy-header');
+    if (!btn) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const idx = Number(btn.dataset.index);
+      togglePolicySection(idx);
+    }
+  });
 }
 
-/**
- * Toggles the visibility of a policy section (accordion).
- * This function is exposed globally via `window.smartEvaluator.components.policy.togglePolicySection`
- * @param {number} index - The index of the section to toggle.
- */
-export function togglePolicySection(index) {
-  const content = document.getElementById(`policyContent-${index}`);
-  const icon = document.getElementById(`policyIcon-${index}`);
-  if (content && icon) {
-    const isHidden = content.classList.contains('hidden');
-    content.classList.toggle('hidden', !isHidden);
-    icon.classList.toggle('rotate-180', isHidden);
+function _formatText(value) {
+  if (helpers?.ensureBengaliText && typeof helpers.ensureBengaliText === 'function') {
+    return helpers.ensureBengaliText(value);
+  }
+  if (typeof value === 'string') return value.trim();
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
 
-    // Update ARIA attribute
-    const button = content.previousElementSibling; // Get the button
-    button?.setAttribute('aria-expanded', String(isHidden));
+function _renderContent(rawHtml) {
+  // 1) normalize + trim
+  let html = _formatText(rawHtml);
+
+  // 2) strip legacy citation markers if accidentally present
+  html = html.replace(/\[cite_start\]/g, '').replace(/\[cite:[^\]]*\]/g, '');
+
+  // 3) sanitize (allow a safe subset only)
+  return _sanitizeHtml(html);
+}
+
+/** Smooth accordion animation (height + opacity)
+ *  - expand: set current height -> target scrollHeight
+ *  - collapse: set fixed height -> 0
+ */
+function _animateAccordion(panel, expand) {
+  if (!panel) return;
+
+  const duration = 260; // ms
+  panel.style.overflow = 'hidden';
+  panel.dataset.animating = 'true';
+
+  const startHeight = panel.getBoundingClientRect().height;
+  const endHeight = expand ? _getInnerHeight(panel) : 0;
+
+  // If starting from display:none/hidden, unhide first
+  if (expand) {
+    panel.classList.remove('hidden');
+    // set height 0 for smooth start if it was hidden
+    panel.style.height = startHeight ? `${startHeight}px` : '0px';
+    panel.style.opacity = 0;
+  }
+
+  const startTime = performance.now();
+
+  const step = (now) => {
+    const t = Math.min(1, (now - startTime) / duration);
+    // ease-out cubic
+    const eased = 1 - Math.pow(1 - t, 3);
+
+    const current = startHeight + (endHeight - startHeight) * eased;
+    panel.style.height = `${current}px`;
+    panel.style.opacity = expand ? eased : 1 - eased;
+
+    if (t < 1) {
+      requestAnimationFrame(step);
+    } else {
+      panel.style.height = expand ? 'auto' : '0px';
+      if (!expand) panel.classList.add('hidden');
+      panel.style.opacity = expand ? 1 : 0;
+      panel.style.overflow = '';
+      delete panel.dataset.animating;
+    }
+  };
+
+  requestAnimationFrame(step);
+}
+
+function _getInnerHeight(panel) {
+  // temporarily set height:auto to measure inner content
+  const prevHeight = panel.style.height;
+  const prevHidden = panel.classList.contains('hidden');
+
+  panel.classList.remove('hidden');
+  panel.style.height = 'auto';
+  const h = panel.getBoundingClientRect().height;
+
+  // revert
+  if (prevHidden) panel.classList.add('hidden');
+  panel.style.height = prevHeight || '0px';
+  return h;
+}
+
+function _sanitizeHtml(html) {
+  // small allow-list (replace with DOMPurify if you have it)
+  const ALLOWED = {
+    tags: ['p', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i', 'u', 'h5', 'br', 'span'],
+    attrs: { '*': ['class', 'style'] },
+  };
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  const walker = (node) => {
+    if (node.nodeType === 1) {
+      const tag = node.tagName.toLowerCase();
+      if (!ALLOWED.tags.includes(tag)) {
+        node.replaceWith(...Array.from(node.childNodes));
+        return;
+      }
+      [...node.attributes].forEach((attr) => {
+        const name = attr.name.toLowerCase();
+        if (!ALLOWED.attrs['*']?.includes(name)) node.removeAttribute(attr.name);
+        if (/^on/i.test(name)) node.removeAttribute(attr.name);
+        if (name === 'style' && /expression|javascript:/i.test(attr.value)) node.removeAttribute('style');
+      });
+    }
+    [...node.childNodes].forEach(walker);
+  };
+  [...div.childNodes].forEach(walker);
+  return div.innerHTML;
+}
+
+function _getExpandedSet() {
+  try {
+    const raw = localStorage.getItem(LS_KEYS.EXPANDED_SET);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(arr);
+  } catch {
+    return new Set();
+  }
+}
+
+function _setExpandedSet(set) {
+  try {
+    localStorage.setItem(LS_KEYS.EXPANDED_SET, JSON.stringify([...set]));
+  } catch {
+    /* ignore */
   }
 }

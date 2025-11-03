@@ -307,13 +307,17 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
                 </tbody>
             </table>
             <style>
-                .td { padding: 8px 6px; border: 1px solid #e5e7eb; vertical-align: top; } .dark .td { border-color: #4b5563; }
-                .th { padding: 10px 6px; border: 1px solid #e5e7eb; vertical-align: middle; } .dark .th { border-color: #4b5563; }
+                .td { padding: 8px 6px; border: 1px solid #e5e7eb; vertical-align: top; }
+                .dark .td { border-color: #4b5563; }
+                .th { padding: 10px 6px; border: 1px solid #e5e7eb; vertical-align: middle; }
+                .dark .th { border-color: #4b5563; }
                 .score-input, .comments-input { width: 100%; min-width: 50px; padding: 4px; border: 1px solid #d1d5db; border-radius: 4px; text-align: center; background-color: white; }
-                .dark .score-input, .dark .comments-input { background-color: #374151; border-color: #4b5563; color: white;}
+                .dark .score-input, .dark .comments-input { background-color: #374151; border-color: #4b5563; color: white; }
                 .score-input:focus, .comments-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; outline: none; }
-                .criteria-cell { background-color: #f9fafb; dark:bg-gray-800/50; }
-                .criteria-input { width: 1rem; height: 1rem; cursor: pointer; border-gray-300 dark:border-gray-600 }
+                .criteria-cell { background-color: #f9fafb; }
+                .dark .criteria-cell { background-color: rgba(31, 41, 55, 0.5); }
+                .criteria-input { width: 1rem; height: 1rem; cursor: pointer; border: 1px solid #d1d5db; background-color: transparent; accent-color: #2563eb; }
+                .dark .criteria-input { border-color: #4b5563; background-color: #1f2937; accent-color: #60a5fa; }
             </style>
         </div>
         <div class="flex justify-end space-x-3 pt-4 border-t dark:border-gray-600">
