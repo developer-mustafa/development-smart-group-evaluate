@@ -486,21 +486,38 @@
     };
 
     // header/footer
-    const headerH = 84, footerH = 28;
+    const headerH = 78, footerH = 28;
     const drawHeader = () => {
-      doc.setFillColor(...BRAND_BG);
-      doc.rect(M, M, PAGE_W - M*2, headerH - 20, 'F');
-      doc.setTextColor(255);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-      text('SMART EVALUATE Automated SYSTEM', PAGE_W/2, M+18, { align: 'center' });
-      doc.setFontSize(14); text('Student Result Report', PAGE_W/2, M+36, { align: 'center' });
+      // Header spacing (compact, with a small top strip for timestamp)
+      const bandTop = M + 12;
+      const bandH = headerH - 18; // compact header height
+      // Removed header background band (no fill rectangle)
 
+      // Generated date at very top-right on white strip (very top blank area)
       const g = new Date();
-      const genStr = `Generated: ${g.getFullYear()}-${String(g.getMonth()+1).padStart(2,'0')}-${String(g.getDate()).padStart(2,'0')} ${String(g.getHours()).padStart(2,'0')}:${String(g.getMinutes()).padStart(2,'0')}`;
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(107,114,128);
-      doc.setFillColor(255,255,255); doc.rect(PAGE_W - M - 175, M + 2, 170, 14, 'F');
-      text(genStr, PAGE_W - M - 10, M + 12, { align: 'right' });
-      line(M, M + headerH - 12, PAGE_W - M, M + headerH - 12);
+      const y4 = g.getFullYear();
+      const mo = String(g.getMonth() + 1).padStart(2, '0');
+      const dd = String(g.getDate()).padStart(2, '0');
+      const h24 = g.getHours();
+      const mm = String(g.getMinutes()).padStart(2, '0');
+      const ampm = h24 >= 12 ? 'pm' : 'am';
+      const h12raw = h24 % 12 || 12;
+      const hh = String(h12raw).padStart(2, '0');
+      const genStr = `Generated: ${y4}-${mo}-${dd} ${hh}:${mm} ${ampm}`;
+      // Render timestamp text only (no background box)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(71,85,105);
+      // Nudge slightly away from page edges to avoid any clipping
+      text(genStr, PAGE_W - M - 8, M + 14, { align: 'right' });
+
+      // Centered system name and report title (plain on white, below date)
+      doc.setTextColor(17,24,39);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+      text('SMART EVALUATE Automated SYSTEM', PAGE_W/2, bandTop + 6, { align: 'center' });
+      doc.setFontSize(14); text('Student Result Report', PAGE_W/2, bandTop + 22, { align: 'center' });
+
+      // Separator
+      doc.setDrawColor(226,232,240); doc.setTextColor(17,24,39);
+      line(M, M + headerH - 8, PAGE_W - M, M + headerH - 8);
     };
     const drawFooter = () => {
       const y = PAGE_H - footerH;
@@ -514,7 +531,7 @@
     };
 
     // content
-    let y = M + headerH + 6;
+    let y = M + headerH + 2;
     const institution = 'Institution: Muktijoddha Major Mostofa College, Rajapur, Mirsharai, Chattogram';
     const developer = 'Developed by: Mustafa Rahman Sir, Senior Software Engineer';
     const devContact = 'Query for Contact: 01840-643946';
@@ -547,10 +564,11 @@
     kv('Student:', st.name || st.id || '', base);
     kv('Roll:', st.roll || '-', base + 16);
     kv('Group:', UI.els.modal.__groupName || '-', base + 32);
+    kv('Academic Group:', st.academicGroup || '-', base + 48);
 
     const dutyBn = prettyRoleBn(st.role) || '-';
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); text('Duty:', M+12, base+48);
-    drawUnicodeText(String(dutyBn), M+12+120, base+48, (PAGE_W - M*2)/2 - 132, 10);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); text('Duty:', M+12, base+64);
+    drawUnicodeText(String(dutyBn), M+12+120, base+64, (PAGE_W - M*2)/2 - 132, 10);
 
     doc.setFont('helvetica','bold'); doc.setFontSize(10); text('Average Total:', rightX, base);
     doc.setFont('helvetica','normal'); text(String((UI.els.modal.__avgTotal || 0).toFixed(2)), rightX+90, base);
