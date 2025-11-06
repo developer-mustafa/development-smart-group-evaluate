@@ -70,6 +70,16 @@
     }[role] ||
     'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800/40 dark:text-gray-200 dark:border-gray-700/40');
 
+  // Clean Bengali labels for role (used in UI/PDF)
+  const prettyRoleBn = (role) => (
+    ({
+      'team-leader': 'টিম লিডার',
+      'time-keeper': 'টাইম কিপার',
+      reporter: 'রিপোর্টার',
+      'resource-manager': 'রিসোর্স ম্যানেজার',
+      'peace-maker': 'পিস মেকার',
+    }[role] || (role ? String(role) : ''))
+  );
   const englishify = (val) => String(val ?? '').replace(/[^\x20-\x7E]/g, '').trim();
 
   const palette = (p) => {
@@ -115,6 +125,12 @@
           ? ev.taskDate.seconds * 1000
           : (Date.parse(ev?.taskDate) || 0) || (Date.parse(ev?.updatedAt) || 0) || (Date.parse(task?.date) || 0) || null;
 
+        const bd = task?.maxScoreBreakdown || {};
+        const maxTask = parseFloat(bd.task) || 0;
+        const maxTeam = parseFloat(bd.team) || 0;
+        const maxAdditional = parseFloat(bd.additional) || 0;
+        const maxMcq = parseFloat(bd.mcq) || 0;
+
         return {
           taskName: task?.name || '',
           date: ms ? new Date(ms) : null,
@@ -122,6 +138,10 @@
           teamScore: parseFloat(sc?.teamScore) || 0,
           additional: parseFloat(sc?.additionalScore) || 0,
           mcq: parseFloat(sc?.mcqScore) || 0,
+          maxTask,
+          maxTeam,
+          maxAdditional,
+          maxMcq,
           total,
           max,
           pct,
@@ -202,7 +222,7 @@
 
     const name = escHtml(student.name || student.id || '');
     const role = safeStr(student.role).trim();
-    const roleLabel = prettyRole(role);
+    const roleLabel = prettyRoleBn(role);
     const roleClass = roleBadgeClass(role);
     const roleHtml = roleLabel
       ? `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${roleClass}">
@@ -210,6 +230,9 @@
          </span>` : '';
 
     setHtml('sdmName', `<span class="mr-2 align-middle">${name}</span>${roleHtml}`);
+    // Override with clean Bengali labels
+    setText('sdmTitle', 'শিক্ষার্থীর বিস্তারিত ফলাফল');
+    setText('sdmRoll', student.roll ? `রোল: ${bn(student.roll)}` : '');
 
     setText('sdmGroup', groupName ? `গ্রুপ: ${groupName}` : '');
     setText('sdmAcademic', student.academicGroup ? `শিক্ষা বিভাগ: ${student.academicGroup}` : '');
@@ -217,6 +240,11 @@
     const hasContact = Boolean(student.email) || Boolean(student.contact);
     setText('sdmContact', hasContact ? `যোগাযোগ: ${student.email || ''} ${student.contact || ''}` : '');
 
+    // Clean Bengali labels (override)
+    setText('sdmGroup', groupName ? `গ্রুপ: ${groupName}` : '');
+    setText('sdmAcademic', student.academicGroup ? `শিক্ষা বিভাগ: ${student.academicGroup}` : '');
+    setText('sdmSession', student.session ? `সেশন: ${student.session}` : '');
+    setText('sdmContact', (Boolean(student.email)||Boolean(student.contact)) ? `যোগাযোগ: ${student.email || ''} ${student.contact || ''}` : '');
     setText('sdmAvgTotal', fmt(avgTotal));
     setText('sdmAvgPct', `${fmt(avgPct, 1)}%`);
     setText('sdmRank', rankLabel);
@@ -246,7 +274,78 @@
         frag.appendChild(li);
       });
       plist.appendChild(frag);
-    }
+      // Redesign: compact cards with progress bars
+      try {
+        const count2 = Math.max(1, evals.length);
+        const sums2 = evals.reduce(
+          (a, r) => ({ task: a.task + (r.taskScore || 0), team: a.team + (r.teamScore || 0),
+                       additional: a.additional + (r.additional || 0), mcq: a.mcq + (r.mcq || 0), total: a.total + (r.total || 0) }),
+          { task: 0, team: 0, additional: 0, mcq: 0, total: 0 }
+        );
+        const avgTotal2 = sums2.total / count2 || 0;
+        const metrics2 = [
+          { key: 'task', label: 'টাস্ক', color: 'indigo', value: sums2.task / count2 },
+          { key: 'team', label: 'টিম', color: 'emerald', value: sums2.team / count2 },
+          { key: 'additional', label: 'অতিরিক্ত', color: 'amber', value: sums2.additional / count2 },
+          { key: 'mcq', label: 'MCQ', color: 'sky', value: sums2.mcq / count2 },
+        ];
+        const html = metrics2.map(({label,color,value}) => {
+          const ratio = avgTotal2 > 0 ? Math.max(0, Math.min(1, value / avgTotal2)) : 0;
+          const pct = Math.round(ratio * 100);
+          return `
+            <li class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800">
+              <div class="flex items-center justify-between mb-2">
+                <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-${color}-50 text-${color}-700 dark:bg-${color}-900/20 dark:text-${color}-200">${escHtml(label)}</span>
+                <span class="text-sm font-semibold text-${color}-600 dark:text-${color}-300">${fmt(value)}</span>
+              </div>
+              <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                <div class="h-2 rounded-full bg-${color}-500" style="width:${pct}%"></div>
+              </div>
+              <div class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">মোটের তুলনায়: ${bn(pct)}%</div>
+            </li>`;
+        }).join('');
+        plist.innerHTML = html;
+      } catch {}
+      // Override: compute percentages based on per-criterion max marks
+      try {
+        const count3 = Math.max(1, evals.length);
+        const totals = evals.reduce((a, r) => ({
+          task: a.task + (r.taskScore || 0),
+          team: a.team + (r.teamScore || 0),
+          additional: a.additional + (r.additional || 0),
+          mcq: a.mcq + (r.mcq || 0)
+        }), { task: 0, team: 0, additional: 0, mcq: 0 });
+        const maxTotals = evals.reduce((a, r) => ({
+          task: a.task + (r.maxTask || 0),
+          team: a.team + (r.maxTeam || 0),
+          additional: a.additional + (r.maxAdditional || 0),
+          mcq: a.mcq + (r.maxMcq || 0)
+        }), { task: 0, team: 0, additional: 0, mcq: 0 });
+        const metrics = [
+          { key: 'task', label: 'টাস্ক', color: 'indigo' },
+          { key: 'team', label: 'টিম', color: 'emerald' },
+          { key: 'additional', label: 'অতিরিক্ত', color: 'amber' },
+          { key: 'mcq', label: 'MCQ', color: 'sky' },
+        ];
+        const html2 = metrics.map(({key,label,color}) => {
+          const avg = totals[key] / count3 || 0;
+          const maxT = maxTotals[key] || 0;
+          const pct = maxT > 0 ? Math.round(Math.max(0, Math.min(1, totals[key] / maxT)) * 100) : 0;
+          return `
+            <li class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800">
+              <div class="flex items-center justify-between mb-2">
+                <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-${color}-50 text-${color}-700 dark:bg-${color}-900/20 dark:text-${color}-200">${escHtml(label)}</span>
+                <span class="text-sm font-semibold text-${color}-600 dark:text-${color}-300">${fmt(avg)}</span>
+              </div>
+              <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
+                <div class="h-2 rounded-full bg-${color}-500" style="width:${pct}%"></div>
+              </div>
+              <div class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">ম্যাক্স মার্কের তুলনায়: ${bn(pct)}%</div>
+            </li>`;
+        }).join('');
+        plist.innerHTML = html2;
+      } catch {}
+      }
 
     const foot = byId('sdmFootnote');
     if (foot) foot.textContent = `${bn(evals.length)} টি মূল্যায়নের তথ্য দেখানো হচ্ছে`;
@@ -393,14 +492,14 @@
       doc.rect(M, M, PAGE_W - M*2, headerH - 20, 'F');
       doc.setTextColor(255);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-      text('Smart Evaluate Automated System', PAGE_W/2, M+18, { align: 'center' });
+      text('SMART EVALUATE Automated SYSTEM', PAGE_W/2, M+18, { align: 'center' });
       doc.setFontSize(14); text('Student Result Report', PAGE_W/2, M+36, { align: 'center' });
 
       const g = new Date();
       const genStr = `Generated: ${g.getFullYear()}-${String(g.getMonth()+1).padStart(2,'0')}-${String(g.getDate()).padStart(2,'0')} ${String(g.getHours()).padStart(2,'0')}:${String(g.getMinutes()).padStart(2,'0')}`;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(107,114,128);
-      doc.setFillColor(255,255,255); doc.rect(PAGE_W - M - 175, M - 18, 170, 16, 'F');
-      text(genStr, PAGE_W - M - 170, M - 6);
+      doc.setFillColor(255,255,255); doc.rect(PAGE_W - M - 175, M + 2, 170, 14, 'F');
+      text(genStr, PAGE_W - M - 10, M + 12, { align: 'right' });
       line(M, M + headerH - 12, PAGE_W - M, M + headerH - 12);
     };
     const drawFooter = () => {
@@ -449,21 +548,17 @@
     kv('Roll:', st.roll || '-', base + 16);
     kv('Group:', UI.els.modal.__groupName || '-', base + 32);
 
-    const dutyBn = prettyRole(st.role) || '-';
-    const dutyAscii = englishify(dutyBn) || '-';
-    if (/[^\x00-\x7F]/.test(dutyBn)) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); text('Duty:', M+12, base+48);
-      drawUnicodeText(`${dutyBn} (${dutyAscii})`, M+12+120, base+48, (PAGE_W - M*2)/2 - 132, 10);
-    } else {
-      kv('Duty:', dutyAscii, base + 48);
-    }
+    const dutyBn = prettyRoleBn(st.role) || '-';
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); text('Duty:', M+12, base+48);
+    drawUnicodeText(String(dutyBn), M+12+120, base+48, (PAGE_W - M*2)/2 - 132, 10);
 
     doc.setFont('helvetica','bold'); doc.setFontSize(10); text('Average Total:', rightX, base);
     doc.setFont('helvetica','normal'); text(String((UI.els.modal.__avgTotal || 0).toFixed(2)), rightX+90, base);
     doc.setFont('helvetica','bold'); text('Average %:', rightX, base+16);
     doc.setFont('helvetica','normal'); text(`${(UI.els.modal.__avgPct || 0).toFixed(1)}%`, rightX+90, base+16);
     doc.setFont('helvetica','bold'); text('Rank:', rightX, base+32);
-    doc.setFont('helvetica','normal'); text(toAsciiDigits(UI.els.modal.__rank ?? '-'), rightX+90, base+32);
+    doc.setFont('helvetica','normal');
+    drawUnicodeText(String(UI.els.modal.__rank ?? '-'), rightX+90, base+32, 40, 10);
 
     y += infoH + 14;
 
@@ -495,7 +590,7 @@
         0: { cellWidth: 64 }, 1: { cellWidth: 44, halign: 'right' }, 2: { cellWidth: 44, halign: 'right' },
         3: { cellWidth: 50, halign: 'right' }, 4: { cellWidth: 40, halign: 'right' },
         5: { cellWidth: 48, halign: 'right' }, 6: { cellWidth: 30, halign: 'right' },
-        7: { cellWidth: 120 }, 8: { cellWidth: 80, halign: 'center' },
+        7: { cellWidth: 120 }, 8: { cellWidth: 90, halign: 'center' },
       },
       margin: { left: M, right: M, top: M + headerH, bottom: footerH + 6 },
       tableWidth: PAGE_W - M * 2,
