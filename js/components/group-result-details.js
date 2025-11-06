@@ -1,5 +1,4 @@
 ﻿
-
 /* global window, document */
 (() => {
   'use strict';
@@ -20,8 +19,8 @@
   };
 
   const escHtml = (s) => String(s ?? '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   const prettyRoleBn = (role) => (
     ({
@@ -118,7 +117,6 @@
     }).filter(x => x.avg >= 0).sort((a, b) => b.avg - a.avg);
 
     const rankIdx = other.findIndex((x) => x.id === String(groupId));
-
     return { members, perEval, groupAvg, rank: rankIdx >= 0 ? (rankIdx + 1) : null };
   }
 
@@ -129,117 +127,110 @@
       const group = state.groups.find((g) => String(g?.id) === String(groupId));
       if (!group) return;
 
-      const { members, perEval, groupAvg, rank } = computeGroupPerformance(groupId, state);
+      const { perEval, groupAvg, rank } = computeGroupPerformance(groupId, state);
 
       // Header
       const name = group?.name || group?.label || groupId;
-      const elTitle = byId('gdmTitle'); if (elTitle) elTitle.textContent = 'গ্রুপের বিস্তারিত ফলাফল';
-      const elName  = byId('gdmGroupName'); if (elName)  elName.textContent = name;
-      const elAvg   = byId('gdmGroupAvg'); if (elAvg)   elAvg.textContent = `${(groupAvg || 0).toFixed(1)}%`;
-      const elRank  = byId('gdmGroupRank'); if (elRank) elRank.textContent = rank ? bn(rank) : '-';
+      const elTitle = byId('gdmTitle');      if (elTitle) elTitle.textContent = 'গ্রুপের বিস্তারিত ফলাফল';
+      const elName  = byId('gdmGroupName');  if (elName)  elName.textContent = name;
+      const elAvg   = byId('gdmGroupAvg');   if (elAvg)   elAvg.textContent = `${(groupAvg || 0).toFixed(1)}%`;
+      const elRank  = byId('gdmGroupRank');  if (elRank)  elRank.textContent = rank ? bn(rank) : '-';
 
-      // Members summary table
-      const mbody = byId('gdmMembersBody');
-      if (mbody) {
-        mbody.innerHTML = '';
-        const taskMap = new Map(state.tasks.map((t) => [t?.id, t]));
-        const sums = new Map();
+      // --- Assignment-wise details in the "Members" tab (table body + selector) ---
+      try {
+        const sel  = byId('gdmAssignSelect'); // <select>
+        const tbody = byId('gdmAssignBody');  // <tbody>
+        const meta = byId('gdmAssignMeta');   // <div> or <span> for meta text
 
-        // accumulate per member across this group's evaluations
-        for (const ev of state.evaluations) {
-          if (String(ev?.groupId) !== String(groupId)) continue;
-          const task = taskMap.get(ev?.taskId);
-          const bd = task?.maxScoreBreakdown || {};
-          const maxTask = parseFloat(bd?.task);
-          const maxTeam = parseFloat(bd?.team);
-          const maxAdditional = parseFloat(bd?.additional);
-          const maxMcq = parseFloat(bd?.mcq);
-          const max = parseFloat(ev?.maxPossibleScore) || parseFloat(task?.maxScore) || 100;
-          const scores = ev?.scores || {};
+        if (sel && tbody) {
+          const assigns = perEval.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
-          for (const m of members) {
-            const sc = scores[m?.id];
-            if (!sc) continue;
+          sel.innerHTML = assigns.map((e, idx) => {
+            const d = e.ts ? new Date(e.ts).toISOString().slice(0, 10) : '-';
+            const nm = e.task?.name || `Assignment-${idx + 1}`;
+            return `<option value="${idx}">${escHtml(nm)} (${d})</option>`;
+          }).join('');
 
-            const cur = sums.get(m?.id) || { task:0, team:0, additional:0, mcq:0, total:0, cnt:0, pctSum:0 };
-            const vTask = parseFloat(sc?.taskScore) || 0;
-            const vTeam = parseFloat(sc?.teamScore) || 0;
-            const vAddi = parseFloat(sc?.additionalScore) || 0;
-            const vMcq  = parseFloat(sc?.mcqScore) || 0;
+          const renderAssignTable = (idx) => {
+            const e = assigns[idx | 0];
+            if (!e) {
+              tbody.innerHTML = '';
+              const elAA = byId('gdmAssignAvg'); if (elAA) elAA.textContent = '-';
+              if (meta) meta.textContent = 'Task: - | Date: -';
+              return;
+            }
 
-            // cap by breakdown maxima when present
-            const effTask = Number.isFinite(maxTask) && maxTask > 0 ? Math.min(vTask, maxTask) : vTask;
-            const effTeam = Number.isFinite(maxTeam) && maxTeam > 0 ? Math.min(vTeam, maxTeam) : vTeam;
-            const effAddi = Number.isFinite(maxAdditional) && maxAdditional > 0 ? Math.min(vAddi, maxAdditional) : vAddi;
-            const effMcq  = Number.isFinite(maxMcq) && maxMcq > 0 ? Math.min(vMcq, maxMcq) : vMcq;
+            try {
+              const dstr = e.ts ? new Date(e.ts).toISOString().slice(0, 10) : '-';
+              const nm = e.task?.name || `Assignment-${idx + 1}`;
+              if (meta) meta.textContent = 'Task: ' + nm + ' | Date: ' + dstr;
+            } catch {}
 
-            const tot = parseFloat(sc?.totalScore) || (effTask + effTeam + effMcq + effAddi);
-            const pct = max > 0 ? (tot / max) * 100 : 0;
+            const elAA = byId('gdmAssignAvg');
+            if (elAA) elAA.textContent = ((e.avgPct || 0).toFixed(1) + '%');
 
-            sums.set(m?.id, {
-              task: cur.task + effTask,
-              team: cur.team + effTeam,
-              additional: cur.additional + effAddi,
-              mcq: cur.mcq + effMcq,
-              total: cur.total + tot,
-              cnt: cur.cnt + 1,
-              pctSum: cur.pctSum + pct,
+            const scores = e.ev?.scores || {};
+            const rows = state.students
+              .filter(s => String(s.groupId) === String(groupId))
+              .map(s => {
+                const sc = scores[s.id];
+                const taskScore = parseFloat(sc?.taskScore) || 0;
+                const teamScore = parseFloat(sc?.teamScore) || 0;
+                const additional = parseFloat(sc?.additionalScore) || 0;
+                const mcq = parseFloat(sc?.mcqScore) || 0;
+                const total = parseFloat(sc?.totalScore) || (taskScore + teamScore + additional + mcq);
+                const max = parseFloat(e.ev?.maxPossibleScore) || parseFloat(e.task?.maxScore) || 100;
+                const pct = max > 0 ? (total / max) * 100 : 0;
+
+                const duty = s.role || s.duty || '';
+                const dutyLabel = prettyRoleBn(duty);
+                const badge = dutyLabel
+                  ? `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(duty)}"><i class="fas fa-id-badge"></i>${escHtml(dutyLabel)}</span>`
+                  : '-';
+
+                const comment = typeof sc?.comments === 'string' ? sc.comments.trim() : '';
+
+                return {
+                  roll: s.roll || s.studentRoll || s.classRoll || s.rollNumber || null,
+                  badge,
+                  name: s.name || s.id,
+                  taskScore, teamScore, additional, mcq, total, pct, comment
+                };
+              })
+              .filter(r => Number.isFinite(r.total))
+              .sort((a, b) => b.pct - a.pct);
+
+            const frag2 = document.createDocumentFragment();
+            rows.forEach(r => {
+              const tr = document.createElement('tr');
+              const pctCls = pctBadgeClass(r.pct);
+              const shortC = r.comment.length > 120 ? r.comment.slice(0, 117) + '…' : r.comment;
+
+              tr.innerHTML = `
+                <td class="px-3 py-2 whitespace-nowrap">${bn(r.roll ?? '-')}</td>
+                <td class="px-3 py-2 whitespace-nowrap">${r.badge}</td>
+                <td class="px-3 py-2 whitespace-nowrap">${escHtml(r.name)}</td>
+                <td class="px-3 py-2 text-right">${r.taskScore.toFixed(2)}</td>
+                <td class="px-3 py-2 text-right">${r.teamScore.toFixed(2)}</td>
+                <td class="px-3 py-2 text-right">${r.additional.toFixed(2)}</td>
+                <td class="px-3 py-2 text-right">${r.mcq.toFixed(2)}</td>
+                <td class="px-3 py-2 text-right font-semibold">${r.total.toFixed(2)}</td>
+                <td class="px-3 py-2 text-right"><span class="inline-block rounded px-2 py-0.5 text-xs font-semibold ${pctCls}">${r.pct.toFixed(1)}%</span></td>
+                <td class="px-3 py-2">${escHtml(shortC)}</td>`;
+              frag2.appendChild(tr);
             });
-          }
-        }
 
-        const list = members.map((m) => {
-          const v = sums.get(m?.id) || { task:0, team:0, additional:0, mcq:0, total:0, cnt:0, pctSum:0 };
-          const avgPct = v.cnt ? (v.pctSum / v.cnt) : 0;
-          return {
-            id: m?.id,
-            name: m?.name || m?.id,
-            duty: m?.role || m?.duty || '',
-            academicGroup: m?.academicGroup || '-',
-            roll: (m?.roll || m?.studentRoll || m?.classRoll || m?.rollNumber || null),
-            ...v,
-            avgPct,
+            tbody.innerHTML = '';
+            tbody.appendChild(frag2);
           };
-        }).sort((a, b) => b.avgPct - a.avgPct);
 
-        // in-group rank
-        list.forEach((x, i) => { x.rank = i + 1; });
-
-        const frag = document.createDocumentFragment();
-        for (const r of list) {
-          const dutyLabel = prettyRoleBn(r.duty);
-          const badgeCls = roleBadgeClass(r.duty);
-          const roleCell = dutyLabel
-            ? `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badgeCls}">
-                 <i class="fas fa-id-badge"></i>${escHtml(dutyLabel)}
-               </span>`
-            : '-';
-          const nameCell = `<span class="font-medium truncate" title="${escHtml(r.name)}">${escHtml(r.name)}</span>`;
-          const agCell = `<span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-gray-700 bg-white">
-                            ${escHtml(r.academicGroup || '-')}
-                          </span>`;
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="px-3 py-2 whitespace-nowrap">${bn(r.roll ?? '-')}</td>
-            <td class="px-3 py-2 whitespace-nowrap">${roleCell}</td>
-            <td class="px-3 py-2 whitespace-nowrap">${nameCell}</td>
-            <td class="px-3 py-2 whitespace-nowrap">${agCell}</td>
-            <td class="px-3 py-2 text-right">${(r.task).toFixed(2)}</td>
-            <td class="px-3 py-2 text-right">${(r.team).toFixed(2)}</td>
-            <td class="px-3 py-2 text-right">${(r.additional).toFixed(2)}</td>
-            <td class="px-3 py-2 text-right">${(r.mcq).toFixed(2)}</td>
-            <td class="px-3 py-2 text-right font-semibold">${(r.total).toFixed(2)}</td>
-            <td class="px-3 py-2 text-right">
-              <span class="inline-block rounded px-2 py-0.5 text-xs font-semibold ${pctBadgeClass(r.avgPct)}">
-                ${(r.avgPct).toFixed(1)}%
-              </span>
-            </td>
-            <td class="px-3 py-2 text-center">${bn(r.rank)}</td>`;
-          frag.appendChild(tr);
+          renderAssignTable(0);
+          sel.onchange = (e) => {
+            const i = parseInt(e.target.value, 10) || 0;
+            renderAssignTable(i);
+          };
         }
-        mbody.appendChild(frag);
-      }
+      } catch {}
 
       // Evaluations list (latest first)
       const ebody = byId('gdmEvalsBody');
@@ -248,6 +239,7 @@
         const sorted = perEval.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
         const frag = document.createDocumentFragment();
         const studentMap = new Map(state.students.map((s) => [String(s?.id), s?.name || s?.id]));
+
         sorted.forEach((e, idx) => {
           const tr = document.createElement('tr');
           const dateStr = e.ts ? new Date(e.ts).toISOString().slice(0, 10) : '-';
@@ -298,11 +290,11 @@
 
   // ---------- init ----------
   function init() {
-    UI.els.modal = byId('groupDetailModal');
-    UI.els.btnMembers = byId('gdmBtnMembers');
-    UI.els.btnEvals = byId('gdmBtnEvals');
-    UI.els.members = byId('gdmMembersWrap');
-    UI.els.evals = byId('gdmEvalsWrap');
+    UI.els.modal     = byId('groupDetailModal');
+    UI.els.btnMembers= byId('gdmBtnMembers');
+    UI.els.btnEvals  = byId('gdmBtnEvals');
+    UI.els.members   = byId('gdmMembersWrap');
+    UI.els.evals     = byId('gdmEvalsWrap');
 
     if (!UI.els.modal) {
       console.warn('[GDM] modal node missing; script loaded but no #groupDetailModal.');

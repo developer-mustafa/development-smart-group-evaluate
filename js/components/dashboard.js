@@ -503,7 +503,7 @@ function _renderTopGroups(groupData) {
       const participation = helpers.convertToBanglaNumber(Math.round(data.participationRate || 0));
       const groupName = _formatLabel(data.groupName);
       return `
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/70 dark:bg-gray-900/80">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/70 dark:bg-gray-900/80 cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0" aria-pressed="false">
           <div class="absolute inset-0 bg-gradient-to-br ${palette.gradient} opacity-70"></div>
           <div class="relative p-6 space-y-5">
             <div class="flex items-center justify-between">
@@ -550,6 +550,18 @@ function _renderTopGroups(groupData) {
       ${cards}
     </div>
   `;
+
+  // Make elite group cards open the same group detail modal
+  if (elements.topGroupsContainer && typeof window !== 'undefined' && typeof window.openGroupModalById === 'function') {
+    uiManager.addListener(elements.topGroupsContainer, 'click', (e) => {
+      const card = e.target.closest('[data-group-id]');
+      if (!card) return;
+      const gid = card.getAttribute('data-group-id');
+      if (gid) {
+        try { window.openGroupModalById(gid); } catch (err) { console.warn('Elite group modal open failed:', err); }
+      }
+    });
+  }
 
   const topGroupsSection = elements.topGroupsContainer.closest('section');
   if (topGroupsSection) {
