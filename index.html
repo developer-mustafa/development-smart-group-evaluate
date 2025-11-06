@@ -589,6 +589,100 @@
       </div>
     </div>
     <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/components/student-result-details.js"></script>
 
+    <!-- Student Detail Modal (scrollable, with table/chart toggle) -->
+    <div id="studentDetailModal" class="fixed inset-0 z-[9998] hidden">
+      <div class="absolute inset-0 bg-black/40" data-modal-close></div>
+      <div class="relative mx-auto mt-10 w-[96%] max-w-6xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-5 py-3 flex items-center justify-between">
+          <h3 id="sdmTitle" class="text-lg font-semibold">শিক্ষার্থীর ফলাফল</h3>
+          <div class="flex items-center gap-2">
+            <button id="sdmDownloadCsv" class="px-3 py-1.5 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">CSV</button>
+            <button id="sdmDownloadPdf" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700">PDF</button>
+            <button class="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-modal-close aria-label="Close"><i class="fa fa-times"></i></button>
+          </div>
+        </div>
+        <div class="p-5 space-y-5">
+          <!-- Profile / Summary -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div class="flex items-center gap-3 lg:col-span-2">
+              <img id="sdmAvatar" src="images/smart.png" alt="avatar" class="w-16 h-16 rounded-full object-cover border border-gray-200 dark:border-gray-700">
+              <div class="text-sm">
+                <div id="sdmName" class="text-lg font-bold"></div>
+                <div id="sdmRoll" class="text-gray-600 dark:text-gray-300"></div>
+                <div id="sdmGroup" class="text-gray-600 dark:text-gray-300"></div>
+                <div id="sdmAcademic" class="text-gray-600 dark:text-gray-300"></div>
+                <div id="sdmSession" class="text-gray-600 dark:text-gray-300"></div>
+                <div id="sdmContact" class="text-gray-600 dark:text-gray-300"></div>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-sm">
+              <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-gray-500 dark:text-gray-400">মোট গড়</div>
+                <div id="sdmAvgTotal" class="text-lg font-semibold"></div>
+              </div>
+              <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-gray-500 dark:text-gray-400">গড় %</div>
+                <div id="sdmAvgPct" class="text-lg font-semibold"></div>
+              </div>
+              <div class="rounded-lg bg-gray-50 dark:bg-gray-900/40 p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-gray-500 dark:text-gray-400">রেঙ্ক</div>
+                <div id="sdmRank" class="text-lg font-semibold"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Param averages -->
+          <div class="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+            <h4 class="font-semibold mb-2">প্যারামিটারভিত্তিক গড়</h4>
+            <ul id="sdmParamList" class="text-sm grid grid-cols-2 sm:grid-cols-4 gap-2"></ul>
+          </div>
+
+          <!-- Toggle controls -->
+          <div class="flex items-center justify-between">
+            <h4 class="font-semibold">মূল্যায়নসমূহ</h4>
+            <div class="inline-flex rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden text-sm">
+              <button id="sdmBtnTable" class="px-3 py-1.5 bg-gray-100 dark:bg-gray-800">টেবিল</button>
+              <button id="sdmBtnChart" class="px-3 py-1.5">বার চার্ট</button>
+            </div>
+          </div>
+
+          <!-- Table view -->
+          <div id="sdmTableWrap" class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th class="px-3 py-2 text-left">শিরোনাম</th>
+                  <th class="px-3 py-2 text-left">টাস্ক</th>
+                  <th class="px-3 py-2 text-left">টিম</th>
+                  <th class="px-3 py-2 text-left">অতিরিক্ত</th>
+                  <th class="px-3 py-2 text-left">MCQ</th>
+                  <th class="px-3 py-2 text-left">মোট</th>
+                  <th class="px-3 py-2 text-left">%</th>
+                  <th class="px-3 py-2 text-left">মন্তব্য</th>
+                  <th class="px-3 py-2 text-left">তারিখ</th>
+                </tr>
+              </thead>
+              <tbody id="sdmTableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+
+          <!-- Chart view -->
+          <div id="sdmChartWrap" class="hidden h-[200px] sm:h-[240px] md:h-[280px] lg:h-[300px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/40 p-2">
+            <canvas id="sdmChart" class="w-full h-full"></canvas>
+          </div>
+
+          <div id="sdmFootnote" class="text-xs text-center text-gray-500 dark:text-gray-400"></div>
+        </div>
+      </div>
+    </div>
+
+<script type="module" src="/js/components/student-result-details.js"></script>
     </body>
 </html>
+
+
+
+
+
