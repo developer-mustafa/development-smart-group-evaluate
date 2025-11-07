@@ -1,5 +1,4 @@
-
-/* global window, document */
+﻿/* global window, document */
 (() => {
   'use strict';
 
@@ -78,8 +77,8 @@
       reporter: 'রিপোর্টার',
       'resource-manager': 'রিসোর্স ম্যানেজার',
       'peace-maker': 'পিস মেকার',
-    }[role] || (role ? String(role) : ''))
-  );
+    }[role] || (role ? String(role) : '')
+  ));
   const englishify = (val) => String(val ?? '').replace(/[^\x20-\x7E]/g, '').trim();
 
   const palette = (p) => {
@@ -95,6 +94,7 @@
     const map = { '০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9' };
     return String(val ?? '').replace(/[০-৯]/g, (d) => map[d]);
   };
+  const normalizeId = (value) => (value === null || value === undefined ? '' : String(value).trim());
 
   // ---------- state ----------
   function getAppState() {
@@ -109,30 +109,63 @@
     };
   }
 
+  async function ensureStateCollections(state) {
+    const appInstance = window.smartEvaluator;
+    const dataService = appInstance?.services?.dataService;
+    if (!dataService) return state;
+    const stateManagerInstance = appInstance.managers?.stateManager;
+
+    const loaders = [
+      ['students', 'loadStudents'],
+      ['groups', 'loadGroups'],
+      ['tasks', 'loadTasks'],
+      ['evaluations', 'loadEvaluations'],
+    ].map(async ([key, loaderName]) => {
+      if (Array.isArray(state[key]) && state[key].length) return;
+      const loader = dataService[loaderName];
+      if (typeof loader !== 'function') return;
+      try {
+        state[key] = (await loader()) || [];
+        if (stateManagerInstance?.set) {
+          stateManagerInstance.set(key, state[key]);
+        }
+      } catch (error) {
+        console.warn(`[SDM] Failed to load ${key}:`, error);
+      }
+    });
+
+    await Promise.all(loaders);
+    return state;
+  }
+
   function computeEvalsForStudent(studentId, state) {
+    const targetId = normalizeId(studentId);
     const taskMap = new Map(state.tasks.map((t) => [t?.id, t]));
     return state.evaluations
       .map((ev) => {
-        const sc = ev?.scores?.[studentId];
-        const task = taskMap.get(ev?.taskId);
-        if (!sc || !task) return null;
+        const sc = ev?.scores?.[targetId];
+        if (!sc) return null; // no score for this student
 
+        const task = taskMap.get(ev?.taskId) || null;
         const max = parseFloat(ev?.maxPossibleScore) || parseFloat(task?.maxScore) || 100;
         const total = parseFloat(sc?.totalScore) || 0;
         const pct = max > 0 ? (total / max) * 100 : 0;
 
-        const ms = ev?.taskDate?.seconds
-          ? ev.taskDate.seconds * 1000
-          : (Date.parse(ev?.taskDate) || 0) || (Date.parse(ev?.updatedAt) || 0) || (Date.parse(task?.date) || 0) || null;
+        // Resolve date from multiple sources: taskDate (TS or string), evaluationDate, updatedAt, or task.date
+        let ms = null;
+        if (ev?.taskDate?.seconds) ms = ev.taskDate.seconds * 1000;
+        else if (ev?.evaluationDate?.seconds) ms = ev.evaluationDate.seconds * 1000;
+        else ms = (Date.parse(ev?.taskDate) || 0) || (Date.parse(ev?.updatedAt) || 0) || (Date.parse(task?.date) || 0) || null;
 
-        const bd = task?.maxScoreBreakdown || {};
+        // Best-effort breakdown: prefer task breakdown if present
+        const bd = task?.maxScoreBreakdown || ev?.maxScoreBreakdown || {};
         const maxTask = parseFloat(bd.task) || 0;
         const maxTeam = parseFloat(bd.team) || 0;
         const maxAdditional = parseFloat(bd.additional) || 0;
         const maxMcq = parseFloat(bd.mcq) || 0;
 
         return {
-          taskName: task?.name || '',
+          taskName: task?.name || ev?.taskName || '',
           date: ms ? new Date(ms) : null,
           taskScore: parseFloat(sc?.taskScore) || 0,
           teamScore: parseFloat(sc?.teamScore) || 0,
@@ -154,12 +187,14 @@
 
   function computeRankLabel(studentId, state) {
     try {
+      const targetId = normalizeId(studentId);
       const taskMap = new Map(state.tasks.map((t) => [t?.id, t]));
       const averages = state.students
         .map((st) => {
+          const currentId = normalizeId(st?.id);
           const vals = state.evaluations
             .map((ev) => {
-              const sc = ev?.scores?.[st?.id];
+              const sc = ev?.scores?.[currentId];
               const t = taskMap.get(ev?.taskId);
               if (!sc || !t) return null;
               const max = parseFloat(ev?.maxPossibleScore) || parseFloat(t?.maxScore) || 100;
@@ -167,12 +202,12 @@
               return max > 0 ? (tot / max) * 100 : 0;
             })
             .filter((v) => typeof v === 'number');
-          return { id: st?.id, avg: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : -1 };
+          return { id: currentId, avg: vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : -1 };
         })
         .filter((x) => (x?.avg ?? -1) >= 0)
         .sort((a, b) => b.avg - a.avg);
 
-      const idx = averages.findIndex((x) => x?.id === studentId);
+      const idx = averages.findIndex((x) => x?.id === targetId);
       return idx >= 0 ? bn(idx + 1) : '-';
     } catch {
       return '-';
@@ -345,7 +380,7 @@
         }).join('');
         plist.innerHTML = html2;
       } catch {}
-      }
+    }
 
     const foot = byId('sdmFootnote');
     if (foot) foot.textContent = `${bn(evals.length)} টি মূল্যায়নের তথ্য দেখানো হচ্ছে`;
@@ -354,6 +389,13 @@
   function renderTable(evals) {
     const tbody = byId('sdmTableBody');
     if (!tbody) return;
+
+    if (!Array.isArray(evals) || evals.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="9" class="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">এই শিক্ষার্থীর কোনো মূল্যায়ন পাওয়া যায়নি।</td></tr>';
+      return;
+    }
+
     const frag = document.createDocumentFragment();
     for (const h of evals) {
       const tr = document.createElement('tr');
@@ -490,8 +532,6 @@
     const drawHeader = () => {
       // Header spacing (compact, with a small top strip for timestamp)
       const bandTop = M + 12;
-      const bandH = headerH - 18; // compact header height
-      // Removed header background band (no fill rectangle)
 
       // Generated date at very top-right on white strip (very top blank area)
       const g = new Date();
@@ -504,12 +544,10 @@
       const h12raw = h24 % 12 || 12;
       const hh = String(h12raw).padStart(2, '0');
       const genStr = `Generated: ${y4}-${mo}-${dd} ${hh}:${mm} ${ampm}`;
-      // Render timestamp text only (no background box)
       doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(71,85,105);
-      // Nudge slightly away from page edges to avoid any clipping
       text(genStr, PAGE_W - M - 8, M + 14, { align: 'right' });
 
-      // Centered system name and report title (plain on white, below date)
+      // Centered system name and report title
       doc.setTextColor(17,24,39);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
       text('SMART EVALUATE Automated SYSTEM', PAGE_W/2, bandTop + 6, { align: 'center' });
@@ -638,19 +676,55 @@
   }
 
   // ---------- open modal ----------
-  async function openStudentModalById(studentId) {
-    const modal = UI.els.modal; if (!modal) return;
+  async function openStudentModalById(studentId, options = {}) {
+    const modal = UI.els.modal;
+    if (!modal) return;
 
-    const state = getAppState();
-    const studentIdx = state.students.findIndex((s) => s?.id === studentId);
-    if (studentIdx < 0) return;
-    const student = { ...state.students[studentIdx] };
+    const targetId = normalizeId(studentId);
+    if (!targetId) {
+      console.warn('[SDM] openStudentModalById called without a valid studentId.');
+      return;
+    }
 
-    const latestRole = await fetchStudentRoleFromFirestore(studentId);
+    const fallbackState = getAppState();
+    const providedState = options?.state || {};
+    const state = {
+      students: Array.isArray(providedState.students) && providedState.students.length
+        ? providedState.students
+        : fallbackState.students,
+      evaluations: Array.isArray(providedState.evaluations) && providedState.evaluations.length
+        ? providedState.evaluations
+        : fallbackState.evaluations,
+      tasks: Array.isArray(providedState.tasks) && providedState.tasks.length ? providedState.tasks : fallbackState.tasks,
+      groups: Array.isArray(providedState.groups) && providedState.groups.length
+        ? providedState.groups
+        : fallbackState.groups,
+    };
+    await ensureStateCollections(state);
+    let student = null;
+
+    if (options.student && normalizeId(options.student.id) === targetId) {
+      student = { ...options.student };
+    } else {
+      const studentIdx = state.students.findIndex((s) => normalizeId(s?.id) === targetId);
+      if (studentIdx >= 0) {
+        student = { ...state.students[studentIdx] };
+      }
+    }
+
+    if (!student) {
+      console.warn('[SDM] Student not found for modal:', studentId);
+      return;
+    }
+
+    const latestRole = await fetchStudentRoleFromFirestore(targetId);
     if (latestRole) student.role = latestRole;
 
-    const groupName = state.groups.find((g) => g?.id === student.groupId)?.name || '';
-    const evals = computeEvalsForStudent(studentId, state);
+    const groupName =
+      options.groupName ||
+      state.groups.find((g) => normalizeId(g?.id) === normalizeId(student.groupId))?.name ||
+      '';
+    const evals = computeEvalsForStudent(targetId, state);
 
     const count = Math.max(1, evals.length);
     const sums = evals.reduce((a, r) => ({ total: a.total + (r.total || 0), pct: a.pct + (r.pct || 0) }), { total: 0, pct: 0 });
@@ -745,4 +819,3 @@
     init();
   }
 })();
-

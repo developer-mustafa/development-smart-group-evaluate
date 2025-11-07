@@ -282,9 +282,78 @@ function _setupEventListeners() {
         stateManager.updateFilters('studentCards', { searchTerm: searchTerm });
         _renderStudentCardsList();
       });
+      });
+    }
+}
+
+/**
+ * Handles click/keyboard activation on a student card to open the detail modal.
+ * Ensures the same modal (and data) used in the ranking page.
+ * @param {Event} event
+ */
+function _handleStudentCardActivation(event) {
+  if (!event) return;
+  const isKeydown = event.type === 'keydown';
+  if (isKeydown && event.key !== 'Enter' && event.key !== ' ') return;
+
+  const rawTarget = event.target;
+  let target = null;
+  if (typeof Element !== 'undefined' && rawTarget instanceof Element) {
+    target = rawTarget;
+  } else if (rawTarget?.parentElement) {
+    target = rawTarget.parentElement;
+  }
+  if (!target) return;
+
+  if (target.closest('button, a, input, textarea, select, label')) return;
+
+  const card = target.closest('[data-student-id]');
+  if (!card) return;
+  const studentId = (card.getAttribute('data-student-id') || '').trim();
+  if (!studentId) return;
+
+  if (isKeydown) event.preventDefault();
+
+  const students = stateManager.get('students') || [];
+  const fallbackStudent =
+    students.find((stu) => (stu?.id === undefined || stu?.id === null ? false : String(stu.id).trim() === studentId)) ||
+    null;
+
+  let fallbackGroupName = null;
+  if (fallbackStudent) {
+    const groups = stateManager.get('groups') || [];
+    const targetGroupId =
+      fallbackStudent.groupId === undefined || fallbackStudent.groupId === null
+        ? null
+        : String(fallbackStudent.groupId).trim();
+    const matchGroup = groups.find((grp) => {
+      if (grp?.id === undefined || grp?.id === null) return false;
+      return String(grp.id).trim() === targetGroupId;
     });
+    fallbackGroupName = matchGroup?.name || null;
+  }
+
+  let stateSnapshot = null;
+  if (typeof stateManager?.getState === 'function') {
+    try {
+      stateSnapshot = stateManager.getState();
+    } catch (err) {
+      console.warn('Members: failed to capture state snapshot for modal', err);
+    }
+  }
+
+  if (typeof window === 'undefined' || typeof window.openStudentModalById !== 'function') {
+    console.warn('Members: student modal handler unavailable for', studentId);
+    return;
+  }
+
+  try {
+    window.openStudentModalById(studentId);
+  } catch (error) {
+    console.warn('Members: failed to open student modal', error);
   }
 }
+
 
 /**
  * ফিল্টার ড্রপডাউনগুলো (গ্রুপ ও একাডেমিক গ্রুপ) পপুলেট করে।
@@ -677,7 +746,11 @@ function _renderStudentCardsList() {
   <article
     class="relative mx-auto w-full max-w-md md:max-w-lg rounded-2xl border ${
       palette.panelBorder || 'border-gray-200 dark:border-gray-700'
-    } bg-white dark:bg-gray-900/80 shadow-sm hover:shadow-lg transition duration-200"
+    } bg-white dark:bg-gray-900/80 shadow-sm hover:shadow-lg transition duration-200 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 focus-visible:outline-offset-2"
+    data-student-id="${student.id}"
+    role="button"
+    tabindex="0"
+    aria-label="${name} - বিস্তারিত"
   >
     <!-- Top gradient bar -->
     <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${
@@ -1230,3 +1303,4 @@ function _getGroupColorClasses(groups) {
   });
   return map;
 }
+

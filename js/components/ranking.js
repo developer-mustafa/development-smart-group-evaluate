@@ -1,4 +1,4 @@
-// js/components/ranking.js
+﻿// js/components/ranking.js
 
 // Dependencies
 let stateManager, uiManager, dataService, helpers, app;
@@ -194,17 +194,7 @@ function _calculateStudentRankings(students, evaluations, tasks) {
       return b.evalCount - a.evalCount;
     });
 
-  let currentRank = 0;
-  let lastScore = -1;
-  let lastEvalCount = -1;
-  rankedList.forEach((item, index) => {
-    if (item.averageScore !== lastScore || item.evalCount !== lastEvalCount) {
-      currentRank = index + 1;
-      lastScore = item.averageScore;
-      lastEvalCount = item.evalCount;
-    }
-    item.rank = currentRank;
-  });
+  rankedList.forEach((item, index) => { item.rank = index + 1; });
 
   return rankedList;
 }
@@ -477,5 +467,6 @@ function _extractTimestamp(value) {
   }
   return null;
 }
+
 
 
