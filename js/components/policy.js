@@ -87,7 +87,7 @@ let policyData = [
       <ul>
         <li>“ভালো করে শিখেছি”: +১০</li>
         <li>“শুধু বুঝেছি”: +৫</li>
-        <li>“এখনো পারিনি”: −৫</li>
+        <li>“এখনো এই টপিক পারিনা ”: −৫</li>
         <li>সাপ্তাহিক নিয়মিত উপস্থিতি: +১০</li>
         <li>সপ্তাহে প্রতিদিন বাড়ির কাজ: +৫</li>
       </ul>
@@ -150,7 +150,9 @@ export function render() {
 
   const tagPills = POLICY_TAGS.map((tag, idx) => {
     const tone = ['bg-white/15 text-white', 'bg-white/10 text-white', 'bg-white/20 text-white'];
-    return `<span class="px-3 py-1 rounded-full text-xs font-medium ${tone[idx % tone.length]} backdrop-blur-sm border border-white/20">${tag}</span>`;
+    return `<span class="px-3 py-1 rounded-full text-xs font-medium ${
+      tone[idx % tone.length]
+    } backdrop-blur-sm border border-white/20">${tag}</span>`;
   }).join('');
 
   const heroHtml = `
@@ -195,7 +197,9 @@ export function render() {
     </div>`;
 
   const expandedSet = _getExpandedSet();
-  let html = heroHtml + `
+  let html =
+    heroHtml +
+    `
     <div class="space-y-6 mt-8">
   `;
 
@@ -214,9 +218,9 @@ export function render() {
     const keywordChips = keywordsSource
       .map(
         (kw) =>
-          `<span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${palette.keywordBg}">${_escapeHtml(
-            kw
-          )}</span>`
+          `<span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+            palette.keywordBg
+          }">${_escapeHtml(kw)}</span>`
       )
       .join('');
     const stepLabel = _formatStepNumber(index + 1);
@@ -224,7 +228,9 @@ export function render() {
 
     html += `
       <section class="relative group">
-        <div class="absolute inset-y-4 left-4 w-[3px] rounded-full bg-gradient-to-b ${palette.accentBar} opacity-60 transition group-hover:opacity-100"></div>
+        <div class="absolute inset-y-4 left-4 w-[3px] rounded-full bg-gradient-to-b ${
+          palette.accentBar
+        } opacity-60 transition group-hover:opacity-100"></div>
         <div class="relative overflow-hidden rounded-2xl border border-gray-200/70 dark:border-gray-700/70 bg-white dark:bg-gray-900/70 shadow-lg">
           <button
             type="button"
@@ -233,19 +239,27 @@ export function render() {
             aria-controls="${id}-content"
             aria-expanded="${isExpanded ? 'true' : 'false'}"
           >
-            <span class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${palette.iconBg} ${palette.iconRing} ring-2 ring-offset-2 ring-offset-white/30 dark:ring-offset-gray-900/40 shadow-md backdrop-blur-sm">
+            <span class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${palette.iconBg} ${
+      palette.iconRing
+    } ring-2 ring-offset-2 ring-offset-white/30 dark:ring-offset-gray-900/40 shadow-md backdrop-blur-sm">
               <i class="${iconClass} text-xl"></i>
             </span>
             <span class="flex-1 space-y-1">
               <span class="inline-flex items-center gap-2">
-                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${palette.badgeBg}">নীতি ${stepLabel}</span>
+                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  palette.badgeBg
+                }">নীতি ${stepLabel}</span>
                 <span class="text-[10px] font-semibold uppercase tracking-[0.25em] text-gray-400 dark:text-gray-500">Guideline</span>
               </span>
-              <span class="block text-lg font-semibold leading-snug text-gray-800 dark:text-white">${_escapeHtml(displayTitle)}</span>
+              <span class="block text-lg font-semibold leading-snug text-gray-800 dark:text-white">${_escapeHtml(
+                displayTitle
+              )}</span>
               ${preview ? `<span class="block text-sm text-gray-500 dark:text-gray-300/80">${preview}</span>` : ''}
             </span>
             <span class="ml-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100/70 text-gray-500 dark:bg-gray-800 dark:text-gray-300">
-              <i class="chev fas fa-chevron-down transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}"></i>
+              <i class="chev fas fa-chevron-down transition-transform duration-300 ${
+                isExpanded ? 'rotate-180' : ''
+              }"></i>
             </span>
           </button>
           <div
@@ -368,16 +382,16 @@ function _formatStepNumber(value) {
 
 function _toBengaliDigits(input) {
   const map = {
-    '0': '০',
-    '1': '১',
-    '2': '২',
-    '3': '৩',
-    '4': '৪',
-    '5': '৫',
-    '6': '৬',
-    '7': '৭',
-    '8': '৮',
-    '9': '৯',
+    0: '০',
+    1: '১',
+    2: '২',
+    3: '৩',
+    4: '৪',
+    5: '৫',
+    6: '৬',
+    7: '৭',
+    8: '৮',
+    9: '৯',
   };
   return String(input)
     .split('')

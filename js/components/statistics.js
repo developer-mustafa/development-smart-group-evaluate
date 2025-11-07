@@ -23,6 +23,11 @@ let app;
 const elements = {};
 let groupStatsChart = null;
 
+// --- NEW: observers & theme state ---
+let visibilityObserver = null;
+let resizeObserver = null;
+let darkMql = null;
+
 /**
  * Initializes the Statistics component.
  */
@@ -33,6 +38,25 @@ export function init(dependencies) {
   app = dependencies.app;
 
   _cacheDOMElements();
+
+  // --- observers for theme & resize ---
+  try {
+    // react to OS theme changes
+    if (window.matchMedia) {
+      darkMql = window.matchMedia('(prefers-color-scheme: dark)');
+      darkMql.addEventListener?.('change', () => render());
+    }
+    // react to container resize for crisp Chart.js sizing
+    if (elements.statsContentContainer && 'ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver(() => {
+        if (groupStatsChart) groupStatsChart.resize();
+      });
+      resizeObserver.observe(elements.statsContentContainer);
+    }
+  } catch (_) {
+    /* no-op */
+  }
+
   console.log('✅ Statistics component initialized.');
 
   return {
@@ -42,6 +66,7 @@ export function init(dependencies) {
 
 /**
  * Main render entry.
+ * (Delays heavy render until section is actually visible.)
  */
 export function render() {
   if (!elements.page) {
@@ -51,19 +76,21 @@ export function render() {
 
   const filters = _ensureFilterDefaults();
 
-  try {
-    const statsData = _calculateStatistics(filters);
-    _renderFilters(filters, statsData);
-    _renderStatistics(statsData, filters);
-  } catch (error) {
-    console.error('❌ Error rendering statistics page:', error);
-    if (elements.statsContentContainer) {
-      uiManager.displayEmptyMessage(
-        elements.statsContentContainer,
-        `পরিসংখ্যান লোড করতে সমস্যা হয়েছে: ${error.message}`
-      );
+  _whenVisible(elements.page, () => {
+    try {
+      const statsData = _calculateStatistics(filters);
+      _renderFilters(filters, statsData);
+      _renderStatistics(statsData, filters);
+    } catch (error) {
+      console.error('❌ Error rendering statistics page:', error);
+      if (elements.statsContentContainer) {
+        uiManager.displayEmptyMessage(
+          elements.statsContentContainer,
+          `পরিসংখ্যান লোড করতে সমস্যা হয়েছে: ${error.message}`
+        );
+      }
     }
-  }
+  });
 }
 
 /**
@@ -106,10 +133,30 @@ function _renderFilters(filters, statsData) {
 
   const cardsHtml = `
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      ${_createSummaryCard('মোট মূল্যায়ন', summary.totalEvaluations, 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200', 'fa-clipboard-list')}
-      ${_createSummaryCard('MCQ মূল্যায়ন', summary.totalMcqEvaluations, 'bg-purple-50 text-purple-700 dark:bg-purple-900/40 dark:text-purple-200', 'fa-brain')}
-      ${_createSummaryCard('গড় স্কোর (%)', _formatPercent(summary.averageScore), 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200', 'fa-gauge')}
-      ${_createSummaryCard('বাকি শিক্ষার্থী', summary.pendingStudents, 'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200', 'fa-user-clock')}
+      ${_createSummaryCard(
+        'মোট মূল্যায়ন',
+        summary.totalEvaluations,
+        'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200',
+        'fa-clipboard-list'
+      )}
+      ${_createSummaryCard(
+        'MCQ মূল্যায়ন',
+        summary.totalMcqEvaluations,
+        'bg-purple-50 text-purple-700 dark:bg-purple-900/40 dark:text-purple-200',
+        'fa-brain'
+      )}
+      ${_createSummaryCard(
+        'গড় স্কোর (%)',
+        _formatPercent(summary.averageScore),
+        'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
+        'fa-gauge'
+      )}
+      ${_createSummaryCard(
+        'বাকি শিক্ষার্থী',
+        summary.pendingStudents,
+        'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200',
+        'fa-user-clock'
+      )}
     </div>
   `;
 
@@ -123,7 +170,9 @@ function _renderFilters(filters, statsData) {
             ${groupOptions
               .map(
                 (group) =>
-                  `<option value="${group.id}" ${group.id === filters.groupFilter ? 'selected' : ''}>${group.label}</option>`
+                  `<option value="${group.id}" ${group.id === filters.groupFilter ? 'selected' : ''}>${
+                    group.label
+                  }</option>`
               )
               .join('')}
           </select>
@@ -146,7 +195,9 @@ function _renderFilters(filters, statsData) {
       </div>
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <label class="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-          <input type="checkbox" id="statsPendingToggle" class="form-checkbox stats-filter" ${filters.showPendingOnly ? 'checked' : ''}/>
+          <input type="checkbox" id="statsPendingToggle" class="form-checkbox stats-filter" ${
+            filters.showPendingOnly ? 'checked' : ''
+          }/>
           শুধু বাকি থাকা মূল্যায়ন দেখাও
         </label>
         <div class="text-sm text-gray-500 dark:text-gray-400">
@@ -170,17 +221,18 @@ function _renderFilters(filters, statsData) {
 
 /**
  * Create a summary card.
+ * (Improved contrast in dark mode via subtle border.)
  */
 function _createSummaryCard(title, value, classes, icon) {
   const displayValue = typeof value === 'string' ? value : _formatNumber(value);
   return `
-    <div class="rounded-2xl border border-transparent ${classes} p-4 shadow-sm backdrop-blur">
+    <div class="rounded-2xl border ${classes} border-gray-200/60 dark:border-white/10 p-4 shadow-sm backdrop-blur">
       <div class="flex items-center justify-between">
         <div>
           <div class="text-sm font-medium opacity-80">${title}</div>
           <div class="mt-2 text-2xl font-semibold">${displayValue}</div>
         </div>
-        <div class="text-3xl opacity-60"><i class="fas ${icon}"></i></div>
+        <div class="text-3xl opacity-70"><i class="fas ${icon}"></i></div>
       </div>
     </div>
   `;
@@ -190,8 +242,7 @@ function _createSummaryCard(title, value, classes, icon) {
  * Create filter toggle button markup.
  */
 function _createToggleButton(value, label, isActive) {
-  const baseClass =
-    'px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 text-sm transition-colors';
+  const baseClass = 'px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700 text-sm transition-colors';
   const activeClass = isActive
     ? 'bg-blue-600 text-white border-blue-600 shadow'
     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
@@ -267,6 +318,10 @@ function _renderStatistics(statsData, filters) {
   if (filters.viewMode === VIEW_MODES.CHART) {
     if (chartData) {
       _renderChart(chartData);
+      // Ensure correct sizing after becoming visible (tab switch, etc.)
+      setTimeout(() => {
+        if (groupStatsChart) groupStatsChart.resize();
+      }, 0);
     } else {
       _destroyChart();
     }
@@ -308,20 +363,30 @@ function _buildTableHtml(groupMetrics, filters) {
         <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50/60 dark:hover:bg-gray-800/60 transition">
           <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">${name}</td>
           <td class="px-4 py-3 text-gray-700 dark:text-gray-300 text-center">${_formatNumber(group.studentCount)}</td>
-          <td class="px-4 py-3 text-gray-700 dark:text-gray-300 text-center">${_formatNumber(group.evaluationCount)}</td>
-          <td class="px-4 py-3 text-gray-700 dark:text-gray-300 text-center">${_formatNumber(group.mcqEvaluationCount)}</td>
+          <td class="px-4 py-3 text-gray-700 dark:text-gray-300 text-center">${_formatNumber(
+            group.evaluationCount
+          )}</td>
+          <td class="px-4 py-3 text-gray-700 dark:text-gray-300 text-center">${_formatNumber(
+            group.mcqEvaluationCount
+          )}</td>
           <td class="px-4 py-3 text-center">
-            <span class="font-semibold ${_scoreColorClass(group.averageScore)}">${_formatPercent(group.averageScore)}</span>
+            <span class="font-semibold ${_scoreColorClass(group.averageScore)}">${_formatPercent(
+        group.averageScore
+      )}</span>
           </td>
           <td class="px-4 py-3 text-center">
-            <span class="font-semibold text-indigo-600 dark:text-indigo-300">${_formatPercent(group.participationRate)}</span>
+            <span class="font-semibold text-indigo-600 dark:text-indigo-300">${_formatPercent(
+              group.participationRate
+            )}</span>
           </td>
           <td class="px-4 py-3 text-center">
             <span class="font-semibold ${group.pendingStudents > 0 ? 'text-rose-500' : 'text-emerald-500'}">
               ${_formatNumber(group.pendingStudents)}
             </span>
           </td>
-          <td class="px-4 py-3 text-gray-600 dark:text-gray-300 text-sm text-center">${group.latestEvaluationLabel || '—'}</td>
+          <td class="px-4 py-3 text-gray-600 dark:text-gray-300 text-sm text-center">${
+            group.latestEvaluationLabel || '—'
+          }</td>
         </tr>
       `;
     })
@@ -333,8 +398,8 @@ function _buildTableHtml(groupMetrics, filters) {
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">গ্রুপ ভিত্তিক বিশ্লেষণ</h3>
         <p class="text-sm text-gray-500 dark:text-gray-400">
           ভিউ মোড: ${filters.viewMode === VIEW_MODES.TABLE ? 'টেবিল' : 'চার্ট'} · মূল্যায়ন ধরন: ${_evaluationTypeLabel(
-            filters.evaluationType
-          )}
+    filters.evaluationType
+  )}
         </p>
       </div>
       <div class="overflow-x-auto">
@@ -392,9 +457,7 @@ function _buildChartContainerHtml(groupMetrics) {
  * Build detailed evaluation list for a single group view.
  */
 function _buildEvaluationDetailHtml(groupMetric) {
-  if (!groupMetric || !groupMetric.evaluationDetails.length) {
-    return '';
-  }
+  if (!groupMetric || !groupMetric.evaluationDetails.length) return '';
 
   const detailRows = groupMetric.evaluationDetails
     .map((detail) => {
@@ -413,8 +476,8 @@ function _buildEvaluationDetailHtml(groupMetric) {
             )}</span>
             <span>মূল্যায়িত: ${_formatNumber(detail.assessedCount)}</span>
             <span class="${detail.pendingCount > 0 ? 'text-rose-500 font-medium' : ''}">বাকি: ${_formatNumber(
-              detail.pendingCount
-            )}</span>
+        detail.pendingCount
+      )}</span>
           </div>
         </div>
       `;
@@ -472,10 +535,7 @@ function _calculateStatistics(filters) {
     if (!groupSummary) return;
 
     const task = tasksMap.get(evaluation.taskId);
-    const maxScore =
-      parseFloat(evaluation.maxPossibleScore) ||
-      _deriveMaxScoreFromTask(task) ||
-      MAX_PERCENT;
+    const maxScore = parseFloat(evaluation.maxPossibleScore) || _deriveMaxScoreFromTask(task) || MAX_PERCENT;
 
     const isMcq = _isMcqEvaluation(task);
     const evaluationType = isMcq ? 'mcq' : 'regular';
@@ -588,7 +648,8 @@ function _deriveMetricsForGroup(summary, filters) {
     assessedCount: assessedTotal,
     weightedScoreSum,
     weight,
-    latestEvaluationLabel: latestDetail.label || (summary.latestEvaluationMs ? _formatDate(summary.latestEvaluationMs) : null),
+    latestEvaluationLabel:
+      latestDetail.label || (summary.latestEvaluationMs ? _formatDate(summary.latestEvaluationMs) : null),
     uniqueParticipants: _getParticipantCount(summary.participants, filters.evaluationType),
     potentialParticipants: summary.studentCount * Math.max(evaluationCount, 1),
     evaluationDetails: relevantDetails.sort((a, b) => (b.dateMs || 0) - (a.dateMs || 0)),
@@ -628,10 +689,12 @@ function _buildSummary(allGroups, filteredGroups, filters) {
 }
 
 /**
- * Build chart data object.
+ * Build chart data object. (Dark-mode aware)
  */
 function _buildChartData(groupMetrics) {
   if (!groupMetrics.length) return null;
+
+  const t = _getThemeColors();
 
   const labels = groupMetrics.map((group) => group.groupName);
   const averageScores = groupMetrics.map((group) => Number(group.averageScore.toFixed(2)));
@@ -647,7 +710,7 @@ function _buildChartData(groupMetrics) {
         type: 'bar',
         label: 'গড় স্কোর (%)',
         data: averageScores,
-        backgroundColor: 'rgba(59, 130, 246, 0.75)',
+        backgroundColor: t.scoreBar,
         borderRadius: 8,
         yAxisID: 'y',
       },
@@ -655,7 +718,7 @@ function _buildChartData(groupMetrics) {
         type: 'bar',
         label: 'অংশগ্রহণ হার (%)',
         data: participationRates,
-        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+        backgroundColor: t.partBar,
         borderRadius: 8,
         yAxisID: 'y',
       },
@@ -663,8 +726,11 @@ function _buildChartData(groupMetrics) {
         type: 'line',
         label: 'বাকি শিক্ষার্থী (জন)',
         data: pendingStudents,
-        backgroundColor: 'rgba(239, 68, 68, 0.85)',
-        borderColor: 'rgba(239, 68, 68, 0.95)',
+        backgroundColor: t.pendLine,
+        borderColor: t.pendLineBorder,
+        pointBackgroundColor: t.pendLineBorder,
+        pointBorderColor: t.pendLineBorder,
+        pointRadius: 3,
         borderWidth: 2,
         tension: 0.35,
         fill: false,
@@ -683,10 +749,11 @@ function _buildChartData(groupMetrics) {
           beginAtZero: true,
           max: MAX_PERCENT,
           ticks: {
+            color: t.ticks,
             callback: (value) => `${value}%`,
           },
           grid: {
-            color: 'rgba(148, 163, 184, 0.2)',
+            color: t.grid,
           },
         },
         y1: {
@@ -694,15 +761,23 @@ function _buildChartData(groupMetrics) {
           position: 'right',
           suggestedMax: maxPending * 1.2 || 10,
           ticks: {
+            color: t.ticks,
             callback: (value) => _formatNumber(value),
           },
           grid: {
             drawOnChartArea: false,
           },
         },
+        x: {
+          ticks: { color: t.ticks },
+          grid: { color: t.grid },
+        },
       },
       plugins: {
         tooltip: {
+          backgroundColor: t.tooltipBg,
+          titleColor: t.tooltipFg,
+          bodyColor: t.tooltipFg,
           callbacks: {
             label: (context) => {
               if (context.dataset.yAxisID === 'y1') {
@@ -715,9 +790,11 @@ function _buildChartData(groupMetrics) {
         legend: {
           labels: {
             usePointStyle: true,
+            color: t.legend,
           },
         },
       },
+      animation: false,
     },
   };
 }
@@ -854,4 +931,62 @@ function _formatText(value) {
   }
   if (typeof value === 'string') return value.trim();
   return String(value);
+}
+
+/* ----------------- NEW: THEME & VISIBILITY UTILITIES ----------------- */
+
+function _isDarkMode() {
+  // Tailwind dark mode: 'dark' class on <html>, fallback to OS
+  const root = document.documentElement;
+  if (root.classList.contains('dark')) return true;
+  if (root.classList.contains('light')) return false;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function _getThemeColors() {
+  const dark = _isDarkMode();
+  // Carefully chosen for contrast across backgrounds; WCAG-friendly
+  return {
+    dark,
+    // data series colors
+    scoreBar: dark ? 'rgba(96, 165, 250, 0.9)' : 'rgba(37, 99, 235, 0.9)', // blue-400/600
+    partBar: dark ? 'rgba(52, 211, 153, 0.9)' : 'rgba(16, 185, 129, 0.9)', // emerald-400/500
+    pendLine: dark ? 'rgba(248, 113, 113, 1.0)' : 'rgba(220, 38, 38, 1.0)', // rose-400/600
+    pendLineBorder: dark ? 'rgba(252, 165, 165, 1.0)' : 'rgba(239, 68, 68, 1.0)',
+    // chart chrome
+    grid: dark ? 'rgba(148,163,184,0.25)' : 'rgba(100,116,139,0.2)',
+    ticks: dark ? '#E5E7EB' : '#334155', // slate-200 / slate-700
+    legend: dark ? '#F1F5F9' : '#0F172A', // slate-50 / slate-900
+    tooltipBg: dark ? 'rgba(2,6,23,0.9)' : 'rgba(255,255,255,0.95)', // slate-950
+    tooltipFg: dark ? '#F8FAFC' : '#0F172A',
+  };
+}
+
+/**
+ * Ensures we only render heavy parts (like charts) once the page/section
+ * is actually visible. Fixes "0×0 canvas" when tab/panel is hidden on mount.
+ */
+function _whenVisible(el, onceCb) {
+  if (!el) return;
+  const isShown = !!(el.offsetParent || el.getClientRects().length);
+  if (isShown) {
+    onceCb();
+    return;
+  }
+
+  visibilityObserver?.disconnect();
+  visibilityObserver = new MutationObserver(() => {
+    const shown = !!(el.offsetParent || el.getClientRects().length);
+    if (shown) {
+      visibilityObserver.disconnect();
+      onceCb();
+    }
+  });
+
+  // Observe style/class changes up the DOM chain
+  let node = el;
+  while (node && node !== document) {
+    visibilityObserver.observe(node, { attributes: true, attributeFilter: ['class', 'style'], subtree: false });
+    node = node.parentElement;
+  }
 }

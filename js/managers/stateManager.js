@@ -65,6 +65,7 @@ class StateManager {
           viewMode: 'table',
           showFullOnly: false,
           criteriaView: 'topic',
+          summaryEvaluationView: 'table',
         },
         adminManagement: {
           searchTerm: '',
