@@ -80,136 +80,8 @@ function _getDashboardHTMLStructure() {
         <div class="relative px-4 py-4 sm:px-5 lg:px-7">
           <div class="space-y-4">
             <div class="grid gap-4 lg:grid-cols-2 items-stretch">
-              <article class="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-sm shadow-sm flex flex-col h-full">
-                <div class="flex items-center justify-between text-xs font-semibold text-white/90">
-                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-                    <i class="fas fa-gem text-rose-200"></i>
-                    ৪টি মূল্যায়ন মানদণ্ড
-                  </span>
-                  <span class="text-white/70 text-[0.7rem]">Task · Team · Extra · MCQ</span>
-                </div>
-                <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div class="flex items-center gap-3 rounded-xl border border-amber-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-300/30 text-amber-100">
-                      <i class="fas fa-clipboard-check text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">টাস্ক মার্কস</p>
-                      <p class="text-[0.75rem] text-white/65">স্বতন্ত্র টাস্ক ও মান যাচাই।</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 rounded-xl border border-emerald-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-300/30 text-emerald-100">
-                      <i class="fas fa-people-group text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">টিম মার্কস</p>
-                      <p class="text-[0.75rem] text-white/65">দলগত সমন্বয় ও উপস্থাপনা।</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 rounded-xl border border-rose-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-rose-300/30 text-rose-100">
-                      <i class="fas fa-star text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">অতিরিক্ত মূল্যায়ন</p>
-                      <p class="text-[0.75rem] text-white/65">শেখা, অনুশীলন, নৈতিকতা।</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 rounded-xl border border-sky-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-sky-300/30 text-sky-100">
-                      <i class="fas fa-question-circle text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">MCQ মার্কস</p>
-                      <p class="text-[0.75rem] text-white/65">ধারণা ও দ্রুত প্রতিক্রিয়া।</p>
-                    </div>
-                  </div>
-                </div>
-              </article>
-              <article class="rounded-2xl border border-white/15 bg-white/95 p-4 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/85 dark:text-white h-full">
-                <div class="space-y-4">
-                  <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="min-w-0">
-                      <p class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-white/80">
-                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
-                          <i class="fas fa-scroll text-xs"></i>
-                        </span>
-                        সর্বশেষ এসাইনমেন্ট
-                      </p>
-                       <span class="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-amber-200/40 bg-amber-100 px-2 py-0.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-amber-700 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-100">
-                        <i class="fas fa-bolt text-[0.65rem]"></i>
-                        লাইভ
-                      </span>
-                      <p id="latestTaskTitle" class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white max-w-[22rem] truncate" title="-">-</p>
-                      <p class="text-xs text-slate-500 dark:text-white/60">আপডেট: <span id="latestAssignmentUpdated">-</span></p>
-                    </div>
-                 
-                  </div>
-                  <div class="space-y-4">
-                    <div class="relative rounded-2xl border border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 shadow-sm dark:border-white/10 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800/70">
-                     
-                      <div class="flex w-full flex-col gap-3 text-sm font-semibold text-slate-600 dark:text-white/80 md:flex-row md:items-center md:gap-4 pr-4 md:pr-6">
-                        <div class="inline-flex flex-wrap items-center gap-2">
-                          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-slate-700 dark:bg-white/10 dark:text-white">
-                            <i class="fas fa-chart-simple text-xs text-indigo-500"></i>
-                            ফলাফল প্রদানের আপডেট
-                          </span>
-                        </div>
-                               <div class="relative h-6 w-full overflow-hidden rounded-full border border-slate-900/10 bg-slate-900/5 dark:border-white/15 dark:bg-white/10 md:flex-1 md:min-w-0">
-  <div id="progressBar" class="relative h-full w-[100%] min-w-[220px] rounded-full bg-blue-600 shadow-lg transition-all duration-1000 ease-out">
-    <span id="progressBarLabel" class="absolute inset-y-0 right-2 text-sm font-semibold text-white/90 drop-shadow">100%</span>
-  </div>
-  <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-3 text-[0.7rem] font-semibold text-slate-500/80 dark:text-white/60">
-    <span> </span>
-    <span>১০০%</span>
-  </div>
-</div>
 
-                      </div>
-                    </div>
-                    <div class="flex flex-col items-center gap-4 md:flex-row md:items-end md:justify-center md:gap-8">
-                      <div class="flex flex-col items-center gap-3">
-                        <div class="relative h-24 w-24">
-                          <div id="latestAssignmentCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
-                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
-                            <p id="latestAssignmentAverage" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
-                          </div>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সর্বশেষ এসাইনমেন্ট গড়</p>
-                      </div>
-                      <div class="flex flex-col items-center gap-3">
-                        <div class="relative h-24 w-24">
-                          <div id="overallProgressCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
-                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
-                            <p id="overallProgress" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
-                          </div>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সামগ্রিক ‍উন্নতি</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            </div>
-            <div class="grid gap-4 lg:grid-cols-2 items-stretch">
-              <article class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-sm shadow-sm space-y-3 h-full">
-                <div class="flex items-center justify-between text-xs font-semibold text-white/85">
-                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-                    <i class="fas fa-star text-amber-300"></i>
-                    অতিরিক্ত মূল্যায়নের মানদণ্ড
-                  </span>
-                  <span class="text-white/60 text-[0.7rem]">Progressive bonus</span>
-                </div>
-                <div class="space-y-1.5 text-sm text-white/85">
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-rose-300"></span> এখনো এই টাস্ক পারিনা <span class="text-white/60">(-৫)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span> শুধু বুঝেছি <span class="text-white/60">(+৫)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-emerald-300"></span> ভালো করে শিখেছি <span class="text-white/60">(+১০)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-sky-300"></span> সপ্তাহে প্রতিদিন বাড়ির কাজ করেছি <span class="text-white/60">(+৫)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-indigo-300"></span> সাপ্তাহিক নিয়মিত উপস্থিতি <span class="text-white/60">(+১০)</span></p>
-                </div>
-              </article>
-              <article class="rounded-2xl border border-white/15 bg-white/95 p-5 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/80 dark:text-white h-full">
+   <article class="rounded-2xl border border-white/15 bg-white/95 p-5 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/80 dark:text-white h-full">
                 <div class="space-y-4">
                   <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-white/70">
                     <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800/60 dark:text-white">
@@ -272,14 +144,151 @@ function _getDashboardHTMLStructure() {
                   </div>
                 </div>
               </article>
+
+
+
+               <article class="rounded-2xl border border-white/15 bg-white/95 p-4 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/85 dark:text-white h-full">
+                <div class="space-y-4">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="min-w-0">
+                      <p class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-white/80">
+                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
+                          <i class="fas fa-scroll text-xs"></i>
+                        </span>
+                        সর্বশেষ এসাইনমেন্ট
+                      </p>
+                       <span class="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-amber-200/40 bg-amber-100 px-2 py-0.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-amber-700 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-100">
+                        <i class="fas fa-bolt text-[0.65rem]"></i>
+                        লাইভ
+                      </span>
+                      <p id="latestTaskTitle" class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white max-w-[22rem] truncate" title="-">-</p>
+                      <p class="text-xs text-slate-500 dark:text-white/60">আপডেট: <span id="latestAssignmentUpdated">-</span></p>
+                    </div>
+                 
+                  </div>
+                  <div class="space-y-4">
+                    <div class="relative rounded-2xl  bg-gradient-to-br from-slate-50 via-white to-slate-100  shadow-sm dark:border-white/10 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800/70">
+                     
+                      <div class="flex w-full flex-col gap-3 text-sm font-semibold text-slate-600 dark:text-white/80 md:flex-row md:items-center md:gap-4 ">
+                        <div class="inline-flex flex-wrap items-center gap-2">
+                          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-slate-700 dark:bg-white/10 dark:text-white">
+                            <i class="fas fa-chart-simple text-xs text-indigo-500"></i>
+                            ফলাফল প্রদানের আপডেট
+                          </span>
+                        </div>
+                               <div class="relative h-6 w-full overflow-hidden rounded-full border border-slate-900/10 bg-slate-900/5 dark:border-white/15 dark:bg-white/10 md:flex-1 md:min-w-0">
+  <div id="progressBar" class="relative h-full w-[100%] min-w-[220px] rounded-full bg-blue-600 shadow-lg transition-all duration-1000 ease-out">
+    <span id="progressBarLabel" class="absolute inset-y-0 right-2 text-sm font-semibold text-white/90 drop-shadow">100%</span>
+  </div>
+  <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-3 text-[0.7rem] font-semibold text-slate-500/80 dark:text-white/60">
+    <span> </span>
+    <span>১০০%</span>
+  </div>
+</div>
+
+                      </div>
+                    </div>
+                    <div class="flex flex-col items-center gap-4 md:flex-row md:items-end md:justify-center md:gap-8">
+                      <div class="flex flex-col items-center gap-3">
+                        <div class="relative h-24 w-24">
+                          <div id="latestAssignmentCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
+                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
+                            <p id="latestAssignmentAverage" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
+                          </div>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সর্বশেষ এসাইনমেন্ট গড়</p>
+                      </div>
+                      <div class="flex flex-col items-center gap-3">
+                        <div class="relative h-24 w-24">
+                          <div id="overallProgressCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
+                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
+                            <p id="overallProgress" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
+                          </div>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সামগ্রিক ‍উন্নতি</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+
+              <article class="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-sm shadow-sm flex flex-col h-full">
+                <div class="flex items-center justify-between text-xs font-semibold text-white/90">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+                    <i class="fas fa-gem text-rose-200"></i>
+                    ৪টি মূল্যায়ন মানদণ্ড
+                  </span>
+                  <span class="text-white/70 text-[0.7rem]">Task · Team · Extra · MCQ</span>
+                </div>
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div class="flex items-center gap-3 rounded-xl border border-amber-200/25 bg-white/10 px-3 py-3 text-white text-sm">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-300/30 text-amber-100">
+                      <i class="fas fa-clipboard-check text-xs"></i>
+                    </span>
+                    <div>
+                      <p class="font-semibold">টাস্ক মার্কস</p>
+                      <p class="text-[0.75rem] text-white/65">স্বতন্ত্র টাস্ক ও মান যাচাই।</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 rounded-xl border border-emerald-200/25 bg-white/10 px-3 py-3 text-white text-sm">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-300/30 text-emerald-100">
+                      <i class="fas fa-people-group text-xs"></i>
+                    </span>
+                    <div>
+                      <p class="font-semibold">টিম মার্কস</p>
+                      <p class="text-[0.75rem] text-white/65">দলগত সমন্বয় ও উপস্থাপনা।</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 rounded-xl border border-rose-200/25 bg-white/10 px-3 py-3 text-white text-sm">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-rose-300/30 text-rose-100">
+                      <i class="fas fa-star text-xs"></i>
+                    </span>
+                    <div>
+                      <p class="font-semibold">অতিরিক্ত মূল্যায়ন</p>
+                      <p class="text-[0.75rem] text-white/65">শেখা, অনুশীলন, নৈতিকতা।</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 rounded-xl border border-sky-200/25 bg-white/10 px-3 py-3 text-white text-sm">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-sky-300/30 text-sky-100">
+                      <i class="fas fa-question-circle text-xs"></i>
+                    </span>
+                    <div>
+                      <p class="font-semibold">MCQ মার্কস</p>
+                      <p class="text-[0.75rem] text-white/65">ধারণা ও দ্রুত প্রতিক্রিয়া।</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+             
+            </div>
+            <div class="grid gap-4 lg:grid-cols-2 items-stretch">
+             
+             
+              <article class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-sm shadow-sm space-y-3 h-full">
+                <div class="flex items-center justify-between text-xs font-semibold text-white/85">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+                    <i class="fas fa-star text-amber-300"></i>
+                    অতিরিক্ত মূল্যায়নের মানদণ্ড
+                  </span>
+                  <span class="text-white/60 text-[0.7rem]">Progressive bonus</span>
+                </div>
+                <div class="space-y-1.5 text-sm text-white/85">
+                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-rose-300"></span> এখনো এই টাস্ক পারিনা <span class="text-white/60">(-৫)</span></p>
+                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span> শুধু বুঝেছি <span class="text-white/60">(+৫)</span></p>
+                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-emerald-300"></span> ভালো করে শিখেছি <span class="text-white/60">(+১০)</span></p>
+                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-sky-300"></span> সপ্তাহে প্রতিদিন বাড়ির কাজ করেছি <span class="text-white/60">(+৫)</span></p>
+                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-indigo-300"></span> সাপ্তাহিক নিয়মিত উপস্থিতি <span class="text-white/60">(+১০)</span></p>
+                </div>
+              </article>
             </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
@@ -294,7 +303,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
 
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
@@ -309,7 +318,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
 
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
@@ -324,7 +333,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
 
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
@@ -339,7 +348,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
 
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
@@ -357,7 +366,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
 
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
@@ -375,7 +384,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
 
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
@@ -390,7 +399,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
 
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-red-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
             <div>
