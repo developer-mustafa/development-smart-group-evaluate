@@ -156,19 +156,9 @@ function _getDashboardHTMLStructure() {
         <div class="flex flex-col items-center justify-between gap-4 md:flex-row">
 
           <!-- Left: title & icon -->
-          <div class="flex w-full items-center gap-3 md:w-auto">
-            <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl
-              bg-indigo-100 text-indigo-600 ring-1 ring-indigo-200
-              shadow-[0_1px_2px_rgba(0,0,0,0.18)]
-              dark:bg-indigo-500/20 dark:text-indigo-200 dark:ring-0
-              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,.08),0_4px_10px_rgba(0,0,0,.6)]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                   fill="currentColor" class="h-5 w-5" aria-hidden>
-                <path d="M6.4 3h11.2l3 4.5-9.6 13L3.4 7.5 6.4 3zm.9 2-1.6 2.5H9L7.3 5zm10.3 0L15 7.5h3.3L17.6 5zM12 19.1 18.2 7.5H5.8L12 19.1z"/>
-              </svg>
-              <span class="sr-only">Gem</span>
-            </span>
-            <p class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          <div class="flex w-full items-center gap-3 md:w-auto justify-center md:justify-start">
+            
+            <p class="text-2xl font-black tracking-tight text-slate-900 dark:text-white text-center md:text-left">
               স্মার্ট ইভ্যালুয়েট সিস্টেম
             </p>
           </div>
