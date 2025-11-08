@@ -1,4 +1,4 @@
-// js/components/dashboard.js
+﻿// js/components/dashboard.js
 // নির্ভরতা (Dependencies)
 let stateManager, uiManager, helpers, app;
 
@@ -81,9 +81,12 @@ function _getDashboardHTMLStructure() {
           <div class="space-y-4">
             <div class="grid gap-4 lg:grid-cols-2 items-stretch">
               <article class="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-sm shadow-sm flex flex-col h-full">
-                <div class="flex items-center justify-between text-[0.7rem] font-semibold uppercase tracking-[0.4em] text-white">
-                  <span>৪টি মূল্যায়ন মানদণ্ড</span>
-                  <span class="text-white/70 normal-case tracking-normal text-[0.7rem]">Task · Team · Extra · MCQ</span>
+                <div class="flex items-center justify-between text-xs font-semibold text-white/90">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+                    <i class="fas fa-gem text-rose-200"></i>
+                    ৪টি মূল্যায়ন মানদণ্ড
+                  </span>
+                  <span class="text-white/70 text-[0.7rem]">Task · Team · Extra · MCQ</span>
                 </div>
                 <div class="mt-3 grid gap-3 sm:grid-cols-2">
                   <div class="flex items-center gap-3 rounded-xl border border-amber-200/25 bg-white/10 px-3 py-3 text-white text-sm">
@@ -125,44 +128,69 @@ function _getDashboardHTMLStructure() {
                 </div>
               </article>
               <article class="rounded-2xl border border-white/15 bg-white/95 p-4 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/85 dark:text-white h-full">
-                <div class="space-y-2">
+                <div class="space-y-4">
                   <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="min-w-0">
-                      <p class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-slate-500 dark:text-white/60">সর্বশেষ এসাইনমেন্ট</p>
+                      <p class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-white/80">
+                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
+                          <i class="fas fa-scroll text-xs"></i>
+                        </span>
+                        সর্বশেষ এসাইনমেন্ট
+                      </p>
                       <p id="latestTaskTitle" class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white max-w-[22rem] truncate" title="-">-</p>
                       <p class="text-xs text-slate-500 dark:text-white/60">আপডেট: <span id="latestAssignmentUpdated">-</span></p>
                     </div>
-                    <div class="flex items-center gap-4">
-                      <div class="relative h-20 w-20">
-                        <div id="overallProgressCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
-                        <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
-                          <p id="overallProgress" class="text-2xl font-semibold text-slate-900 dark:text-white">-</p>
+                 
+                  </div>
+                  <div class="space-y-4">
+                    <div class="space-y-2">
+                      <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-white/75">
+                          <span>ফলাফল প্রদানের আপডেট</span>
+                          <span class="inline-flex items-center gap-1 rounded-full border border-amber-200/30 px-2 py-0.5 text-amber-500 dark:text-amber-300 normal-case tracking-normal text-xs">
+                            <i class="fas fa-sparkles text-[0.6rem]"></i> লাইভ
+                          </span>
+                        </div>
+                        <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10 md:flex-1">
+                          <div id="progressBar" class="relative h-full w-0 rounded-full shadow-lg transition-all duration-1000 ease-out">
+                            <span id="progressBarLabel" class="absolute inset-y-0 right-2 text-sm font-semibold text-white/90"></span>
+                          </div>
                         </div>
                       </div>
-                      <p class="text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-slate-500 dark:text-white/60 text-right">সকল এসাইনমেন্ট গড়</p>
+                  
                     </div>
-                  </div>
-                  <div class="space-y-1">
-                    <div class="flex items-center justify-between text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500 dark:text-white/60">
-                      <span>গড় সম্পন্নতা</span>
-                      <span class="inline-flex items-center gap-1 rounded-full border border-amber-200/30 px-2 py-0.5 text-amber-500 dark:text-amber-300 normal-case tracking-normal text-xs">
-                        <i class="fas fa-sparkles text-[0.6rem]"></i> লাইভ
-                      </span>
-                    </div>
-                    <div class="relative h-4 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10">
-                      <div id="progressBar" class="relative h-full w-0 rounded-full shadow-lg transition-all duration-1000 ease-out">
-                        <span id="progressBarLabel" class="absolute inset-y-0 right-2 text-sm font-semibold text-white/90"></span>
+                    <div class="flex flex-col items-center gap-4 md:flex-row md:items-end md:justify-center md:gap-8">
+                      <div class="flex flex-col items-center gap-3">
+                        <div class="relative h-24 w-24">
+                          <div id="latestAssignmentCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
+                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
+                            <p id="latestAssignmentAverage" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
+                          </div>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সর্বশেষ এসাইনমেন্ট গড়</p>
+                      </div>
+                      <div class="flex flex-col items-center gap-3">
+                        <div class="relative h-24 w-24">
+                          <div id="overallProgressCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
+                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
+                            <p id="overallProgress" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
+                          </div>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সামগ্রিক ‍উন্নতি</p>
                       </div>
                     </div>
                   </div>
                 </div>
-                </article>
+              </article>
             </div>
             <div class="grid gap-4 lg:grid-cols-2 items-stretch">
               <article class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-sm shadow-sm space-y-3 h-full">
-                <div class="flex items-center justify-between text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-white/70">
-                  <span>অতিরিক্ত মূল্যায়নের মানদণ্ড</span>
-                  <span class="text-white/50 normal-case tracking-normal text-[0.65rem]">Progressive bonus</span>
+                <div class="flex items-center justify-between text-xs font-semibold text-white/85">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+                    <i class="fas fa-star text-amber-300"></i>
+                    অতিরিক্ত মূল্যায়নের মানদণ্ড
+                  </span>
+                  <span class="text-white/60 text-[0.7rem]">Progressive bonus</span>
                 </div>
                 <div class="space-y-1.5 text-sm text-white/85">
                   <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-rose-300"></span> এখনো এই টাস্ক পারিনা <span class="text-white/60">(-৫)</span></p>
@@ -174,15 +202,18 @@ function _getDashboardHTMLStructure() {
               </article>
               <article class="rounded-2xl border border-white/15 bg-white/95 p-5 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/80 dark:text-white h-full">
                 <div class="space-y-4">
-                  <div class="flex items-center justify-between text-[0.55rem] font-semibold uppercase tracking-[0.35em] text-slate-500 dark:text-white/60">
-                    <span>শিক্ষার্থী ও গ্রুপ স্ট্যাটাস</span>
-                    <span class="text-slate-400 dark:text-white/50 normal-case tracking-normal text-[0.65rem]">Latest snapshot</span>
+                  <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-white/70">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800/60 dark:text-white">
+                      <i class="fas fa-people-group text-indigo-500"></i>
+                      শিক্ষার্থী ও গ্রুপ স্ট্যাটাস
+                    </span>
+                    <span class="text-slate-400 dark:text-white/60 text-[0.75rem]">Latest snapshot</span>
                   </div>
                   <div class="grid gap-4 md:grid-cols-2">
                     <div class="rounded-2xl border border-emerald-300/40 bg-gradient-to-br from-emerald-500/15 via-transparent to-transparent px-4 py-4 dark:border-emerald-200/30 dark:from-emerald-400/15">
                       <div class="flex items-center justify-between">
                         <div>
-                          <p class="text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-emerald-900/80 dark:text-emerald-200">শিক্ষার্থী</p>
+                          <p class="text-sm font-semibold text-emerald-900/90 dark:text-emerald-200">শিক্ষার্থী</p>
                           <p class="text-xs text-emerald-500/80 dark:text-emerald-100">বর্তমান অগ্রগতি</p>
                         </div>
                         <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/30 text-emerald-100">
@@ -207,7 +238,7 @@ function _getDashboardHTMLStructure() {
                     <div class="rounded-2xl border border-sky-300/40 bg-gradient-to-br from-sky-500/15 via-transparent to-transparent px-4 py-4 dark:border-sky-200/30 dark:from-sky-400/15">
                       <div class="flex items-center justify-between">
                         <div>
-                          <p class="text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-sky-900/80 dark:text-sky-100">গ্রুপ</p>
+                          <p class="text-sm font-semibold text-sky-900/90 dark:text-sky-100">গ্রুপ</p>
                           <p class="text-xs text-sky-500/80 dark:text-sky-100/80">বর্তমান অগ্রগতি</p>
                         </div>
                         <span class="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/30 text-sky-100">
@@ -366,6 +397,42 @@ function _getDashboardHTMLStructure() {
         </article>
       </section>
 
+      <section class="grid gap-4">
+        <article class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white p-6 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">ড্যাশবোর্ড ওভারভিউ</p>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">এসাইনমেন্ট ও তারিখ</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">সাম্প্রতিক এসাইনমেন্টের সময়সূচি ও অবস্থা</p>
+            </div>
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
+              <i class="fas fa-calendar-week text-lg"></i>
+            </span>
+          </div>
+          <div class="mt-4 grid grid-cols-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <span class="inline-flex items-center gap-2">
+              <i class="fas fa-list-check text-gray-400"></i>
+              এসাইনমেন্ট
+            </span>
+            <span class="text-right inline-flex items-center justify-end gap-2">
+              <i class="fas fa-clock text-gray-400"></i>
+              তারিখ
+            </span>
+          </div>
+          <div id="assignmentOverviewList" class="mt-2 divide-y divide-gray-100 dark:divide-gray-800"></div>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gray-50 px-4 py-3 dark:bg-gray-800/60">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">সর্বশেষ এসাইনমেন্ট</p>
+              <p id="assignmentOverviewLatestTitle" class="text-base font-semibold text-gray-900 dark:text-white truncate" title="-">-</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">আপডেট</p>
+              <p id="assignmentOverviewLatestDate" class="text-sm font-medium text-gray-700 dark:text-gray-200">-</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
       <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
         <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
           <div class="flex flex-wrap items-center justify-between gap-3">
@@ -440,6 +507,16 @@ function _formatDateTime(timestamp) {
   }
 }
 
+function _formatDateOnly(timestamp) {
+  if (!timestamp) return '-';
+  try {
+    const date = new Date(timestamp);
+    return new Intl.DateTimeFormat('bn-BD', { dateStyle: 'medium' }).format(date);
+  } catch {
+    return '-';
+  }
+}
+
 /** Caches the main page element. */
 function _cacheDOMElements() {
   elements.page = document.getElementById('page-dashboard');
@@ -464,6 +541,8 @@ function _cacheInnerDOMElements() {
     'progressBarLabel',
     'overallProgress',
     'overallProgressCircle',
+    'latestAssignmentAverage',
+    'latestAssignmentCircle',
     'latestTaskTitle',
     'latestAssignmentUpdated',
     'latestAssignmentEvaluated',
@@ -475,6 +554,9 @@ function _cacheInnerDOMElements() {
     'topGroupsContainer',
     'academicGroupStatsList',
     'groupsRankingList',
+    'assignmentOverviewList',
+    'assignmentOverviewLatestTitle',
+    'assignmentOverviewLatestDate',
   ];
   idsToCache.forEach((id) => {
     elements[id] = elements.page.querySelector(`#${id}`);
@@ -498,7 +580,8 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
   const groupPerformanceData = _calculateGroupPerformance(groups, students, evaluations, tasks);
   const validGroupPerformances = groupPerformanceData.filter((g) => g.evalCount > 0);
   const totalOverallScore = validGroupPerformances.reduce((acc, group) => acc + group.averageScore, 0);
-  const overallProgress = validGroupPerformances.length > 0 ? totalOverallScore / validGroupPerformances.length : 0;
+  const groupOverallProgress =
+    validGroupPerformances.length > 0 ? totalOverallScore / validGroupPerformances.length : 0;
 
   const completedEvaluationIds = new Set(evaluations.map((e) => `${e.taskId}_${e.groupId}`));
   let pendingEvaluations = 0;
@@ -511,6 +594,16 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
   }
   const academicGroupStats = _calculateAcademicGroupStats(students, groupPerformanceData);
   const latestAssignmentSummary = _calculateLatestAssignmentSummary(groups, students, tasks, evaluations);
+  const assignmentAverageStats = _calculateAssignmentAverageStats(tasks, evaluations);
+  const assignmentSummaries = assignmentAverageStats.assignmentSummaries;
+  const hasAssignmentAverage = assignmentSummaries.length > 0;
+  const overallAssignmentAverage = hasAssignmentAverage ? assignmentAverageStats.overallAverage : 0;
+  const overallProgress = hasAssignmentAverage ? overallAssignmentAverage : groupOverallProgress;
+  const assignmentOverview = _buildAssignmentOverview(tasks, latestAssignmentSummary);
+  const latestAssignmentAverage =
+    latestAssignmentSummary?.taskId && assignmentAverageStats.assignmentAverageMap
+      ? assignmentAverageStats.assignmentAverageMap.get(latestAssignmentSummary.taskId) ?? null
+      : null;
   return {
     totalGroups,
     totalStudents,
@@ -523,9 +616,13 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
     pendingRoles,
     pendingEvaluations,
     overallProgress,
+    overallAssignmentAverage,
+    latestAssignmentAverage,
+    assignmentSummaries,
     groupPerformanceData,
     academicGroupStats,
     latestAssignmentSummary,
+    assignmentOverview,
   };
 }
 
@@ -543,33 +640,10 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
       let latestEvalMeta = { ts: 0, avgPct: null, participants: null, participationRate: null };
       groupEvals.forEach((evaluation) => {
         const participantCount = evaluation?.scores ? Object.keys(evaluation.scores).length : 0;
-        let evalAvgPct = null;
-        // Use the average percentage score stored in the evaluation document
-        const avgEvalScorePercent = parseFloat(evaluation.groupAverageScore);
-        if (!isNaN(avgEvalScorePercent)) {
-          totalPercentageScore += avgEvalScorePercent;
+        const evalAvgPct = _getEvaluationAveragePercent(evaluation, taskMap);
+        if (typeof evalAvgPct === 'number' && !Number.isNaN(evalAvgPct)) {
+          totalPercentageScore += evalAvgPct;
           validEvalsCount++;
-          evalAvgPct = avgEvalScorePercent;
-        }
-        // Fallback (if groupAverageScore not present, though it should be)
-        else if (evaluation.scores) {
-          const task = taskMap.get(evaluation.taskId);
-          const maxScore = parseFloat(task?.maxScore) || parseFloat(evaluation.maxPossibleScore) || 100;
-          if (maxScore > 0) {
-            let evalScoreSum = 0;
-            let studentCountInEval = 0;
-            Object.values(evaluation.scores).forEach((scoreData) => {
-              evalScoreSum += parseFloat(scoreData.totalScore) || 0;
-              studentCountInEval++;
-              if (scoreData.studentId) evaluatedMemberIds.add(scoreData.studentId);
-            });
-            if (studentCountInEval > 0) {
-              const derivedPct = (evalScoreSum / studentCountInEval / maxScore) * 100;
-              totalPercentageScore += derivedPct;
-              validEvalsCount++;
-              evalAvgPct = derivedPct;
-            }
-          }
         }
         if (evaluation?.scores) {
           Object.keys(evaluation.scores).forEach((studentId) => {
@@ -587,7 +661,7 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
             groupStudents.length > 0 ? Math.min(100, (participantCount / groupStudents.length) * 100) : 0;
           latestEvalMeta = {
             ts: evalTs,
-            avgPct: evalAvgPct ?? latestEvalMeta.avgPct,
+            avgPct: typeof evalAvgPct === 'number' ? evalAvgPct : latestEvalMeta.avgPct,
             participants: participantCount,
             participationRate: partRate,
           };
@@ -613,6 +687,26 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
       };
     })
     .sort((a, b) => b.averageScore - a.averageScore);
+}
+
+function _getEvaluationAveragePercent(evaluation, taskMap) {
+  if (!evaluation) return null;
+  const avgEvalScorePercent = parseFloat(evaluation.groupAverageScore);
+  if (!Number.isNaN(avgEvalScorePercent)) return avgEvalScorePercent;
+
+  if (!evaluation.scores) return null;
+  const task = taskMap.get(evaluation.taskId);
+  const maxScore = parseFloat(task?.maxScore) || parseFloat(evaluation.maxPossibleScore) || 100;
+  if (!(maxScore > 0)) return null;
+
+  let evalScoreSum = 0;
+  let studentCountInEval = 0;
+  Object.values(evaluation.scores).forEach((scoreData) => {
+    evalScoreSum += parseFloat(scoreData.totalScore) || 0;
+    studentCountInEval++;
+  });
+  if (studentCountInEval === 0) return null;
+  return (evalScoreSum / studentCountInEval / maxScore) * 100;
 }
 
 function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [], evaluations = []) {
@@ -744,6 +838,102 @@ function _calculateLatestAssignmentSummary(groups = [], students = [], tasks = [
   };
 }
 
+function _calculateAssignmentAverageStats(tasks = [], evaluations = []) {
+  if (!evaluations.length) {
+    return { assignmentSummaries: [], overallAverage: 0, assignmentAverageMap: new Map() };
+  }
+  const taskMap = new Map(tasks.map((task) => [task.id, task]));
+  const aggregates = new Map();
+
+  evaluations.forEach((evaluation) => {
+    if (!evaluation.taskId) return;
+    const avgPct = _getEvaluationAveragePercent(evaluation, taskMap);
+    if (typeof avgPct !== 'number' || Number.isNaN(avgPct)) return;
+    if (!aggregates.has(evaluation.taskId)) {
+      aggregates.set(evaluation.taskId, { total: 0, count: 0 });
+    }
+    const bucket = aggregates.get(evaluation.taskId);
+    bucket.total += avgPct;
+    bucket.count += 1;
+  });
+
+  const assignmentSummaries = [];
+  const assignmentAverageMap = new Map();
+  aggregates.forEach((bucket, taskId) => {
+    if (!bucket.count) return;
+    const taskInfo = taskMap.get(taskId);
+    const averagePercent = bucket.total / bucket.count;
+    assignmentSummaries.push({
+      taskId,
+      taskTitle: taskInfo?.title || taskInfo?.name || 'অজ্ঞাত এসাইনমেন্ট',
+      averagePercent,
+      evaluationCount: bucket.count,
+    });
+    assignmentAverageMap.set(taskId, averagePercent);
+  });
+
+  const overallAverage = assignmentSummaries.length
+    ? assignmentSummaries.reduce((sum, summary) => sum + summary.averagePercent, 0) /
+      assignmentSummaries.length
+    : 0;
+
+  return { assignmentSummaries, overallAverage, assignmentAverageMap };
+}
+
+function _buildAssignmentOverview(tasks = [], latestAssignmentSummary = null) {
+  if (!Array.isArray(tasks) || tasks.length === 0) return [];
+  const latestTaskId = latestAssignmentSummary?.taskId || null;
+  return tasks
+    .map((task) => {
+      const timestamp =
+        _normalizeTimestamp(task.date) ||
+        _normalizeTimestamp(task.deadline) ||
+        _normalizeTimestamp(task.scheduleDate) ||
+        _normalizeTimestamp(task.createdAt) ||
+        _normalizeTimestamp(task.updatedAt);
+      const title = task.title || task.name || 'অনির্ধারিত এসাইনমেন্ট';
+      const identifier =
+        task.id ??
+        task.uid ??
+        task.key ??
+        `${title}-${timestamp || Date.now()}`;
+      return {
+        id: identifier,
+        title,
+        timestamp,
+        dateLabel: timestamp ? _formatDateOnly(timestamp) : 'তারিখ নির্ধারিত নয়',
+      };
+    })
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, 6)
+    .map((item, index) => {
+      const isLatest = latestTaskId ? item.id === latestTaskId : index === 0;
+      return {
+        ...item,
+        index: index + 1,
+        isLatest,
+        relativeLabel: _getRelativeDayLabel(item.timestamp),
+      };
+    });
+}
+
+function _getRelativeDayLabel(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  const today = new Date();
+  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diffDays = Math.round((dateOnly - todayOnly) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'আজ';
+  const absDiff = Math.abs(diffDays);
+  const formatted =
+    helpers?.convertToBanglaNumber && typeof helpers.convertToBanglaNumber === 'function'
+      ? helpers.convertToBanglaNumber(String(absDiff))
+      : String(absDiff);
+  return diffDays > 0 ? `${formatted} দিন বাকি` : `${formatted} দিন আগে`;
+}
+
 function _calculateAcademicGroupStats(students, groupPerformanceData) {
   const stats = {};
   const groupPerfMap = new Map(groupPerformanceData.map((gp) => [gp.group.id, gp.averageScore]));
@@ -813,11 +1003,30 @@ function _renderStats(stats) {
   if (elements.latestAssignmentGroupPending) setText(elements.latestAssignmentGroupPending, latestGroupsPending);
   if (elements.latestAssignmentGroupTotal) setText(elements.latestAssignmentGroupTotal, latestGroupTotal);
 
+  const hasAssignmentAverageData =
+    Array.isArray(stats.assignmentSummaries) &&
+    stats.assignmentSummaries.length > 0 &&
+    typeof stats.overallAssignmentAverage === 'number' &&
+    !Number.isNaN(stats.overallAssignmentAverage);
+  const latestAssignmentAverageValue =
+    typeof stats.latestAssignmentAverage === 'number' && !isNaN(stats.latestAssignmentAverage)
+      ? Math.min(100, Math.max(0, stats.latestAssignmentAverage))
+      : null;
+  const overallImprovementSource = hasAssignmentAverageData
+    ? stats.overallAssignmentAverage
+    : stats.overallProgress;
   const progressValue =
-    typeof stats.overallProgress === 'number' && !isNaN(stats.overallProgress)
-      ? Math.min(100, Math.max(0, stats.overallProgress))
+    typeof overallImprovementSource === 'number' && !isNaN(overallImprovementSource)
+      ? Math.min(100, Math.max(0, overallImprovementSource))
       : 0;
   setText(elements.overallProgress, `${formatNum(progressValue, 0)}%`);
+  if (elements.latestAssignmentAverage) {
+    if (latestAssignmentAverageValue !== null) {
+      setText(elements.latestAssignmentAverage, `${formatNum(latestAssignmentAverageValue, 0)}%`);
+    } else {
+      elements.latestAssignmentAverage.textContent = '-';
+    }
+  }
 
   const circlePalette = _getScorePalette(progressValue);
   if (elements.overallProgressCircle) {
@@ -827,6 +1036,15 @@ function _renderStats(stats) {
   }
   if (elements.overallProgress) {
     elements.overallProgress.style.color = circlePalette.solid;
+  }
+  if (elements.latestAssignmentCircle && latestAssignmentAverageValue !== null) {
+    const latestCirclePalette = _getScorePalette(latestAssignmentAverageValue);
+    const latestDeg = (latestAssignmentAverageValue / 100) * 360;
+    elements.latestAssignmentCircle.style.background = `conic-gradient(${latestCirclePalette.solid} ${latestDeg}deg, rgba(255,255,255,0.08) ${latestDeg}deg)`;
+    elements.latestAssignmentCircle.style.boxShadow = `0 0 25px ${latestCirclePalette.shadow}`;
+    if (elements.latestAssignmentAverage) {
+      elements.latestAssignmentAverage.style.color = latestCirclePalette.solid;
+    }
   }
 
   if (elements.progressBar) {
@@ -845,6 +1063,66 @@ function _renderStats(stats) {
     elements.progressBarLabel.style.color = 'rgba(255,255,255,0.92)';
     elements.progressBarLabel.style.minWidth = '32px';
     elements.progressBarLabel.style.textAlign = anchorRight ? 'right' : 'left';
+  }
+
+  _renderAssignmentOverview(stats.assignmentOverview || [], latestSummary);
+}
+
+function _renderAssignmentOverview(overviewItems = [], latestSummary = null) {
+  if (!elements.assignmentOverviewList) return;
+  const formatBanglaNumber = (value) =>
+    helpers?.convertToBanglaNumber && typeof helpers.convertToBanglaNumber === 'function'
+      ? helpers.convertToBanglaNumber(String(value))
+      : String(value);
+
+  if (!overviewItems.length) {
+    elements.assignmentOverviewList.innerHTML =
+      '<div class="py-4 text-sm text-gray-500 dark:text-gray-400">কোন এসাইনমেন্ট তথ্য পাওয়া যায়নি।</div>';
+  } else {
+    const rows = overviewItems
+      .map((item) => {
+        const serial = formatBanglaNumber(item.index);
+        const latestBadge = item.isLatest
+          ? '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[0.65rem] font-medium text-emerald-600 dark:text-emerald-300"><i class="fas fa-bolt text-[0.6rem]"></i> সর্বশেষ</span>'
+          : '';
+        const relative = item.relativeLabel
+          ? `<p class="text-xs text-gray-500 dark:text-gray-400">${_escapeHtml(item.relativeLabel)}</p>`
+          : '';
+        const safeTitle = _escapeHtml(item.title);
+        return `
+          <div class="flex items-center justify-between gap-4 py-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500/10 text-sm font-semibold text-indigo-600 dark:text-indigo-300">${serial}</span>
+              <div class="min-w-0 space-y-1">
+                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" title="${safeTitle}">${safeTitle}</p>
+                ${latestBadge}
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-200">${_escapeHtml(item.dateLabel)}</p>
+              ${relative}
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+    elements.assignmentOverviewList.innerHTML = rows;
+  }
+
+  const latestItem = overviewItems.find((item) => item.isLatest) || overviewItems[0];
+  if (elements.assignmentOverviewLatestTitle) {
+    const title = latestSummary?.taskTitle || latestItem?.title || '-';
+    elements.assignmentOverviewLatestTitle.textContent = title || '-';
+    elements.assignmentOverviewLatestTitle.setAttribute('title', title || '-');
+  }
+  if (elements.assignmentOverviewLatestDate) {
+    let dateLabel = '-';
+    if (latestSummary?.lastUpdated) {
+      dateLabel = _formatDateTime(latestSummary.lastUpdated);
+    } else if (latestItem?.timestamp) {
+      dateLabel = latestItem.dateLabel || '-';
+    }
+    elements.assignmentOverviewLatestDate.textContent = dateLabel;
   }
 }
 
