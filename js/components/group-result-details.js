@@ -233,7 +233,7 @@
             rows.forEach(r => {
               const tr = document.createElement('tr');
               const pctCls = pctBadgeClass(r.pct);
-              const shortC = r.comment.length > 120 ? r.comment.slice(0, 117) + '…' : r.comment;
+              const shortC = r.comment.length > 120 ? r.comment.slice(0, 117) + '.' : r.comment;
 
               tr.innerHTML = `
                 <td class="px-3 py-2 whitespace-nowrap">${bn(r.roll ?? '-')}</td>
@@ -248,7 +248,7 @@
                 <td class="px-3 py-2 text-right">${r.mcq.toFixed(2)}</td>
                 <td class="px-3 py-2 text-right font-semibold">${r.total.toFixed(2)}</td>
                 <td class="px-3 py-2 text-right"><span class="inline-block rounded px-2 py-0.5 text-xs font-semibold ${pctCls}">${r.pct.toFixed(1)}%</span></td>
-                <td class="px-3 py-2">${escHtml(shortC)}</td>`;
+                <td class="px-3 py-2 comments-cell">${escHtml(shortC)}</td>`;
               frag2.appendChild(tr);
             });
 

@@ -377,6 +377,71 @@ body {
 }
 
 
+#gdmMembersWrap {
+    overflow: visible;
+}
+#gdmMembersWrap .overflow-x-auto {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#gdmMembersWrap .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+#gdmMembersWrap .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.6);
+    border-radius: 999px;
+}
+#gdmMembersWrap .overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+#gdmMembersWrap table {
+    font-size: 0.95rem;
+}
+#gdmMembersWrap td.comments-cell {
+    white-space: normal;
+    word-break: break-word;
+}
+#gdmAssignSelect {
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@media (max-width: 640px) {
+    #gdmMembersWrap table {
+        width: 100%;
+        table-layout: auto;
+        font-size: 0.82rem;
+    }
+    #gdmMembersWrap th,
+    #gdmMembersWrap td {
+        padding: 0.4rem 0.45rem;
+    }
+    #gdmMembersWrap td {
+        white-space: nowrap;
+    }
+    #gdmMembersWrap td.comments-cell {
+        white-space: normal;
+        word-break: break-word;
+    }
+    #gdmAssignSelect {
+        max-width: 150px;
+        font-size: 0.85rem;
+    }
+    #gdmAssignSelect option {
+        white-space: nowrap;
+    }
+    #gdmAssignSelect::-ms-value {
+        width: 100%;
+    }
+    #gdmAssignSelect::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+
+
 /* --- প্রি-রিকোয়ারমেন্টস টগল অ্যানিমেশন --- */
 
 /* টগলের মূল বাটন (summary) স্টাইল */
