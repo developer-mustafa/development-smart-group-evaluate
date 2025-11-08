@@ -74,218 +74,323 @@ export function render() {
  */
 function _getDashboardHTMLStructure() {
   return `
+    <style>
+      @keyframes glowOrbit {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .glow-ring {
+        position: relative;
+        isolation: isolate;
+      }
+      .glow-ring::before,
+      .glow-ring::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 9999px;
+        pointer-events: none;
+      }
+      .glow-ring::before {
+        background: conic-gradient(from 0deg,
+          rgba(255,200,90,0) 0deg,
+          rgba(255,210,110,0.15) 180deg,
+          rgba(255,225,160,0.9) 300deg,
+          rgba(255,240,200,1) 340deg,
+          rgba(255,200,90,0) 360deg);
+        mask: radial-gradient(circle, transparent 70%, black 78%);
+        -webkit-mask: radial-gradient(circle, transparent 70%, black 78%);
+        box-shadow: 0 0 40px rgba(255,210,120,0.6), 0 0 80px rgba(255,220,160,0.4);
+        animation: glowOrbit 4s linear infinite;
+      }
+      .glow-ring::after {
+        background: conic-gradient(from 0deg,
+          rgba(255,210,100,0) 0deg,
+          rgba(255,230,160,0.25) 240deg,
+          rgba(255,240,200,0.8) 320deg,
+          rgba(255,210,100,0) 360deg);
+        mask: radial-gradient(circle, transparent 60%, black 72%);
+        -webkit-mask: radial-gradient(circle, transparent 60%, black 72%);
+        filter: blur(14px);
+        opacity: 0.9;
+        animation: glowOrbit 6s linear infinite;
+      }
+
+
+
+      
+    </style>
     <div class="max-w-7xl mx-auto space-y-3">
-      <section class="relative overflow-hidden rounded-3xl border border-slate-800/30 bg-gradient-to-br from-slate-950 via-indigo-900 to-slate-800 text-white shadow-lg">
-        <div class="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_rgba(129,140,248,0.35),_transparent_60%)]"></div>
-        <div class="relative px-4 py-4 sm:px-5 lg:px-7">
-          <div class="space-y-4">
-            <div class="grid gap-4 lg:grid-cols-2 items-stretch">
+     
 
-   <article class="rounded-2xl border border-white/15 bg-white/95 p-5 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/80 dark:text-white h-full">
-                <div class="space-y-4">
-                  <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-white/70">
-                    <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700 dark:bg-slate-800/60 dark:text-white">
-                      <i class="fas fa-people-group text-indigo-500"></i>
-                      শিক্ষার্থী ও গ্রুপের ফলাফল প্রদান তথ্য
-                    </span>
-                    <span class="text-slate-400 dark:text-white/60 text-[0.75rem]">Latest snapshot</span>
-                  </div>
-                  <div class="grid gap-4 md:grid-cols-2">
-                    <div class="rounded-2xl border border-emerald-300/40 bg-gradient-to-br from-emerald-500/15 via-transparent to-transparent px-4 py-4 dark:border-emerald-200/30 dark:from-emerald-400/15">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <p class="text-sm font-semibold text-emerald-900/90 dark:text-emerald-200">শিক্ষার্থী</p>
-                          <p class="text-xs text-emerald-500/80 dark:text-emerald-100">বর্তমান অগ্রগতি</p>
-                        </div>
-                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/30 text-emerald-100">
-                          <i class="fas fa-user-graduate"></i>
-                        </span>
-                      </div>
-                      <div class="mt-3 space-y-2 text-sm font-semibold text-emerald-900/90 dark:text-white">
-                        <div class="flex items-center justify-between">
-                          <span>মূল্যায়িত</span>
-                          <span><span id="latestAssignmentEvaluated">-</span> জন</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <span>অবশিষ্ট</span>
-                          <span><span id="latestAssignmentPending">-</span> জন</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <span>মোট</span>
-                          <span><span id="latestAssignmentStudentTotal">-</span> জন</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="rounded-2xl border border-sky-300/40 bg-gradient-to-br from-sky-500/15 via-transparent to-transparent px-4 py-4 dark:border-sky-200/30 dark:from-sky-400/15">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <p class="text-sm font-semibold text-sky-900/90 dark:text-sky-100">গ্রুপ</p>
-                          <p class="text-xs text-sky-500/80 dark:text-sky-100/80">বর্তমান অগ্রগতি</p>
-                        </div>
-                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/30 text-sky-100">
-                          <i class="fas fa-layer-group"></i>
-                        </span>
-                      </div>
-                      <div class="mt-3 space-y-2 text-sm font-semibold text-sky-900/90 dark:text-white">
-                        <div class="flex items-center justify-between">
-                          <span>মূল্যায়িত</span>
-                          <span><span id="latestAssignmentGroupEvaluated">-</span> টি</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <span>অবশিষ্ট</span>
-                          <span><span id="latestAssignmentGroupPending">-</span> টি</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <span>মোট</span>
-                          <span><span id="latestAssignmentGroupTotal">-</span> টি</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </article>
+    <section class="relative overflow-hidden rounded-3xl border border-slate-300/60
+  bg-gradient-to-br from-white via-slate-50 to-slate-200
+  text-slate-900 shadow-[0_4px_10px_rgba(0,0,0,0.10),0_10px_28px_rgba(255,255,255,0.65)]
+  hover:shadow-[0_8px_18px_rgba(0,0,0,0.14),0_14px_34px_rgba(255,255,255,0.75)]
+  transition-all duration-500 ease-out
+  dark:border-slate-700/60 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-black
+  dark:text-slate-100 dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_6px_18px_rgba(0,0,0,0.60),0_0_28px_rgba(255,255,255,0.10)]
+  dark:hover:shadow-[inset_0_3px_6px_rgba(255,255,255,0.08),0_10px_24px_rgba(0,0,0,0.75),0_0_36px_rgba(255,255,255,0.14)]">
 
+  <!-- subtle radial aura -->
+  <div aria-hidden class="absolute inset-0 opacity-30 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(99,102,241,0.35),transparent_60%)]"></div>
 
+  <div class="relative p-3 sm:p-4 space-y-4">
 
-               <article class="rounded-2xl border border-white/15 bg-white/95 p-4 text-slate-900 shadow-lg backdrop-blur dark:border-white/10 dark:bg-slate-900/85 dark:text-white h-full">
-                <div class="space-y-4">
-                  <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="min-w-0">
-                      <p class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-white/80">
-                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-200">
-                          <i class="fas fa-scroll text-xs"></i>
-                        </span>
-                        সর্বশেষ এসাইনমেন্ট
-                      </p>
-                       <span class="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full border border-amber-200/40 bg-amber-100 px-2 py-0.5 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-amber-700 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-100">
-                        <i class="fas fa-bolt text-[0.65rem]"></i>
-                        লাইভ
-                      </span>
-                      <p id="latestTaskTitle" class="mt-1 text-2xl font-semibold text-slate-900 dark:text-white max-w-[22rem] truncate" title="-">-</p>
-                      <p class="text-xs text-slate-500 dark:text-white/60">আপডেট: <span id="latestAssignmentUpdated">-</span></p>
-                    </div>
-                 
-                  </div>
-                  <div class="space-y-4">
-                    <div class="relative rounded-2xl  bg-gradient-to-br from-slate-50 via-white to-slate-100  shadow-sm dark:border-white/10 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800/70">
-                     
-                      <div class="flex w-full flex-col gap-3 text-sm font-semibold text-slate-600 dark:text-white/80 md:flex-row md:items-center md:gap-4 ">
-                        <div class="inline-flex flex-wrap items-center gap-2">
-                          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-slate-700 dark:bg-white/10 dark:text-white">
-                            <i class="fas fa-chart-simple text-xs text-indigo-500"></i>
-                            ফলাফল প্রদানের আপডেট
-                          </span>
-                        </div>
-                               <div class="relative h-6 w-full overflow-hidden rounded-full border border-slate-900/10 bg-slate-900/5 dark:border-white/15 dark:bg-white/10 md:flex-1 md:min-w-0">
-  <div id="progressBar" class="relative h-full w-[100%] min-w-[220px] rounded-full bg-blue-600 shadow-lg transition-all duration-1000 ease-out">
-    <span id="progressBarLabel" class="absolute inset-y-0 right-2 text-sm font-semibold text-white/90 drop-shadow">100%</span>
-  </div>
-  <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-3 text-[0.7rem] font-semibold text-slate-500/80 dark:text-white/60">
-    <span> </span>
-    <span>১০০%</span>
-  </div>
-</div>
+    <!-- Card (hero row) -->
+    <section class="relative overflow-hidden rounded-3xl border
+      border-slate-300/70 ring-1 ring-white/40 backdrop-blur supports-[backdrop-filter]:bg-white/70
+      bg-gradient-to-br from-amber-50 via-rose-50 to-sky-50
+      shadow-[0_6px_16px_rgba(0,0,0,0.10),0_0_30px_rgba(255,255,255,0.55)]
+      hover:shadow-[0_10px_24px_rgba(0,0,0,0.14),0_0_36px_rgba(255,255,255,0.65)]
+      transition-all duration-500 ease-out
+      dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-slate-950
+      dark:text-slate-100 dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_10px_26px_rgba(0,0,0,0.70),0_0_34px_rgba(255,255,255,0.10)]
+      dark:hover:shadow-[inset_0_3px_6px_rgba(255,255,255,0.08),0_14px_30px_rgba(0,0,0,0.78),0_0_40px_rgba(255,255,255,0.14)]">
 
-                      </div>
-                    </div>
-                    <div class="flex flex-col items-center gap-4 md:flex-row md:items-end md:justify-center md:gap-8">
-                      <div class="flex flex-col items-center gap-3">
-                        <div class="relative h-24 w-24">
-                          <div id="latestAssignmentCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
-                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
-                            <p id="latestAssignmentAverage" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
-                          </div>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সর্বশেষ এসাইনমেন্ট গড়</p>
-                      </div>
-                      <div class="flex flex-col items-center gap-3">
-                        <div class="relative h-24 w-24">
-                          <div id="overallProgressCircle" class="absolute inset-0 rounded-full bg-white/10"></div>
-                          <div class="absolute inset-1 rounded-full bg-white/95 dark:bg-slate-900/80 flex items-center justify-center">
-                            <p id="overallProgress" class="text-3xl font-semibold text-slate-900 dark:text-white">-</p>
-                          </div>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-600 dark:text-white/70 text-center">সামগ্রিক ‍উন্নতি</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </article>
+      <!-- conic aura -->
+      <div aria-hidden class="pointer-events-none absolute -inset-px rounded-[24px] opacity-[0.10] blur-2xl"
+           style="background: conic-gradient(#fde68a, #f0abfc, #93c5fd, #fde68a)"></div>
 
+      <div class="relative p-3 sm:p-4">
+        <div class="flex flex-col items-center justify-between gap-4 md:flex-row">
 
-              <article class="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-sm shadow-sm flex flex-col h-full">
-                <div class="flex items-center justify-between text-xs font-semibold text-white/90">
-                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-                    <i class="fas fa-gem text-rose-200"></i>
-                    ৪টি মূল্যায়ন মানদণ্ড
-                  </span>
-                  <span class="text-white/70 text-[0.7rem]">Task · Team · Extra · MCQ</span>
-                </div>
-                <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div class="flex items-center gap-3 rounded-xl border border-amber-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-300/30 text-amber-100">
-                      <i class="fas fa-clipboard-check text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">টাস্ক মার্কস</p>
-                      <p class="text-[0.75rem] text-white/65">স্বতন্ত্র টাস্ক ও মান যাচাই।</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 rounded-xl border border-emerald-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-300/30 text-emerald-100">
-                      <i class="fas fa-people-group text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">টিম মার্কস</p>
-                      <p class="text-[0.75rem] text-white/65">দলগত সমন্বয় ও উপস্থাপনা।</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 rounded-xl border border-rose-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-rose-300/30 text-rose-100">
-                      <i class="fas fa-star text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">অতিরিক্ত মূল্যায়ন</p>
-                      <p class="text-[0.75rem] text-white/65">শেখা, অনুশীলন, নৈতিকতা।</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 rounded-xl border border-sky-200/25 bg-white/10 px-3 py-3 text-white text-sm">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-sky-300/30 text-sky-100">
-                      <i class="fas fa-question-circle text-xs"></i>
-                    </span>
-                    <div>
-                      <p class="font-semibold">MCQ মার্কস</p>
-                      <p class="text-[0.75rem] text-white/65">ধারণা ও দ্রুত প্রতিক্রিয়া।</p>
-                    </div>
-                  </div>
-                </div>
-              </article>
-             
+          <!-- Left: title & icon -->
+          <div class="flex w-full items-center gap-3 md:w-auto">
+            <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl
+              bg-indigo-100 text-indigo-600 ring-1 ring-indigo-200
+              shadow-[0_1px_2px_rgba(0,0,0,0.18)]
+              dark:bg-indigo-500/20 dark:text-indigo-200 dark:ring-0
+              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,.08),0_4px_10px_rgba(0,0,0,.6)]">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                   fill="currentColor" class="h-5 w-5" aria-hidden>
+                <path d="M6.4 3h11.2l3 4.5-9.6 13L3.4 7.5 6.4 3zm.9 2-1.6 2.5H9L7.3 5zm10.3 0L15 7.5h3.3L17.6 5zM12 19.1 18.2 7.5H5.8L12 19.1z"/>
+              </svg>
+              <span class="sr-only">Gem</span>
+            </span>
+            <p class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              স্মার্ট ইভ্যালুয়েট সিস্টেম
+            </p>
+          </div>
+
+          <!-- Score chips (perfectly matched border/shadow; high-contrast light) -->
+          <div class="grid w-full grid-cols-2 gap-2 text-[0.9rem] font-semibold sm:w-auto sm:grid-cols-3 md:grid-cols-4">
+            <span class="relative rounded-2xl px-4 py-1.5
+              text-emerald-900 bg-gradient-to-b from-emerald-50 via-emerald-200 to-emerald-500
+              ring-2 ring-emerald-300/80
+              shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
+              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
+              transition-all duration-300
+              dark:text-emerald-100 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-900 dark:ring-emerald-600/40
+              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">টাস্ক স্কোর</span>
+
+            <span class="relative rounded-2xl px-4 py-1.5
+              text-sky-900 bg-gradient-to-b from-sky-50 via-sky-200 to-sky-500
+              ring-2 ring-sky-300/80
+              shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
+              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
+              transition-all duration-300
+              dark:text-sky-100 dark:from-sky-700 dark:via-sky-800 dark:to-sky-900 dark:ring-sky-600/40
+              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">টিম স্কোর</span>
+
+            <span class="relative rounded-2xl px-4 py-1.5
+              text-rose-900 bg-gradient-to-b from-rose-50 via-rose-200 to-rose-500
+              ring-2 ring-rose-300/80
+              shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
+              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
+              transition-all duration-300
+              dark:text-rose-100 dark:from-rose-700 dark:via-rose-800 dark:to-rose-900 dark:ring-rose-600/40
+              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">অতিরিক্ত মূল্যায়ন</span>
+
+            <span class="relative rounded-2xl px-4 py-1.5
+              text-amber-900 bg-gradient-to-b from-amber-50 via-amber-200 to-amber-500
+              ring-2 ring-amber-300/80
+              shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
+              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
+              transition-all duration-300
+              dark:text-amber-100 dark:from-amber-700 dark:via-amber-800 dark:to-amber-900 dark:ring-amber-700/40
+              dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">MCQ স্কোর</span>
+          </div>
+
+          <!-- Right: image preview -->
+          <div class="w-full md:w-auto">
+            <div class="glow-ring relative mx-auto h-28 w-28 sm:h-32 sm:w-32">
+              <div class="absolute inset-[10px] overflow-hidden rounded-full border-2 border-amber-200/60 bg-white
+                shadow-[0_10px_25px_rgba(0,0,0,0.25),0_0_35px_rgba(255,214,155,0.7)]
+                dark:bg-slate-900 dark:shadow-[0_12px_28px_rgba(0,0,0,0.65),0_0_35px_rgba(255,214,155,0.10)]">
+                <img src="images/smart.png" alt="Evaluation summary visual"
+                     class="h-full w-full object-cover object-center" loading="lazy" decoding="async" />
+              </div>
             </div>
-            <div class="grid gap-4 lg:grid-cols-2 items-stretch">
-             
-             
-              <article class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-sm shadow-sm space-y-3 h-full">
-                <div class="flex items-center justify-between text-xs font-semibold text-white/85">
-                  <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-                    <i class="fas fa-star text-amber-300"></i>
-                    অতিরিক্ত মূল্যায়নের মানদণ্ড
-                  </span>
-                  <span class="text-white/60 text-[0.7rem]">Progressive bonus</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-column content -->
+    <div class="grid gap-4 lg:grid-cols-2 items-stretch">
+
+      <!-- Students & Groups -->
+      <article class="rounded-3xl border border-slate-300/70 bg-gradient-to-br from-white via-slate-50 to-slate-100 
+        text-slate-900 shadow-[0_8px_24px_rgba(0,0,0,0.10),0_0_24px_rgba(255,255,255,0.5)]
+        backdrop-blur dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-black 
+        dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full p-5">
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-white/80">
+            <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-slate-900 
+              ring-1 ring-slate-200 shadow-sm dark:bg-white/10 dark:text-white">
+              <i class="fas fa-people-group text-indigo-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]"></i>
+              শিক্ষার্থী ও গ্রুপের ফলাফল প্রদান তথ্য
+            </span>
+            <span class="text-slate-600 dark:text-white/60 text-[0.75rem]">সর্বশেষ এসাইনমেন্ট ফলাফল প্রদান চার্ট</span>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <!-- শিক্ষার্থী -->
+            <div class="rounded-2xl border border-emerald-300/70 bg-gradient-to-br from-white via-emerald-50 to-emerald-100/70 
+              shadow-[0_6px_16px_rgba(16,185,129,0.18)] px-4 py-4
+              dark:border-emerald-300/30 dark:from-emerald-900/40 dark:via-slate-900 dark:to-emerald-900/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-bold text-emerald-900 dark:text-emerald-200">শিক্ষার্থী</p>
+                  <p class="text-xs text-emerald-700 dark:text-emerald-300/90">বর্তমান অগ্রগতি</p>
                 </div>
-                <div class="space-y-1.5 text-sm text-white/85">
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-rose-300"></span> এখনো এই টাস্ক পারিনা <span class="text-white/60">(-৫)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span> শুধু বুঝেছি <span class="text-white/60">(+৫)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-emerald-300"></span> ভালো করে শিখেছি <span class="text-white/60">(+১০)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-sky-300"></span> সপ্তাহে প্রতিদিন বাড়ির কাজ করেছি <span class="text-white/60">(+৫)</span></p>
-                  <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-indigo-300"></span> সাপ্তাহিক নিয়মিত উপস্থিতি <span class="text-white/60">(+১০)</span></p>
-                </div>
-              </article>
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 
+                  shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:bg-emerald-500/20 dark:text-emerald-200">
+                  <i class="fas fa-user-graduate"></i>
+                </span>
+              </div>
+
+              <div class="mt-3 space-y-2 text-sm font-semibold text-slate-900 dark:text-white">
+                <div class="flex items-center justify-between"><span>মূল্যায়িত</span><span><span id="latestAssignmentEvaluated">-</span> জন</span></div>
+                <div class="flex items-center justify-between"><span>অবশিষ্ট</span><span><span id="latestAssignmentPending">-</span> জন</span></div>
+                <div class="flex items-center justify-between"><span>মোট</span><span><span id="latestAssignmentStudentTotal">-</span> জন</span></div>
+              </div>
             </div>
+
+            <!-- গ্রুপ -->
+            <div class="rounded-2xl border border-sky-300/70 bg-gradient-to-br from-white via-sky-50 to-sky-100/70 
+              shadow-[0_6px_16px_rgba(14,165,233,0.18)] px-4 py-4
+              dark:border-sky-300/30 dark:from-sky-900/40 dark:via-slate-900 dark:to-sky-900/10">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-bold text-sky-900 dark:text-sky-100">গ্রুপ</p>
+                  <p class="text-xs text-sky-700 dark:text-sky-200/80">বর্তমান অগ্রগতি</p>
+                </div>
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sky-600 
+                  shadow-[0_1px_2px_rgba(0,0,0,0.2)] dark:bg-sky-500/20 dark:text-sky-200">
+                  <i class="fas fa-layer-group"></i>
+                </span>
+              </div>
+              <div class="mt-3 space-y-2 text-sm font-semibold text-slate-900 dark:text-white">
+                <div class="flex items-center justify-between"><span>মূল্যায়িত</span><span><span id="latestAssignmentGroupEvaluated">-</span> টি</span></div>
+                <div class="flex items-center justify-between"><span>অবশিষ্ট</span><span><span id="latestAssignmentGroupPending">-</span> টি</span></div>
+                <div class="flex items-center justify-between"><span>মোট</span><span><span id="latestAssignmentGroupTotal">-</span> টি</span></div>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </article>
+
+      <!-- Latest assignment + progress -->
+      <article class="relative rounded-3xl border border-slate-300/70 
+        bg-gradient-to-br from-blue-50 via-sky-100 to-emerald-50 
+        text-slate-900 shadow-[0_10px_25px_rgba(0,0,0,0.08),0_0_35px_rgba(255,255,255,0.6)] 
+        backdrop-blur p-4 sm:p-5 transition-all duration-500 
+        dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 
+        dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full">
+
+        <!-- লাইভ ব্যাজ -->
+        <span class="absolute right-3 top-3 sm:right-4 sm:top-4 inline-flex items-center gap-1 rounded-full border 
+          border-amber-300/70 bg-amber-100 text-[0.65rem] sm:text-[0.7rem] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-amber-800 
+          shadow-[0_1px_3px_rgba(0,0,0,0.15)] px-2 py-0.5 
+          dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100">
+          <i class="fas fa-bolt text-[0.6rem] sm:text-[0.65rem]"></i> লাইভ
+        </span>
+
+        <!-- Header -->
+        <div class="mb-2 sm:mb-3">
+          <p class="inline-flex items-center gap-2 text-sm sm:text-[0.95rem] md:text-base font-bold text-slate-900 dark:text-white/90">
+            <span class="flex h-6 w-6 items-center justify-center rounded-full 
+              bg-indigo-100 text-indigo-600 shadow-[0_1px_2px_rgba(0,0,0,0.25)] 
+              dark:bg-indigo-500/20 dark:text-indigo-200">
+              <i class="fas fa-scroll text-[0.7rem]"></i>
+            </span>
+            সর্বশেষ এসাইনমেন্ট
+          </p>
+          <p id="latestTaskTitle"
+            class="mt-1 max-w-[28rem] truncate font-bold text-slate-900 dark:text-white text-sm sm:text-base"
+            title="-">-</p>
+          <p class="text-xs sm:text-[0.8rem] text-slate-700 dark:text-white/60">
+            আপডেট: <span id="latestAssignmentUpdated">-</span>
+          </p>
+        </div>
+
+        <!-- Content: 3-column on sm+ -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+          <!-- Progress bar -->
+          <div>
+            <div class="relative h-7 sm:h-8 w-full overflow-hidden rounded-full
+              border border-blue-300/70
+              bg-gradient-to-b from-blue-100 via-blue-200 to-emerald-100
+              shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),0_3px_8px_rgba(0,0,0,0.08)]
+              dark:border-blue-400/30 dark:from-slate-800 dark:via-sky-900/30 dark:to-slate-900
+              dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.05),0_6px_16px_rgba(0,0,0,0.55)]">
+
+              <div id="progressBar" class="relative h-full w-[75%] md:w-[70%] rounded-full
+                bg-gradient-to-r from-blue-500 via-indigo-600 to-emerald-500
+                shadow-[inset_0_1px_2px_rgba(255,255,255,0.8),0_4px_10px_rgba(59,130,246,0.35)]
+                transition-all duration-700 ease-out">
+                <span class="absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-white/20"></span>
+                <span id="progressBarLabel"
+                  class="absolute inset-y-0 right-2 flex items-center text-[0.8rem] sm:text-[0.9rem] font-bold text-white drop-shadow">75%</span>
+              </div>
+
+              <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-2.5 sm:px-3
+                text-[0.65rem] sm:text-[0.7rem] font-medium text-slate-700/70 dark:text-white/60">
+                <span>০%</span><span>১০০%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Average -->
+          <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
+            <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-2xl border border-emerald-300/60 
+              bg-gradient-to-br from-emerald-100 via-emerald-200 to-emerald-300 
+              shadow-[0_6px_16px_rgba(16,185,129,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] 
+              dark:border-emerald-300/30 dark:from-emerald-900/40 dark:via-slate-900 dark:to-emerald-900/10 flex items-center justify-center">
+              <p id="latestAssignmentAverage" class="text-2xl sm:text-3xl font-bold text-emerald-900 dark:text-emerald-100">-</p>
+            </div>
+            <p class="text-[0.8rem] sm:text-sm font-bold text-emerald-800 dark:text-white/80 text-center">
+              সর্বশেষ এসাইনমেন্ট গড়
+            </p>
+          </div>
+
+          <!-- Overall -->
+          <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
+            <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-2xl border border-sky-300/60 
+              bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 
+              shadow-[0_6px_16px_rgba(14,165,233,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] 
+              dark:border-sky-300/30 dark:from-sky-900/40 dark:via-slate-900 dark:to-sky-900/10 flex items-center justify-center">
+              <p id="overallProgress" class="text-2xl sm:text-3xl font-bold text-sky-900 dark:text-sky-100">-</p>
+            </div>
+            <p class="text-[0.8rem] sm:text-sm font-bold text-sky-800 dark:text-white/80 text-center">
+              সামগ্রিক ‍উন্নতি
+            </p>
+          </div>
+
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+           
+
 
       <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
@@ -415,41 +520,7 @@ function _getDashboardHTMLStructure() {
         </article>
       </section>
 
-      <section class="grid gap-4">
-        <article class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white p-6 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">ড্যাশবোর্ড ওভারভিউ</p>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">এসাইনমেন্ট ও তারিখ</h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400">সাম্প্রতিক এসাইনমেন্টের সময়সূচি ও অবস্থা</p>
-            </div>
-            <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
-              <i class="fas fa-calendar-week text-lg"></i>
-            </span>
-          </div>
-          <div class="mt-4 grid grid-cols-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
-            <span class="inline-flex items-center gap-2">
-              <i class="fas fa-list-check text-gray-400"></i>
-              এসাইনমেন্ট
-            </span>
-            <span class="text-right inline-flex items-center justify-end gap-2">
-              <i class="fas fa-clock text-gray-400"></i>
-              তারিখ
-            </span>
-          </div>
-          <div id="assignmentOverviewList" class="mt-2 divide-y divide-gray-100 dark:divide-gray-800"></div>
-          <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-gray-50 px-4 py-3 dark:bg-gray-800/60">
-            <div class="min-w-0">
-              <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">সর্বশেষ এসাইনমেন্ট</p>
-              <p id="assignmentOverviewLatestTitle" class="text-base font-semibold text-gray-900 dark:text-white truncate" title="-">-</p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">আপডেট</p>
-              <p id="assignmentOverviewLatestDate" class="text-sm font-medium text-gray-700 dark:text-gray-200">-</p>
-            </div>
-          </div>
-        </article>
-      </section>
+    
 
       <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
         <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
@@ -1253,8 +1324,9 @@ function _renderTopGroups(groupData) {
     const articleClass = podiumClasses[index] || podiumClasses[podiumClasses.length - 1];
     const rankIcon = rankIcons[index] || '<i class="fa-solid fa-trophy text-amber-700 dark:text-amber-200"></i>';
     return `
-        <article class="${articleClass}" data-group-id="${data.group?.id
-      }" role="button" tabindex="0" aria-pressed="false">
+        <article class="${articleClass}" data-group-id="${
+      data.group?.id
+    }" role="button" tabindex="0" aria-pressed="false">
           <span class="elite-rank-chip">
             <span class="elite-rank-icon">${rankIcon}</span>
             <span class="elite-rank-title">${placeText}</span>
@@ -1265,8 +1337,9 @@ function _renderTopGroups(groupData) {
               <span class="elite-score-label">মোট গড় স্কোর</span>
             </div>
             <div class="elite-card-body ${index === 0 ? 'space-y-1.5' : 'space-y-1'}">
-              <div class="${nameClass}" title="${groupName}" data-max-font="${fontConfig.max}" data-min-font="${fontConfig.min
-      }">${groupName}</div>
+              <div class="${nameClass}" title="${groupName}" data-max-font="${fontConfig.max}" data-min-font="${
+      fontConfig.min
+    }">${groupName}</div>
               <div class="${memberLineClass} text-xs sm:text-sm font-medium">
                 <span>সদস্য:</span>
                 <span>${members}</span>

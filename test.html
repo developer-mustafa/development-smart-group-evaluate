@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="bn" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>স্মার্ট ইভ্যালুয়েট সিস্টেম — Compact Version</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            boxShadow: {
+              glow: '0 6px 12px rgba(0,0,0,0.25), 0 0 20px rgba(255,214,155,0.7)'
+            },
+          }
+        }
+      }
+    </script>
+
+    <style>
+      .glow-ring { position: relative; }
+      .glow-ring::before {
+        content: "";
+        position: absolute;
+        inset: -6px;
+        border-radius: 9999px;
+        background: conic-gradient(from 0deg, #facc15, #f472b6, #38bdf8, #facc15);
+        filter: blur(10px);
+        opacity: .25;
+        animation: spin 10s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(1turn); } }
+    </style>
+  </head>
+
+  <body class="bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+    <main class="mx-auto max-w-4xl p-3 sm:p-4 md:p-6">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h1 class="text-lg font-extrabold tracking-tight sm:text-xl">স্মার্ট ইভ্যালুয়েট সিস্টেম</h1>
+        <button id="themeToggle" class="rounded-xl border border-slate-200/60 bg-white/80 px-2.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur hover:bg-white dark:border-slate-700/60 dark:bg-slate-800/70 dark:hover:bg-slate-800">
+          ডার্ক/লাইট
+        </button>
+      </div>
+
+      <section class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/95 shadow-md ring-1 ring-white/40 backdrop-blur dark:border-white/10 dark:bg-slate-900/85">
+        <div aria-hidden class="pointer-events-none absolute -inset-px rounded-[20px] opacity-[0.1] blur-xl" style="background: conic-gradient(#fde68a, #f0abfc, #93c5fd, #fde68a)"></div>
+
+        <div class="relative p-3 sm:p-4">
+          <div class="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <div class="flex w-full items-center gap-2 md:w-auto">
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 shadow-sm dark:bg-indigo-500/20 dark:text-indigo-200">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M6.4 3h11.2l3 4.5-9.6 13L3.4 7.5 6.4 3zm.9 2-1.6 2.5H9L7.3 5zm10.3 0L15 7.5h3.3L17.6 5zM12 19.1 18.2 7.5H5.8L12 19.1z"/></svg>
+              </span>
+              <p class="text-lg font-black tracking-tight text-slate-800 dark:text-white">স্মার্ট ইভ্যালুয়েট</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1 text-[0.75rem] font-semibold sm:w-auto sm:grid-cols-3 md:grid-cols-4">
+              <span class="rounded-xl bg-emerald-50 px-2.5 py-0.5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200">টাস্ক</span>
+              <span class="rounded-xl bg-sky-50 px-2.5 py-0.5 text-sky-700 dark:bg-sky-500/10 dark:text-sky-200">টিম</span>
+              <span class="rounded-xl bg-rose-50 px-2.5 py-0.5 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200">অতিরিক্ত</span>
+              <span class="rounded-xl bg-amber-50 px-2.5 py-0.5 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">MCQ</span>
+            </div>
+
+            <div class="w-full md:w-auto">
+              <div class="glow-ring relative mx-auto h-20 w-20 sm:h-24 sm:w-24">
+                <div class="absolute inset-[6px] overflow-hidden rounded-full border-2 border-amber-200/60 bg-white shadow-glow dark:bg-slate-900">
+                  <img src="images/smart.png" alt="Evaluation visual" class="h-full w-full object-cover object-center" loading="lazy" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <article class="rounded-xl border border-slate-200/60 bg-white/80 p-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60">
+              <h2 class="text-xs font-bold text-slate-700 dark:text-slate-100">কনটেক্সট</h2>
+              <p class="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">এই কার্ডে টাস্ক, টিম ও মূল্যায়ন সামারি দেখা যাবে।</p>
+            </article>
+            <article class="rounded-xl border border-slate-200/60 bg-white/80 p-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/60">
+              <h2 class="text-xs font-bold text-slate-700 dark:text-slate-100">টিপস</h2>
+              <p class="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">ডান/বাম পাশে চার্ট বা লাইভ ডেটা যুক্ত করতে পারেন।</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <p class="mt-4 text-center text-[10px] text-slate-500 dark:text-slate-400">Vanilla JS + Tailwind • Compact Height Version</p>
+    </main>
+
+    <script>
+      const root = document.documentElement;
+      const btn = document.getElementById('themeToggle');
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') root.classList.add('dark');
+      if (saved === 'light') root.classList.remove('dark');
+      btn.addEventListener('click', () => {
+        const isDark = root.classList.toggle('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      });
+    </script>
+  </body>
+</html>
