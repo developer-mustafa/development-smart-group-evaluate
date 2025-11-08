@@ -719,21 +719,22 @@ details[open] .prereq-content {
 .elite-podium-card .elite-card-name {
   display: block;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: clip;
+  overflow: visible;
+  text-overflow: unset;
   width: 100%;
   max-width: calc(100% - 0.4rem);
   margin: 0 auto;
-  padding: 0 0.1rem;
+  padding: 0 0.15rem;
   line-height: 1.2;
+  text-align: center;
 }
 
 .elite-name-xl {
-  font-size: clamp(1.4rem, 3.4vw, 2.2rem);
+  font-size: clamp(1.3rem, 3vw, 2rem);
 }
 
 .elite-name-lg {
-  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
+  font-size: clamp(1.1rem, 2.3vw, 1.6rem);
 }
 
 @media (max-width: 420px) {
