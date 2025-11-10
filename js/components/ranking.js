@@ -63,11 +63,13 @@ function _ensureSoft3DStyles() {
     background: rgba(255,255,255,.85);
     border: 1px solid rgba(0,0,0,.06);
     box-shadow: 0 1px 0 rgba(255,255,255,.60) inset, 0 2px 6px rgba(0,0,0,.06);
+    color: var(--rk-chip-fg, var(--rk-card-fg, #0f172a));
     white-space: nowrap;
   }
   .dark .rk-chip{
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.08);
+    --rk-chip-fg: #f8fafc;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 6px rgba(0,0,0,.35);
   }
 
@@ -76,6 +78,7 @@ function _ensureSoft3DStyles() {
     position: relative;
     border-radius: .9rem;
     background: var(--rk-card-bg);
+    color: var(--rk-card-fg, #0f172a);
     border: 1px solid rgba(0,0,0,.06);
     box-shadow:
       6px 6px 16px rgba(0,0,0,.08),
@@ -85,11 +88,26 @@ function _ensureSoft3DStyles() {
   }
   .rk-card:hover{ transform: translateY(-1px); }
   .dark .rk-card{
+    --rk-card-bg: rgba(15,23,42,.92);
+    --rk-card-fg: #e2e8f0;
     border-color: rgba(255,255,255,.08);
     box-shadow:
       10px 10px 24px rgba(0,0,0,.45),
       -6px -6px 14px rgba(255,255,255,.06),
       inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .ranking-card{
+    background: var(--rk-card-bg, #fdfefe);
+    color: var(--rk-card-fg, #0f172a);
+  }
+  .dark .ranking-card{
+    --rk-card-bg: rgba(13,20,34,.92);
+    --rk-card-fg: #e2e8f0;
+    border-color: rgba(255,255,255,.08);
+  }
+  .ranking-card *{
+    color: inherit;
   }
 
   /* Accent border + glow (driven by --rk-grad/--rk-accent/--rk-glow) */
@@ -133,6 +151,12 @@ function _ensureSoft3DStyles() {
     white-space: nowrap;
     min-width: 0;
     text-align: center;
+  }
+  .dark .rk-badge{
+    border-color: var(--rk-badge-border-dark, rgba(255,255,255,.12));
+    background: var(--rk-badge-bg-dark, rgba(255,255,255,.08));
+    color: var(--rk-badge-fg-dark, #f8fafc);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 2px 8px var(--rk-badge-glow-dark, rgba(0,0,0,.45));
   }
   .rk-badge i{ font-size: 11px; }
   .rk-badge--compact{ padding:.28rem .45rem; font-size:10px; }
@@ -490,8 +514,8 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
             const rankText = _toBnRank(item.rank);
             const avgPct = formatPct2(item.efficiency);
             const evals = formatInt(item.evalCount);
-            const maxPossible = formatNum2(item.maxScoreSum);
-            const totalMark = formatNum2(item.totalScore);
+            // const maxPossible = formatNum2(item.maxScoreSum);
+            // const totalMark = formatNum2(item.totalScore);
             const palette = _getScorePalette(item.efficiency);
 
             const groupName = groupsMap.get(s.groupId) || 'গ্রুপ নেই';
@@ -800,6 +824,10 @@ function _roleBadgeMeta(roleCode) {
       fg: '#92400e',
       border: 'rgba(245, 158, 11, .35)',
       glow: 'rgba(251, 191, 36, .28)',
+      darkBg: 'rgba(245, 158, 11, .22)',
+      darkFg: '#fde68a',
+      darkBorder: 'rgba(251, 191, 36, .45)',
+      darkGlow: 'rgba(251, 191, 36, .38)',
     }, // amber
     'time-keeper': {
       icon: 'fa-stopwatch',
@@ -807,6 +835,10 @@ function _roleBadgeMeta(roleCode) {
       fg: '#0c4a6e',
       border: 'rgba(59, 130, 246, .35)',
       glow: 'rgba(56, 189, 248, .26)',
+      darkBg: 'rgba(56, 189, 248, .22)',
+      darkFg: '#e0f2fe',
+      darkBorder: 'rgba(56, 189, 248, .48)',
+      darkGlow: 'rgba(14, 165, 233, .35)',
     }, // sky
     reporter: {
       icon: 'fa-pen-nib',
@@ -814,6 +846,10 @@ function _roleBadgeMeta(roleCode) {
       fg: '#4c1d95',
       border: 'rgba(167, 139, 250, .35)',
       glow: 'rgba(196, 181, 253, .26)',
+      darkBg: 'rgba(167, 139, 250, .24)',
+      darkFg: '#ede9fe',
+      darkBorder: 'rgba(196, 181, 253, .48)',
+      darkGlow: 'rgba(139, 92, 246, .35)',
     }, // violet
     'resource-manager': {
       icon: 'fa-box-open',
@@ -821,6 +857,10 @@ function _roleBadgeMeta(roleCode) {
       fg: '#065f46',
       border: 'rgba(16, 185, 129, .35)',
       glow: 'rgba(134, 239, 172, .26)',
+      darkBg: 'rgba(16, 185, 129, .22)',
+      darkFg: '#d1fae5',
+      darkBorder: 'rgba(16, 185, 129, .45)',
+      darkGlow: 'rgba(5, 150, 105, .32)',
     }, // emerald
     'peace-maker': {
       icon: 'fa-dove',
@@ -828,6 +868,10 @@ function _roleBadgeMeta(roleCode) {
       fg: '#7f1d1d',
       border: 'rgba(244, 63, 94, .35)',
       glow: 'rgba(253, 164, 175, .28)',
+      darkBg: 'rgba(244, 63, 94, .22)',
+      darkFg: '#ffe4e6',
+      darkBorder: 'rgba(244, 63, 94, .45)',
+      darkGlow: 'rgba(244, 63, 94, .34)',
     }, // rose
   };
   const def = {
@@ -836,6 +880,10 @@ function _roleBadgeMeta(roleCode) {
     fg: '#111827',
     border: 'rgba(148,163,184,.35)',
     glow: 'rgba(148,163,184,.20)',
+    darkBg: 'rgba(148,163,184,.20)',
+    darkFg: '#e2e8f0',
+    darkBorder: 'rgba(148,163,184,.45)',
+    darkGlow: 'rgba(148,163,184,.30)',
   };
   return palettes[r] || def;
 }
@@ -853,6 +901,10 @@ function _branchBadgeMeta(academicGroup) {
       fg: '#115e59',
       border: 'rgba(45, 212, 191, .35)',
       glow: 'rgba(94, 234, 212, .26)',
+      darkBg: 'rgba(45, 212, 191, .22)',
+      darkFg: '#ccfbf1',
+      darkBorder: 'rgba(94, 234, 212, .48)',
+      darkGlow: 'rgba(20, 184, 166, .32)',
     }; // teal
   if (isArts)
     return {
@@ -861,6 +913,10 @@ function _branchBadgeMeta(academicGroup) {
       fg: '#7c2d12',
       border: 'rgba(251, 146, 60, .35)',
       glow: 'rgba(254, 215, 170, .28)',
+      darkBg: 'rgba(251, 146, 60, .24)',
+      darkFg: '#ffedd5',
+      darkBorder: 'rgba(251, 146, 60, .48)',
+      darkGlow: 'rgba(249, 115, 22, .32)',
     }; // orange
   if (isCom)
     return {
@@ -869,6 +925,10 @@ function _branchBadgeMeta(academicGroup) {
       fg: '#1e3a8a',
       border: 'rgba(99, 102, 241, .35)',
       glow: 'rgba(191, 219, 254, .28)',
+      darkBg: 'rgba(99, 102, 241, .24)',
+      darkFg: '#e0e7ff',
+      darkBorder: 'rgba(99, 102, 241, .48)',
+      darkGlow: 'rgba(79, 70, 229, .32)',
     }; // indigo/blue
   if (isVoc)
     return {
@@ -877,6 +937,10 @@ function _branchBadgeMeta(academicGroup) {
       fg: '#164e63',
       border: 'rgba(34, 211, 238, .35)',
       glow: 'rgba(165, 243, 252, .28)',
+      darkBg: 'rgba(34, 211, 238, .22)',
+      darkFg: '#cffafe',
+      darkBorder: 'rgba(34, 211, 238, .48)',
+      darkGlow: 'rgba(14, 165, 233, .32)',
     }; // cyan
   return {
     icon: 'fa-layer-group',
@@ -884,17 +948,33 @@ function _branchBadgeMeta(academicGroup) {
     fg: '#0f172a',
     border: 'rgba(148,163,184,.35)',
     glow: 'rgba(148,163,184,.18)',
+    darkBg: 'rgba(148,163,184,.20)',
+    darkFg: '#e2e8f0',
+    darkBorder: 'rgba(148,163,184,.45)',
+    darkGlow: 'rgba(148,163,184,.28)',
   }; // slate default
 }
 
 function _renderBadge(meta, label) {
   const safe = _escapeHtml(label || '');
+  const bg = meta?.bg || 'rgba(255,255,255,.85)';
+  const fg = meta?.fg || '#0f172a';
+  const border = meta?.border || 'rgba(0,0,0,.06)';
+  const glow = meta?.glow || 'rgba(0,0,0,.05)';
+  const darkBg = meta?.darkBg || bg;
+  const darkFg = meta?.darkFg || fg;
+  const darkBorder = meta?.darkBorder || border;
+  const darkGlow = meta?.darkGlow || glow;
   return `<span class="rk-badge rk-badge--compact"
-    style="--rk-badge-bg:${meta.bg};
-           --rk-badge-fg:${meta.fg};
-           --rk-badge-border:${meta.border};
-           --rk-badge-glow:${meta.glow};">
-           <i class="fas ${meta.icon}"></i>${safe}
+    style="--rk-badge-bg:${bg};
+           --rk-badge-fg:${fg};
+           --rk-badge-border:${border};
+           --rk-badge-glow:${glow};
+           --rk-badge-bg-dark:${darkBg};
+           --rk-badge-fg-dark:${darkFg};
+           --rk-badge-border-dark:${darkBorder};
+           --rk-badge-glow-dark:${darkGlow};">
+           <i class="fas ${meta?.icon || 'fa-circle'}"></i>${safe}
   </span>`;
 }
 
