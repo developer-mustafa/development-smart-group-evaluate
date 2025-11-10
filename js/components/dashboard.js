@@ -1365,7 +1365,7 @@ function _renderStats(stats) {
   const latestComposite =
     latestDateLabel === '-' && latestTimeLabel === '-'
       ? '-'
-      : `তারিখ: ${latestDateLabel} | সময়: ${latestTimeLabel}`;
+      : `: ${latestDateLabel} | সময়: ${latestTimeLabel}`;
 
   if (elements.latestTaskTitle) {
     const title = latestSummary?.taskTitle || 'সর্বশেষ এসাইনমেন্ট';
