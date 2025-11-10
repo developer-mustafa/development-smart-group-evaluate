@@ -228,13 +228,13 @@ function _getDashboardHTMLStructure() {
         dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full p-5">
 
         <div class="space-y-4">
-          <div class="flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-white/80">
+          <div class="flex items-center justify-center text-xs font-semibold text-slate-800 dark:text-white/80">
             <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-slate-900 
               ring-1 ring-slate-200 shadow-sm dark:bg-white/10 dark:text-white">
               <i class="fas fa-people-group text-indigo-600 drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]"></i>
-              শিক্ষার্থী ও গ্রুপের ফলাফল প্রদান তথ্য
+              সর্বশেষ এসাইনমেন্ট ফলাফল প্রদান তথ্য
             </span>
-            <span class="text-slate-600 dark:text-white/60 text-[0.75rem]">সর্বশেষ এসাইনমেন্ট</span>
+           
           </div>
 
           <div class="grid gap-4 md:grid-cols-2">
@@ -423,7 +423,7 @@ function _getDashboardHTMLStructure() {
            
 
 
-      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
