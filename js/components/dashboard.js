@@ -1,4 +1,4 @@
-﻿// js/components/dashboard.js
+// js/components/dashboard.js
 // নির্ভরতা (Dependencies)
 let stateManager, uiManager, helpers, app;
 
@@ -115,10 +115,6 @@ function _getDashboardHTMLStructure() {
         opacity: 0.9;
         animation: glowOrbit 6s linear infinite;
       }
-
-
-
-      
     </style>
     <div class="max-w-7xl mx-auto space-y-3">
      
@@ -163,13 +159,12 @@ function _getDashboardHTMLStructure() {
             </p>
           </div>
 
-          <!-- Score chips (perfectly matched border/shadow; high-contrast light) -->
+          <!-- Score chips -->
           <div class="grid w-full grid-cols-2 gap-2 text-[0.9rem] font-semibold sm:w-auto sm:grid-cols-3 md:grid-cols-4">
             <span class="relative rounded-2xl px-4 py-1.5
               text-emerald-900 bg-gradient-to-b from-emerald-50 via-emerald-200 to-emerald-500
               ring-2 ring-emerald-300/80
               shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
-              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
               transition-all duration-300
               dark:text-emerald-100 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-900 dark:ring-emerald-600/40
               dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">টাস্ক স্কোর</span>
@@ -178,7 +173,6 @@ function _getDashboardHTMLStructure() {
               text-sky-900 bg-gradient-to-b from-sky-50 via-sky-200 to-sky-500
               ring-2 ring-sky-300/80
               shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
-              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
               transition-all duration-300
               dark:text-sky-100 dark:from-sky-700 dark:via-sky-800 dark:to-sky-900 dark:ring-sky-600/40
               dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">টিম স্কোর</span>
@@ -187,7 +181,6 @@ function _getDashboardHTMLStructure() {
               text-rose-900 bg-gradient-to-b from-rose-50 via-rose-200 to-rose-500
               ring-2 ring-rose-300/80
               shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
-              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
               transition-all duration-300
               dark:text-rose-100 dark:from-rose-700 dark:via-rose-800 dark:to-rose-900 dark:ring-rose-600/40
               dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">অতিরিক্ত স্কোর</span>
@@ -196,7 +189,6 @@ function _getDashboardHTMLStructure() {
               text-amber-900 bg-gradient-to-b from-amber-50 via-amber-200 to-amber-500
               ring-2 ring-amber-300/80
               shadow-[inset_0_1px_3px_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.15),0_10px_18px_rgba(0,0,0,0.20)]
-              hover:shadow-[inset_0_1px_3px_rgba(255,255,255,1),0_6px_12px_rgba(0,0,0,0.22),0_14px_22px_rgba(0,0,0,0.28)]
               transition-all duration-300
               dark:text-amber-100 dark:from-amber-700 dark:via-amber-800 dark:to-amber-900 dark:ring-amber-700/40
               dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.75)]">MCQ স্কোর</span>
@@ -292,101 +284,82 @@ function _getDashboardHTMLStructure() {
         dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 
         dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full">
 
-        
-
         <!-- লাইভ ব্যাজ -->
         <span class="absolute right-3 top-3 sm:right-4 sm:top-4 inline-flex items-center gap-1 rounded-full border 
           border-amber-300/70 bg-amber-100 text-[0.65rem] sm:text-[0.7rem] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-amber-800 
           shadow-[0_1px_3px_rgba(0,0,0,0.15)] px-2 py-0.5 
           dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100">
-          <i class="fas fa-bolt text-[0.6rem] sm:text-[0.65rem]"></i> লাইভ
+          <i class="fas fa-bolt text-[0.6rem]"></i> লাইভ
         </span>
 
         <!-- Header -->
         <div class="mb-2 sm:mb-3 ">
           <p class="text-xs font-bold text-slate-700 dark:text-white/60" lang="bn" >
-            
-            সর্বশেষ এসাইনমেন্ট    <span class="text-xs  text-slate-700 dark:text-white/60">
+            সর্বশেষ এসাইনমেন্ট    <span class="text-xs text-slate-700 dark:text-white/60">
             আপডেট: <span id="latestAssignmentUpdated">-</span>
           </span>
           </p>
           <p id="latestTaskTitle"
             class="mt-1 max-w-[28rem] truncate font-bold text-slate-900 dark:text-white text-sm sm:text-base"
             title="-">-</p>
-        
         </div>
 
-
-  
-<!-- Evaluation progress: responsive 2-column (title + bar) -->
-<div class="relative rounded-2xl border border-blue-300/70
+        <!-- Evaluation progress -->
+        <div class="relative rounded-2xl border border-blue-300/70
             bg-gradient-to-br from-white via-blue-50 to-emerald-50
             shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_8px_18px_rgba(0,0,0,0.08)]
             p-1 mb-2
             dark:border-blue-400/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950
             dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05),0_10px_24px_rgba(0,0,0,0.55)]">
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-center">
-    <!-- Col 1: Title chip -->
-    <div class="min-w-0">
-      <span class="inline-flex items-center gap-2 rounded-full
-                   px-3 py-1 text-[0.85rem] font-semibold
-                   bg-white/90 text-slate-900 ring-1 ring-white/70
-                   shadow-[0_1px_2px_rgba(0,0,0,0.14)] backdrop-blur
-                   dark:bg-white/10 dark:text-white dark:ring-white/15">
-        <i class="fas fa-chart-simple text-indigo-600 dark:text-indigo-300 text-sm"></i>
-        <span class="truncate" lang="bn">মূল্যায়ন প্রদানের অগ্রগতি</span>
-      </span>
-    </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 items-center">
+            <!-- Col 1: Title chip -->
+            <div class="min-w-0">
+              <span class="inline-flex items-center gap-2 rounded-full
+                           px-3 py-1 text-[0.85rem] font-semibold
+                           bg-white/90 text-slate-900 ring-1 ring-white/70
+                           shadow-[0_1px_2px_rgba(0,0,0,0.14)] backdrop-blur
+                           dark:bg-white/10 dark:text-white dark:ring-white/15">
+                <i class="fas fa-chart-simple text-indigo-600 dark:text-indigo-300 text-sm"></i>
+                <span class="truncate" lang="bn">মূল্যায়ন প্রদানের অগ্রগতি</span>
+              </span>
+            </div>
 
-    <!-- Col 2: Progress bar -->
-    <div>
-      <div class="relative h-8 w-full overflow-hidden rounded-full
-                  border border-blue-300/70
-                  bg-gradient-to-b from-blue-100 via-blue-200 to-emerald-100
-                  shadow-[inset_0_3px_6px_rgba(255,255,255,0.9),inset_0_-4px_8px_rgba(0,0,0,0.08)]
-                  dark:border-blue-400/30 dark:from-slate-800 dark:via-sky-900/20 dark:to-slate-900
-                  dark:shadow-[inset_0_3px_6px_rgba(255,255,255,0.06),inset_0_-4px_8px_rgba(0,0,0,0.45)]">
+            <!-- Col 2: Progress bar -->
+            <div>
+              <div class="relative h-8 w-full overflow-hidden rounded-full
+                          border border-blue-300/70
+                          bg-gradient-to-b from-blue-100 via-blue-200 to-emerald-100
+                          shadow-[inset_0_3px_6px_rgba(255,255,255,0.9),inset_0_-4px_8px_rgba(0,0,0,0.08)]
+                          dark:border-blue-400/30 dark:from-slate-800 dark:via-sky-900/20 dark:to-slate-900
+                          dark:shadow-[inset_0_3px_6px_rgba(255,255,255,0.06),inset_0_-4px_8px_rgba(0,0,0,0.45)]">
 
-        <!-- Fill (no end-cap) -->
-        <div id="progressBar"
-             class="relative h-full w-[75%] md:w-[70%] rounded-full
-                    bg-gradient-to-r from-blue-500 via-indigo-600 to-emerald-500
-                    shadow-[inset_0_2px_3px_rgba(255,255,255,0.65),0_4px_10px_rgba(59,130,246,0.35),0_8px_18px_rgba(16,185,129,0.25)]
-                    transition-all duration-700 ease-out">
-          <!-- Top gloss -->
-          <span class="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full
-                       bg-white/25 dark:bg-white/10"></span>
-          <!-- Inner ridge -->
-          <span class="pointer-events-none absolute inset-y-0 left-0 w-[40%]
-                       bg-gradient-to-r from-white/15 to-transparent"></span>
-          <!-- Right edge glow -->
-          <span class="pointer-events-none absolute right-0 top-0 h-full w-6
-                       bg-gradient-to-l from-white/35 to-transparent dark:from-white/15"></span>
-          <!-- Percent label -->
-          <span id="progressBarLabel"
-                class="absolute inset-y-0 right-2 flex items-center
-                       text-[0.85rem] sm:text-[0.95rem] font-extrabold tracking-wide
-                       text-slate-900 dark:text-white drop-shadow">75%</span>
-          <!-- Moving shine (optional) -->
-          <span class="pointer-events-none absolute inset-y-0 -left-10 w-10 skew-x-12
-                       bg-white/20 blur-[2px] animate-[shine_2.4s_linear_infinite]"></span>
+                <!-- Fill -->
+                <div id="progressBar"
+                     class="relative h-full w-[75%] md:w-[70%] rounded-full
+                            bg-gradient-to-r from-blue-500 via-indigo-600 to-emerald-500
+                            shadow-[inset_0_2px_3px_rgba(255,255,255,0.65),0_4px_10px_rgba(59,130,246,0.35),0_8px_18px_rgba(16,185,129,0.25)]
+                            transition-all duration-700 ease-out">
+                  <span class="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full
+                               bg-white/25 dark:bg-white/10"></span>
+                  <span class="pointer-events-none absolute inset-y-0 left-0 w-[40%]
+                               bg-gradient-to-r from-white/15 to-transparent"></span>
+                  <span class="pointer-events-none absolute right-0 top-0 h-full w-6
+                               bg-gradient-to-l from-white/35 to-transparent dark:from-white/15"></span>
+                  <span id="progressBarLabel"
+                        class="absolute inset-y-0 right-2 flex items-center
+                               text-[0.85rem] sm:text-[0.95rem] font-extrabold tracking-wide
+                               text-slate-900 dark:text-white drop-shadow">75%</span>
+                  <span class="pointer-events-none absolute inset-y-0 -left-10 w-10 skew-x-12
+                               bg-white/20 blur-[2px] animate-[shine_2.4s_linear_infinite]"></span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Ticks -->
-        <div class="pointer-events-none absolute inset-0 flex items-center justify-between px-3
-                    text-[0.7rem] font-semibold text-slate-700/70 dark:text-white/60">
-       
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
         <!-- Content: 3-column on sm+ -->
         <div class="grid grid-cols-2 gap-4">
-
-         
-
           <!-- Average -->
           <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
             <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-2xl border border-emerald-300/60 
@@ -412,16 +385,12 @@ function _getDashboardHTMLStructure() {
               সামগ্রিক ‍উন্নতি
             </p>
           </div>
-
         </div>
       </article>
 
     </div>
   </div>
 </section>
-
-           
-
 
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
@@ -550,8 +519,6 @@ function _getDashboardHTMLStructure() {
           </div>
         </article>
       </section>
-
-    
 
       <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
         <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
@@ -760,10 +727,7 @@ function _calculateGenderBuckets(students = []) {
 function _normalizeGender(value) {
   const raw = (value || '').toString().trim();
   if (!raw) return '';
-  const normalized = raw
-    .normalize('NFC')
-    .toLowerCase()
-    .replace(/\s+/g, '');
+  const normalized = raw.normalize('NFC').toLowerCase().replace(/\s+/g, '');
   const banglaAligned = normalized.replace(/য়/g, 'য়');
   if (
     banglaAligned.includes('ছেলে') ||
@@ -1527,90 +1491,130 @@ function _renderAcademicGroups(academicStats) {
   `;
 }
 
-/** Renders group ranking list */
+/** NEW: Build a single Rank Card (glass + gradient + medal) */
+function _buildRankCard(data, rank) {
+  const palette = _getScorePalette(data.averageScore);
+  const rankText = helpers.convertToBanglaRank(rank);
+  const groupName = _formatLabel(data.groupName);
+
+  const scorePct = Math.min(100, Math.max(0, Number(data.averageScore) || 0));
+  const members = helpers.convertToBanglaNumber(data.studentCount || 0);
+  const evaluated = helpers.convertToBanglaNumber(data.evaluatedMembers || 0);
+  const tasks = helpers.convertToBanglaNumber(data.taskCount || 0);
+  const evals = helpers.convertToBanglaNumber(data.evalCount || 0);
+
+  // medal style by rank
+  const medalIcon = rank === 1 ? 'fa-crown' : rank === 2 ? 'fa-medal' : 'fa-award';
+  const medalBg =
+    rank === 1
+      ? 'from-amber-400 via-yellow-500 to-orange-500'
+      : rank === 2
+      ? 'from-slate-200 via-slate-300 to-slate-400 dark:from-slate-600 dark:via-slate-500 dark:to-slate-600'
+      : 'from-amber-200 via-orange-300 to-amber-400 dark:from-amber-700 dark:via-orange-600 dark:to-amber-700';
+
+  return `
+  <article class="group relative overflow-hidden rounded-3xl p-5 ring-1 ring-black/5 dark:ring-white/10
+                  bg-white/90 dark:bg-slate-900/60
+                  shadow-[0_10px_25px_rgba(2,6,23,0.06)] hover:shadow-[0_18px_40px_rgba(2,6,23,0.12)]
+                  transition cursor-pointer" data-group-id="${data.group?.id || ''}">
+    <!-- ambient conic aura -->
+    <div aria-hidden class="pointer-events-none absolute -inset-px rounded-[22px] opacity-20 blur-xl"
+         style="background: conic-gradient(${palette.solid}, transparent 35deg)"></div>
+
+    <div class="relative grid gap-4 md:grid-cols-[auto_1fr_auto] items-center">
+
+      <!-- medal / rank chip -->
+      <div class="flex flex-col items-center justify-center rounded-2xl px-4 py-3 text-white shadow
+                  bg-gradient-to-br ${medalBg}">
+        <i class="fa-solid ${medalIcon} text-xl drop-shadow"></i>
+        <span class="mt-1 text-sm font-bold">${rankText}</span>
+      </div>
+
+      <!-- main content -->
+      <div class="min-w-0 space-y-2">
+        <div class="flex items-center justify-between gap-3">
+          <h4 class="truncate text-base font-semibold text-slate-900 dark:text-white" title="${groupName}">
+            ${groupName}
+          </h4>
+          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-white/10
+                       px-3 py-1 text-[11px] font-semibold">
+            <i class="fas fa-diagram-project text-indigo-500"></i> টাস্ক: ${tasks}
+          </span>
+        </div>
+
+        <!-- mini stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <span class="inline-flex items-center gap-2">
+            <i class="fas fa-users text-sky-500"></i> সদস্য: ${members}
+          </span>
+          <span class="inline-flex items-center gap-2">
+            <i class="fas fa-user-check text-emerald-500"></i> মূল্যায়িত: ${evaluated}
+          </span>
+          <span class="inline-flex items-center gap-2 sm:justify-end">
+            <i class="fas fa-clipboard-check text-purple-500"></i> সম্পন্ন: ${evals}
+          </span>
+        </div>
+
+        <!-- progress + donut -->
+        <div class="flex items-center gap-3">
+          <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+            <div class="h-full rounded-full"
+                 style="width:${Math.round(scorePct)}%;
+                        background:${palette.solid};
+                        box-shadow:0 6px 16px ${palette.shadow};">
+            </div>
+          </div>
+          <div class="relative flex items-center justify-center w-16 h-16">
+            ${_buildCircularMeter(scorePct, palette, 64)}
+          </div>
+        </div>
+      </div>
+
+      <!-- action (kept for a11y, but article handles click) -->
+      <button class="hidden md:inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold
+                     text-slate-700 dark:text-slate-200 ring-1 ring-slate-200/70 dark:ring-white/15
+                     hover:bg-slate-900/5 dark:hover:bg-white/10 transition"
+              data-group-id="${data.group?.id || ''}"
+              aria-label="গ্রুপ বিস্তারিত">
+        <i class="fas fa-arrow-right"></i> বিস্তারিত
+      </button>
+    </div>
+  </article>`;
+}
+
+/** UPDATED: Renders group ranking list using new Rank Card */
 function _renderGroupsRanking(groupData) {
   if (!elements.groupsRankingList) return;
   uiManager.clearContainer(elements.groupsRankingList);
+
   const evaluatedGroups = groupData.filter((g) => g.evalCount > 0);
   if (evaluatedGroups.length === 0) {
     uiManager.displayEmptyMessage(elements.groupsRankingList, 'র‍্যাঙ্কিংয়ের জন্য ডেটা নেই।');
     return;
   }
 
+  // tie-aware rank (same logic as before)
   let rank = 0;
   let lastScore = -1;
   let lastEvalCount = -1;
 
-  const html = evaluatedGroups
+  const cards = evaluatedGroups
     .map((data, index) => {
       if (data.averageScore !== lastScore || data.evalCount !== lastEvalCount) {
         rank = index + 1;
         lastScore = data.averageScore;
         lastEvalCount = data.evalCount;
       }
-      const rankText = helpers.convertToBanglaRank(rank);
-      const evals = helpers.convertToBanglaNumber(data.evalCount);
-      const students = helpers.convertToBanglaNumber(data.studentCount);
-      const evaluatedMembers = helpers.convertToBanglaNumber(data.evaluatedMembers);
-      const tasks = helpers.convertToBanglaNumber(data.taskCount);
-      const palette = _getScorePalette(data.averageScore);
-      const groupName = _formatLabel(data.groupName);
-      const progressPercentage = Math.min(100, Math.round(data.averageScore));
-      const progressBar = `
-        <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-          <div class="h-full rounded-full" style="width: ${progressPercentage}%; background: ${palette.solid}; box-shadow: 0 6px 12px ${palette.shadow};"></div>
-        </div>
-      `;
-      const circleIndicatorContent = `
-        ${_buildCircularMeter(data.averageScore, palette, 88)}
-        <span class="text-xs font-medium text-gray-500 dark:text-gray-400">গড় স্কোর</span>
-      `;
-      return `
-        <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-5 shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70 cursor-pointer" data-group-id="${data.group?.id}" role="button" tabindex="0">
-          <div class="absolute inset-0 bg-gradient-to-r ${palette.gradient} opacity-60"></div>
-          <div class="relative grid gap-5 md:grid-cols-[auto,1fr,auto] items-center">
-            <div class="flex flex-col items-center justify-center gap-1 rounded-2xl bg-white/80 px-4 py-3 text-center text-sm font-semibold text-gray-700 shadow dark:bg-white/10 dark:text-gray-200">
-              <span class="text-xl font-bold">${rankText}</span>
-              <span class="text-[10px] uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">Rank</span>
-            </div>
-            <div class="space-y-3 min-w-0">
-              <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                <h4 class="text-base font-semibold text-gray-900 dark:text-white truncate" title="${groupName}">${groupName}</h4>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200 shadow">
-                  <i class="fas fa-diagram-project text-indigo-500"></i> টাস্ক: ${tasks}
-                </span>
-              </div>
-              <div class="grid grid-cols-2 gap-3 text-xs font-medium text-gray-600 dark:text-gray-300">
-                <span class="inline-flex items-center gap-2">
-                  <i class="fas fa-users text-sky-500"></i> মোট সদস্য: ${students}
-                </span>
-                <span class="inline-flex items-center gap-2 justify-end">
-                  <i class="fas fa-user-check text-emerald-500"></i> মূল্যায়িত সদস্য: ${evaluatedMembers}
-                </span>
-                <span class="inline-flex items-center gap-2">
-                  <i class="fas fa-clipboard-check text-purple-500"></i> সম্পন্ন মূল্যায়ন: ${evals}
-                </span>
-              </div>
-              <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-center md:hidden">
-                ${progressBar}
-                <div class="flex flex-col items-center gap-2">
-                  ${circleIndicatorContent}
-                </div>
-              </div>
-              <div class="hidden md:block">
-                ${progressBar}
-              </div>
-            </div>
-            <div class="hidden md:flex flex-col items-center gap-2">
-              ${circleIndicatorContent}
-            </div>
-          </div>
-        </article>
-      `;
+      return _buildRankCard(data, rank);
     })
     .join('');
 
-  elements.groupsRankingList.innerHTML = html;
+  elements.groupsRankingList.innerHTML = `
+    <div class="grid grid-cols-1 gap-4 sm:gap-5">
+      ${cards}
+    </div>
+  `;
+
   // Open group detail modal on click
   if (elements.groupsRankingList && window && typeof window.openGroupModalById === 'function') {
     uiManager.addListener(elements.groupsRankingList, 'click', (e) => {

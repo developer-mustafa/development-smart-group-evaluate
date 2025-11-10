@@ -1,10 +1,13 @@
-﻿// js/components/ranking.js
+// js/components/ranking.js
 
 // Dependencies
 let stateManager, uiManager, dataService, helpers, app;
 
 // DOM Elements
 const elements = {};
+
+// Tab state
+const uiTabState = { active: 'students' }; // 'students' | 'groups'
 
 // Search state & cached data for re-rendering student list
 const studentSearchState = { name: '', roll: '' };
@@ -15,29 +18,40 @@ const cachedRankingData = {
   students: [],
 };
 
-// Ranking criteria (kept for safety)
+// Ranking criteria
 const MIN_EVALUATIONS_FOR_RANKING = 1;
-const TOTAL_MAX_SCORE = 100; // fallback (evaluation.maxPossibleScore preferred)
 
-/* -----------------------------
-   Soft Neumorphic 3D (light/dark)
-   — inspired by your toggle references
------------------------------- */
+/* ----------------------------- Soft Neumorphic + Gradient ------------------------------ */
 function _ensureSoft3DStyles() {
   if (document.getElementById('ranking-soft3d-styles')) return;
   const style = document.createElement('style');
   style.id = 'ranking-soft3d-styles';
   style.textContent = `
+  /* ---------- Global soft page vibe ---------- */
+  .rk-soft-page{
+    --rk-page-start:#f8fafc;
+    --rk-page-mid:#eef2ff;
+    --rk-page-end:#ffffff;
+    background: radial-gradient(120% 140% at 10% -10%, var(--rk-page-start) 0%, var(--rk-page-mid) 42%, var(--rk-page-end) 100%);
+    background-attachment: fixed;
+  }
+  .dark .rk-soft-page{
+    --rk-page-start:#0b1220; --rk-page-mid:#0f172a; --rk-page-end:#111827;
+    background: radial-gradient(120% 140% at 10% -10%, var(--rk-page-start) 0%, var(--rk-page-mid) 52%, var(--rk-page-end) 100%);
+    background-attachment: fixed;
+  }
+
   .rk-surface{
-    border-radius: 1.1rem;
-    background-color: var(--rk-bg, #fff);
+    --rk-bg:#fff;
+    border-radius: 1rem;
+    background-color: var(--rk-bg);
     box-shadow:
       8px 8px 20px rgba(0,0,0,.08),
-      -6px -6px 16px rgba(255,255,255,.7),
+      -6px -6px 16px rgba(255,255,255,.70),
       inset 0 1px 0 rgba(255,255,255,.45);
   }
   .dark .rk-surface{
-    --rk-bg: rgba(17,24,39,.9);
+    --rk-bg: rgba(17,24,39,.92);
     box-shadow:
       10px 10px 26px rgba(0,0,0,.45),
       -6px -6px 14px rgba(255,255,255,.06),
@@ -45,30 +59,29 @@ function _ensureSoft3DStyles() {
   }
 
   .rk-chip{
-    border-radius: .75rem;
-    background: rgba(255,255,255,.8);
+    border-radius: .65rem;
+    background: rgba(255,255,255,.85);
     border: 1px solid rgba(0,0,0,.06);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,.6) inset,
-      0 2px 6px rgba(0,0,0,.06);
+    box-shadow: 0 1px 0 rgba(255,255,255,.60) inset, 0 2px 6px rgba(0,0,0,.06);
+    white-space: nowrap;
   }
   .dark .rk-chip{
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.08);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.08),
-      0 2px 6px rgba(0,0,0,.35);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 6px rgba(0,0,0,.35);
   }
 
   .rk-card{
-    border-radius: 1rem;
-    background: var(--rk-bg, #fff);
+    --rk-card-bg: var(--rk-bg, #fff);
+    position: relative;
+    border-radius: .9rem;
+    background: var(--rk-card-bg);
     border: 1px solid rgba(0,0,0,.06);
     box-shadow:
       6px 6px 16px rgba(0,0,0,.08),
-      -4px -4px 12px rgba(255,255,255,.7),
+      -4px -4px 12px rgba(255,255,255,.70),
       inset 0 1px 0 rgba(255,255,255,.45);
-    transition: transform .15s ease, box-shadow .15s ease;
+    transition: transform .2s ease, box-shadow .2s ease, background .25s ease;
   }
   .rk-card:hover{ transform: translateY(-1px); }
   .dark .rk-card{
@@ -79,12 +92,80 @@ function _ensureSoft3DStyles() {
       inset 0 1px 0 rgba(255,255,255,.08);
   }
 
-  .rk-micro{
-    font-size: 11px;
-    line-height: 1.1;
+  /* Accent border + glow (driven by --rk-grad/--rk-accent/--rk-glow) */
+  .rk-card[data-accent]{
+    border: 1px solid transparent;
+    background-image:
+      linear-gradient(var(--rk-card-bg), var(--rk-card-bg)),
+      var(--rk-grad, linear-gradient(90deg,#e5e7eb,#e5e7eb));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
   }
+  .rk-card[data-accent]::after{
+    content:""; position:absolute; inset:-6px; z-index:-1; border-radius:inherit;
+    background: radial-gradient(60% 60% at 50% -10%, var(--rk-accent, #94a3b8) 0%, transparent 60%);
+    filter: blur(16px); opacity:.18; pointer-events:none;
+  }
+  .dark .rk-card[data-accent]::after{ opacity:.28; }
+
+  .rk-meter-outer{
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 8px 18px var(--rk-glow, rgba(0,0,0,.10));
+  }
+
+  .rk-micro{ font-size: 11px; line-height: 1.1; }
+
+  /* -------- Tabs -------- */
+  .rk-tabbar{
+    display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; justify-content:space-between;
+    padding:.6rem; border-radius:.9rem;
+    background: color-mix(in srgb, var(--rk-bg) 88%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .rk-tabs{
+    display:flex; gap:.4rem; align-items:center;
+    padding:.25rem; border-radius:999px;
+    background: linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,0));
+    border:1px solid rgba(0,0,0,.06);
+    box-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
+  }
+  .dark .rk-tabs{ border-color: rgba(255,255,255,.10); background: rgba(255,255,255,.04); }
+
+  .rk-tab{
+    position:relative; border:0; background:transparent; cursor:pointer;
+    padding:.55rem .85rem; border-radius:999px; font-weight:600; font-size:14px;
+    color: #0f172a;
+  }
+  .dark .rk-tab{ color:#e5e7eb; }
+
+  .rk-tab[aria-selected="true"]{
+    color:white;
+    background: var(--rk-grad, linear-gradient(90deg,#0ea5e9,#7dd3fc));
+    box-shadow: 0 6px 14px var(--rk-glow, rgba(14,165,233,.25));
+  }
+
+  .rk-tab-search{
+    display:flex; gap:.5rem; width:100%; max-width:560px;
+  }
+  .rk-input{
+    flex:1 1 auto;
+    padding:.55rem .75rem; border-radius:.7rem;
+    border:1px solid rgba(0,0,0,.08);
+    background: rgba(255,255,255,.85);
+    color:#0f172a; font-size: 14px;
+    outline: none;
+  }
+  .rk-input::placeholder{ color:#94a3b8; }
+  .rk-input:focus{ border-color: rgba(14,165,233,.45); box-shadow: 0 0 0 3px rgba(14,165,233,.12); }
+  .rk-input:disabled{ opacity:.55; cursor:not-allowed; }
+
+  .dark .rk-input{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.10); color:#e5e7eb; }
+  .dark .rk-input:focus{ border-color: rgba(14,165,233,.55); box-shadow: 0 0 0 3px rgba(14,165,233,.22); }
   `;
   document.head.appendChild(style);
+}
+function _ensureSoftPageVibe() {
+  const root = document.body || document.documentElement;
+  if (root && !root.classList.contains('rk-soft-page')) root.classList.add('rk-soft-page');
 }
 
 /**
@@ -98,11 +179,11 @@ export function init(dependencies) {
   app = dependencies.app;
 
   _ensureSoft3DStyles();
+  _ensureSoftPageVibe();
   _cacheDOMElements();
   _setupEventListeners();
 
   console.log('✅ Ranking component initialized.');
-
   return { render };
 }
 
@@ -119,7 +200,6 @@ export function render() {
   uiManager.showLoading('র‍্যাঙ্কিং গণনা করা হচ্ছে...');
   try {
     const { students, evaluations, tasks, groups } = stateManager.getState();
-
     if (!students || !evaluations || !tasks) {
       uiManager.displayEmptyMessage(elements.studentRankingListContainer, 'র‍্যাঙ্কিং গণনার জন্য ডেটা লোড হচ্ছে...');
       return;
@@ -134,6 +214,7 @@ export function render() {
     cachedRankingData.students = students || [];
     studentSearchState.name = '';
     studentSearchState.roll = '';
+    uiTabState.active = 'students'; // default active tab
 
     _renderRankingList(rankedStudents, rankedGroups, groups || [], students);
   } catch (error) {
@@ -168,6 +249,7 @@ function _setupEventListeners() {
     }
   });
 
+  // Card click → open student modal if available
   uiManager.addListener(elements.studentRankingListContainer, 'click', (e) => {
     const target = e.target.closest('[data-student-id]') || e.target.closest('.ranking-card');
     if (!target) return;
@@ -188,21 +270,18 @@ function _setupEventListeners() {
    3) TotalScore DESC
    4) MaxPossible DESC
    5) Latest time DESC
-   (All % shown with 2 decimals)
 ========================================================= */
 
 function _calculateStudentRankings(students, evaluations, tasks) {
   if (!students || !evaluations || !tasks) return [];
 
   const studentPerf = {};
-
   evaluations.forEach((evaluation) => {
     const maxScore = parseFloat(evaluation.maxPossibleScore) || 60;
     const ts = _extractTimestamp(
       evaluation.taskDate || evaluation.updatedAt || evaluation.evaluationDate || evaluation.createdAt
     );
     const scores = evaluation.scores || {};
-
     Object.entries(scores).forEach(([studentId, scoreData]) => {
       if (!studentPerf[studentId]) {
         studentPerf[studentId] = { evalCount: 0, totalScore: 0, maxScoreSum: 0, latestMs: null };
@@ -244,26 +323,19 @@ function _calculateStudentRankings(students, evaluations, tasks) {
   return ranked;
 }
 
-/**
- * Group ranking with extra metrics:
- * - participantsCount (unique students who got scored)
- * - groupSize (total members in the group)
- * - remainingCount = groupSize - participantsCount (not negative)
- */
 function _calculateGroupRankings(students, evaluations, groups) {
   if (!students || !evaluations) return [];
 
   const groupNameMap = new Map((groups || []).map((g) => [g.id, g.name || 'গ্রুপ']));
   const studentToGroup = new Map((students || []).map((s) => [s.id, s.groupId || '__none']));
 
-  // group size map
   const groupSize = {};
   (students || []).forEach((s) => {
     const gid = s.groupId || '__none';
     groupSize[gid] = (groupSize[gid] || 0) + 1;
   });
 
-  const groupAgg = {}; // gid -> { evalCount, totalScore, maxScoreSum, latestMs, participants: Set }
+  const groupAgg = {};
   evaluations.forEach((evaluation) => {
     const maxScore = parseFloat(evaluation.maxPossibleScore) || 60;
     const ts = _extractTimestamp(
@@ -293,9 +365,9 @@ function _calculateGroupRankings(students, evaluations, groups) {
     .map(([gid, agg]) => {
       if (agg.evalCount < MIN_EVALUATIONS_FOR_RANKING) return null;
       const efficiency = agg.maxScoreSum > 0 ? (agg.totalScore / agg.maxScoreSum) * 100 : 0;
-      const groupTotal = groupSize[gid] || 0;
+      const size = groupSize[gid] || 0;
       const participantsCount = agg.participants.size;
-      const remainingCount = Math.max(0, groupTotal - participantsCount);
+      const remainingCount = Math.max(0, size - participantsCount);
       return {
         groupId: gid,
         groupName: groupNameMap.get(gid) || 'গ্রুপ নেই',
@@ -305,7 +377,7 @@ function _calculateGroupRankings(students, evaluations, groups) {
         efficiency,
         latestEvaluationMs: agg.latestMs || null,
         participantsCount,
-        groupSize: groupTotal,
+        groupSize: size,
         remainingCount,
         rank: 0,
       };
@@ -323,53 +395,19 @@ function _calculateGroupRankings(students, evaluations, groups) {
   return rankedGroups;
 }
 
-/* ---------------- Render ---------------- */
+/* ---------------- Render (Tabs + Compact Cards) ---------------- */
 
 function _renderRankingList(rankedStudents, rankedGroups, groups, students, options = {}) {
   if (!elements.studentRankingListContainer) return;
 
-  let onlyUpdateStudents = Boolean(options?.onlyUpdateStudents);
+  const onlyUpdateStudents = Boolean(options?.onlyUpdateStudents);
   let studentCardsTarget = null;
-
   if (onlyUpdateStudents) {
     studentCardsTarget = elements.studentRankingListContainer.querySelector('[data-student-cards]');
-    if (!studentCardsTarget) {
-      onlyUpdateStudents = false;
-    }
+    if (!studentCardsTarget) return;
   }
 
-  if (!onlyUpdateStudents) {
-    uiManager.clearContainer(elements.studentRankingListContainer);
-  }
-
-  if (!rankedStudents || rankedStudents.length === 0) {
-    if (!onlyUpdateStudents) {
-      uiManager.displayEmptyMessage(
-        elements.studentRankingListContainer,
-        `কোনো শিক্ষার্থী র‍্যাঙ্কিংয়ের জন্য যোগ্য নয় (কমপক্ষে ${helpers.convertToBanglaNumber(
-          MIN_EVALUATIONS_FOR_RANKING
-        )} টি মূল্যায়নে অংশ নিতে হবে)।`
-      );
-    } else if (studentCardsTarget) {
-      studentCardsTarget.innerHTML = '';
-    }
-    return;
-  }
-
-  const groupsMap = new Map((groups || []).map((g) => [g.id, g.name]));
-  const totalRanked = rankedStudents.length;
-  const totalEvaluations = rankedStudents.reduce((sum, item) => sum + item.evalCount, 0);
-  const top = rankedStudents[0];
-  const latestMs = rankedStudents.reduce(
-    (max, item) => (item.latestEvaluationMs ? Math.max(max, item.latestEvaluationMs) : max),
-    0
-  );
-  const latestDate =
-    latestMs && helpers?.formatTimestamp
-      ? helpers.formatTimestamp(new Date(latestMs))
-      : latestMs
-      ? new Date(latestMs).toLocaleDateString('bn-BD')
-      : 'N/A';
+  const groupsMap = new Map((groups || []).map((g) => [g.id, g.name])); // for student group name
 
   const formatPct2 = (n) => {
     const str = (Number(n) || 0).toFixed(2);
@@ -383,246 +421,203 @@ function _renderRankingList(rankedStudents, rankedGroups, groups, students, opti
     const str = (Number(n) || 0).toFixed(2);
     return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(str) : str;
   };
+  const toBn = (v) => {
+    const raw = (v ?? '').toString();
+    return helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(raw) : raw;
+  };
+  const roleLabel = (code) => {
+    const map = {
+      'team-leader': 'টিম লিডার',
+      'time-keeper': 'টাইম কিপার',
+      reporter: 'রিপোর্টার',
+      'resource-manager': 'রিসোর্স ম্যানেজার',
+      'peace-maker': 'পিস মেকার',
+    };
+    const r = (code || '').toString().trim();
+    return map[r] || r || '—';
+  };
 
-  const filteredStudents = _filterStudentsForSearch(rankedStudents);
+  // Determine accent palette from current tab top rank
+  const topStudent = (rankedStudents && rankedStudents[0]) || null;
+  const topGroup = (rankedGroups && rankedGroups[0]) || null;
+  const paletteNow =
+    uiTabState.active === 'students'
+      ? _getScorePalette(topStudent ? topStudent.efficiency : 70)
+      : _getScorePalette(topGroup ? topGroup.efficiency : 70);
 
-  const summary = `
-    <section class="rk-surface text-white p-6 md:p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-2xl md:text-3xl font-bold">Leaderboard (Average% → Evaluations)</h2>
-          <p class="text-white/80 text-sm mt-1">বারে “Total / Max” দেখানো হচ্ছে।</p>
-        </div>
-        <span class="rk-chip px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-white text-slate-900 shadow dark:bg-white/20 dark:text-white">
-          <i class="fas fa-sync-alt"></i> শেষ আপডেট: ${latestDate}
-        </span>
+  // Build tabs + search row
+  const searchDisabled = uiTabState.active !== 'students';
+  const nameValue = _escapeHtml(studentSearchState.name);
+  const rollValue = _escapeHtml(studentSearchState.roll);
+
+  const tabbar = `
+    <div class="rk-tabbar rk-surface" style="--rk-accent:${paletteNow.solid}; --rk-grad:${paletteNow.grad}; --rk-glow:${
+    paletteNow.shadow
+  };">
+      <div class="rk-tabs">
+        <button class="rk-tab" data-tab="students" aria-selected="${
+          uiTabState.active === 'students'
+        }">শিক্ষার্থী র‍্যাঙ্কিং</button>
+        <button class="rk-tab" data-tab="groups" aria-selected="${
+          uiTabState.active === 'groups'
+        }">গ্রুপ র‍্যাঙ্কিং</button>
       </div>
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mt-5">
-        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
-          <p class="rk-micro text-gray-500 dark:text-gray-400">যোগ্য শিক্ষার্থী</p>
-          <p class="text-2xl font-semibold mt-1">${formatInt(totalRanked)}</p>
-        </div>
-        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
-          <p class="rk-micro text-gray-500 dark:text-gray-400">মোট মূল্যায়ন</p>
-          <p class="text-2xl font-semibold mt-1">${formatInt(totalEvaluations)}</p>
-        </div>
-        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
-          <p class="rk-micro text-gray-500 dark:text-gray-400">শীর্ষ শিক্ষার্থী</p>
-          <p class="mt-1 font-semibold truncate" title="${_formatLabel(top.student.name)}">${_formatLabel(
-    top.student.name
-  )}</p>
-          <p class="rk-micro text-gray-500 dark:text-gray-400 mt-1">Average: ${formatPct2(top.efficiency)}%</p>
-        </div>
-        <div class="rk-card p-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
-          <p class="rk-micro text-gray-500 dark:text-gray-400">Criteria</p>
-          <p class="mt-1 text-sm font-semibold">Average% → #Evaluations → Total → Max → Latest</p>
-        </div>
+      <div class="rk-tab-search">
+        <input id="studentSearchName" type="text" class="rk-input" placeholder="নাম দিয়ে সার্চ"
+          value="${nameValue}" ${searchDisabled ? 'disabled' : ''} />
+        <input id="studentSearchRoll" type="text" inputmode="numeric" autocomplete="off"
+          class="rk-input" placeholder="রোল (এক্স্যাক্ট)" value="${rollValue}" ${searchDisabled ? 'disabled' : ''} />
       </div>
-    </section>
-  `;
-
-  const studentSearchPanel = `
-    <div class="rk-surface px-4 py-4 md:px-5 md:py-5 flex flex-col md:flex-row gap-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
-      <label class="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
-        <span>নাম দিয়ে সার্চ</span>
-        <input
-          id="studentSearchName"
-          type="text"
-          class="mt-2 w-full px-3 py-2 rounded-lg border border-gray-200/80 bg-white/80 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-400 dark:bg-gray-900/60 dark:border-gray-700 dark:text-gray-100"
-          placeholder="উদাহরণ: রাকিব, সুমি"
-          value="${_escapeHtml(studentSearchState.name)}"
-        />
-      </label>
-      <label class="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
-        <span>রোল দিয়ে সার্চ (এক্স্যাক্ট ম্যাচ)</span>
-        <input
-          id="studentSearchRoll"
-          type="text"
-          inputmode="numeric"
-          autocomplete="off"
-          class="mt-2 w-full px-3 py-2 rounded-lg border border-gray-200/80 bg-white/80 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-400 dark:bg-gray-900/60 dark:border-gray-700 dark:text-gray-100"
-          placeholder="উদাহরণ: 203"
-          value="${_escapeHtml(studentSearchState.roll)}"
-        />
-        <span class="rk-micro text-gray-500 dark:text-gray-400 mt-1 block">সঠিক রোল লিখলেই ফলাফল তাৎক্ষণিকভাবে ফিল্টার হবে।</span>
-      </label>
     </div>
   `;
 
-  /* ---------- STUDENT CARDS ---------- */
-  const studentCards = filteredStudents.length
-    ? filteredStudents.map((item) => {
-      const s = item.student;
-      const rankText = _toBnRank(item.rank);
-      const avgPct = formatPct2(item.efficiency);
-      const evals = formatInt(item.evalCount);
-      const totalMark = formatNum2(item.totalScore);
-      const maxPossible = formatNum2(item.maxScoreSum);
-      const groupName = groupsMap.get(s.groupId) || 'গ্রুপ নেই';
-      const palette = _getScorePalette(item.efficiency);
-      const barPct = Math.max(0, Math.min(100, item.maxScoreSum > 0 ? (item.totalScore / item.maxScoreSum) * 100 : 0));
+  // STUDENT CARDS (compact with right circular meter & one-line identity row)
+  const studentCards =
+    rankedStudents && rankedStudents.length
+      ? (uiTabState.active === 'students' ? _filterStudentsForSearch(rankedStudents) : rankedStudents)
+          .map((item) => {
+            const s = item.student;
+            const rankText = _toBnRank(item.rank);
+            const avgPct = formatPct2(item.efficiency);
+            const evals = formatInt(item.evalCount);
+            const maxPossible = formatNum2(item.maxScoreSum);
+            const totalMark = formatNum2(item.totalScore);
+            const palette = _getScorePalette(item.efficiency);
 
-      const info3col = `
-        <div class="grid grid-cols-3 gap-2 text-[12px] font-semibold mt-2">
-          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>গড়: ${avgPct}%</div>
-          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>মূল্যায়ন সংখ্যা: ${evals} টি</div>
-          <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>
-          মোট নম্বর: ${totalMark} / ${maxPossible}</div>
-        </div>
-      `;
+            // identity (single micro line)
+            const groupName = groupsMap.get(s.groupId) || 'গ্রুপ নেই';
+            const idLine = `নাম: ${_escapeHtml(s.name || '')} · রোল: ${toBn(
+              s.roll || '—'
+            )} · একাডেমিক গ্রুপ: ${_escapeHtml(s.academicGroup || '—')} · গ্রুপ: ${_escapeHtml(
+              groupName
+            )} · দায়িত্ব: ${_escapeHtml(roleLabel(s.role))}`;
 
-      return `
-        <article class="ranking-card rk-card bg-white dark:bg-gray-900/90 border-0 p-4 text-gray-900 dark:text-gray-100" data-student-id="${
-          s.id
-        }">
-          <div class="flex items-start gap-3">
-            <div class="rk-chip px-3 py-2 text-center">
-              <div class="text-base font-bold">${rankText}</div>
+            return `
+        <article class="ranking-card rk-card p-4 flex items-center gap-3 justify-between"
+          data-student-id="${s.id}" data-accent
+          style="--rk-accent:${palette.solid}; --rk-grad:${palette.grad}; --rk-glow:${palette.shadow};">
+          
+          <div class="flex items-start gap-3 min-w-0">
+            <div class="rk-chip px-3 py-2 text-center shrink-0">
+              <div class="text-sm font-bold">${rankText}</div>
               <div class="rk-micro text-gray-500 dark:text-gray-400">র‍্যাঙ্ক</div>
             </div>
-            <div class="min-w-0 flex-1">
+            <div class="min-w-0">
               <div class="flex items-center gap-2 min-w-0">
                 <h4 class="font-semibold truncate" title="${_formatLabel(s.name)}">${_formatLabel(s.name)}</h4>
-                ${_renderRoleBadge(s.role)}
               </div>
-              <p class="rk-micro text-gray-500 dark:text-gray-400 mt-1">রোল: ${helpers.convertToBanglaNumber(
-                s.roll
-              )} · ${s.academicGroup || 'শাখা নেই'} · গ্রুপ: ${_formatLabel(groupName)}</p>
 
-              ${info3col}
+              <p class="rk-micro mt-1 text-gray-600 dark:text-gray-300 truncate" title="${_escapeHtml(
+                idLine
+              )}">${idLine}</p>
 
-              <div class="mt-3">
-                <div class="w-full h-2.5 rounded-full bg-gray-200 dark:bg-gray-700/60 overflow-hidden">
-                  <div class="h-full rounded-full" style="width:${barPct}%; background:${palette.solid};"></div>
-                </div>
-                
+              <div class="mt-2 grid grid-cols-3 gap-2 text-[12px] font-semibold">
+                <div class="rk-chip px-2 py-1">Avg: ${avgPct}%</div>
+                <div class="rk-chip px-2 py-1">Eval: ${evals}</div>
+                <div class="rk-chip px-2 py-1">${totalMark} / ${maxPossible}</div>
               </div>
-            </div>
-
-            <div class="flex flex-col items-center gap-2">
-              ${_buildCircularMeter(item.efficiency, palette, 78)}
-              <span class="rk-chip px-2 py-0.5 rk-micro text-gray-800 dark:text-gray-100">Average%</span>
             </div>
           </div>
-        </article>
-      `;
-    })
-    .join('')
-    : `<div class="rk-card p-4 text-center text-gray-600 dark:text-gray-300">সার্চের সাথে মিল পাওয়া যায়নি।</div>`;
+
+          <div class="flex flex-col items-center gap-1 shrink-0">
+            ${_buildCircularMeter(item.efficiency, palette, 72)}
+            <span class="rk-micro text-gray-500 dark:text-gray-400">Avg%</span>
+          </div>
+        </article>`;
+          })
+          .join('')
+      : `<div class="rk-card p-4 text-center text-gray-600 dark:text-gray-300">কোনো শিক্ষার্থী পাওয়া যায়নি।</div>`;
+
+  // GROUP CARDS (compact, single-line members row + right circular meter)
+  const groupCards =
+    rankedGroups && rankedGroups.length
+      ? rankedGroups
+          .map((g) => {
+            const rank = _toBnRank(g.rank);
+            const avgPct = formatPct2(g.efficiency);
+            const evals = formatInt(g.evalCount);
+            const palette = _getScorePalette(g.efficiency);
+            const membersLine = `মোট সদস্য: ${formatInt(g.groupSize)} · পরীক্ষায় অংশগ্রহন : ${formatInt(
+              g.participantsCount
+            )} · বাকি সদস্য: ${formatInt(g.remainingCount)}`;
+
+            return `
+        <article class="rk-card p-4 flex items-center gap-3 justify-between"
+          data-accent style="--rk-accent:${palette.solid}; --rk-grad:${palette.grad}; --rk-glow:${palette.shadow};">
+          
+          <div class="flex items-start gap-3 min-w-0">
+            <div class="rk-chip px-3 py-2 text-center shrink-0">
+              <div class="text-sm font-bold">${rank}</div>
+              <div class="rk-micro text-gray-500 dark:text-gray-400">গ্রুপ র‍্যাঙ্ক</div>
+            </div>
+            <div class="min-w-0">
+              <h4 class="font-semibold truncate" title="${_formatLabel(g.groupName)}">${_formatLabel(g.groupName)}</h4>
+              <div class="mt-1 grid grid-cols-2 gap-2 text-[12px] font-semibold">
+                <div class="rk-chip px-2 py-1">Avg: ${avgPct}%</div>
+                <div class="rk-chip px-2 py-1">Eval: ${evals}</div>
+              </div>
+              <p class="rk-micro mt-2 text-gray-600 dark:text-gray-300 truncate" title="${membersLine}">${membersLine}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-center gap-1 shrink-0">
+            ${_buildCircularMeter(g.efficiency, palette, 72)}
+            <span class="rk-micro text-gray-500 dark:text-gray-400">Avg%</span>
+          </div>
+        </article>`;
+          })
+          .join('')
+      : `<div class="rk-card p-4 text-gray-700 dark:text-gray-300">গ্রুপ র‍্যাঙ্কিং প্রদর্শনের মতো তথ্য পাওয়া যায়নি।</div>`;
+
+  // CONTENT by tab
+  const content =
+    uiTabState.active === 'students'
+      ? `<div class="grid gap-4 grid-cols-1" data-student-cards>${studentCards}</div>`
+      : `<div class="grid gap-4 grid-cols-1">${groupCards}</div>`;
 
   if (onlyUpdateStudents && studentCardsTarget) {
     studentCardsTarget.innerHTML = studentCards;
     return;
   }
 
-  /* ---------- GROUP CARDS (with participants/remaining) ---------- */
-  const groupCards =
-    (rankedGroups || []).length > 0
-      ? rankedGroups
-          .map((g) => {
-            const rank = _toBnRank(g.rank);
-            const avgPct = formatPct2(g.efficiency);
-            const evals = formatInt(g.evalCount);
-            const totalMark = formatNum2(g.totalScore);
-            const maxPossible = formatNum2(g.maxScoreSum);
-            const palette = _getScorePalette(g.efficiency);
-            const barPct = Math.max(0, Math.min(100, g.maxScoreSum > 0 ? (g.totalScore / g.maxScoreSum) * 100 : 0));
-
-            const info3col = `
-              <div class="grid grid-cols-3 gap-2 text-[12px] font-semibold mt-2">
-                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-percent mr-1 text-indigo-500"></i>গড়: ${avgPct}%</div>
-                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-clipboard-check mr-1 text-emerald-500"></i>মূল্যায়ন সংখ্যা: ${evals}টি</div>
-                <div class="rk-chip px-2 py-1 text-gray-800 dark:text-gray-100"><i class="fas fa-scale-balanced mr-1 text-amber-500"></i>মোট নম্বর: ${totalMark} / ${maxPossible}</div>
-              </div>
-            `;
-
-            // participants vs remaining panel
-            const peopleBar = `
-              <div class="mt-2 grid grid-cols-3 gap-2 rk-micro text-gray-700 dark:text-gray-300">
-                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-users mr-1"></i>মোট সদস্য: ${formatInt(
-                  g.groupSize
-                )}</div>
-                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-user-check mr-1 text-emerald-600"></i>অংশগ্রহণ: ${formatInt(
-                  g.participantsCount
-                )}</div>
-                <div class="rk-chip px-2 py-1 text-center"><i class="fas fa-user-clock mr-1 text-rose-500"></i>বাকি: ${formatInt(
-                  g.remainingCount
-                )}</div>
-              </div>
-            `;
-
-            return `
-            <article class="rk-card bg-white dark:bg-gray-900/90 border-0 p-4 text-gray-900 dark:text-gray-100">
-              <div class="flex items-start gap-3">
-                <div class="rk-chip px-3 py-2 text-center">
-                  <div class="text-base font-bold">${rank}</div>
-                  <div class="rk-micro text-gray-500 dark:text-gray-400">গ্রুপ র‍্যাঙ্ক</div>
-                </div>
-
-                <div class="min-w-0 flex-1">
-                  <h4 class="font-semibold truncate" title="${_formatLabel(g.groupName)}">${_formatLabel(
-              g.groupName
-            )}</h4>
-
-                  ${info3col}
-                  ${peopleBar}
-
-                  <div class="mt-3">
-                    <div class="w-full h-2.5 rounded-full bg-gray-200 dark:bg-gray-700/60 overflow-hidden">
-                      <div class="h-full rounded-full" style="width:${barPct}%; background:${palette.solid};"></div>
-                    </div>
-                   
-                  </div>
-
-                 
-                </div>
-
-                <div class="flex flex-col items-center gap-2">
-                  ${_buildCircularMeter(g.efficiency, palette, 78)}
-                  <span class="rk-chip px-2 py-0.5 rk-micro text-gray-800 dark:text-gray-100">Group Avg%</span>
-                </div>
-              </div>
-            </article>
-            `;
-          })
-          .join('')
-      : `<div class="rk-card p-4 text-gray-700 dark:text-gray-300">গ্রুপ র‍্যাঙ্কিং প্রদর্শনের মতো তথ্য পাওয়া যায়নি।</div>`;
-
+  // Full repaint
+  uiManager.clearContainer(elements.studentRankingListContainer);
   elements.studentRankingListContainer.innerHTML = `
-    <div class="space-y-8">
-      ${summary}
-
-      <!-- Students -->
-      <section class="space-y-4">
-        <header class="px-4 py-3 rk-surface text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
-          <h3 class="font-semibold">শিক্ষার্থী র‍্যাঙ্কিং</h3>
-          <p class="rk-micro text-gray-500 dark:text-gray-400">প্রাধান্য: Average% → মূল্যায়ন সংখ্যা → Total → Max → Latest</p>
-        </header>
-        ${studentSearchPanel}
-        <div class="grid gap-4 grid-cols-1" data-student-cards>
-          ${studentCards}
-        </div>
-      </section>
-
-      <!-- Groups -->
-      <section class="space-y-3">
-        <header class="px-4 py-3 rk-surface text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900/90">
-          <h3 class="font-semibold">গ্রুপ র‍্যাঙ্কিং</h3>
-          <p class="rk-micro text-gray-500 dark:text-gray-400">একই নিয়ম—Average% → মূল্যায়ন সংখ্যা → Total → Max → Latest</p>
-        </header>
-        <div class="grid gap-4 grid-cols-1">
-          ${groupCards}
-        </div>
-      </section>
+    <div class="space-y-4" style="--rk-accent:${paletteNow.solid}; --rk-grad:${paletteNow.grad}; --rk-glow:${paletteNow.shadow};">
+      ${tabbar}
+      ${content}
     </div>
   `;
 
-  if (!onlyUpdateStudents) {
-    _attachStudentSearchListeners();
-  }
+  _attachTabHandlers();
+  _attachStudentSearchListeners(); // harmless if disabled
 }
 
-/* ---------------- search helpers ---------------- */
+/* ---------------- search + tab handlers ---------------- */
+
+function _attachTabHandlers() {
+  if (!elements.studentRankingListContainer) return;
+  const container = elements.studentRankingListContainer;
+
+  const tabBtns = Array.from(container.querySelectorAll('.rk-tab'));
+  tabBtns.forEach((btn) => {
+    uiManager.addListener(btn, 'click', () => {
+      const tab = btn.getAttribute('data-tab');
+      if (!tab || (tab !== 'students' && tab !== 'groups')) return;
+      if (uiTabState.active === tab) return;
+      uiTabState.active = tab;
+
+      // Repaint full to update accent + disabled states
+      _renderRankingList(
+        cachedRankingData.rankedStudents,
+        cachedRankingData.rankedGroups,
+        cachedRankingData.groups,
+        cachedRankingData.students,
+        { onlyUpdateStudents: false }
+      );
+    });
+  });
+}
 
 function _attachStudentSearchListeners() {
   if (!elements.studentRankingListContainer) return;
@@ -630,15 +625,21 @@ function _attachStudentSearchListeners() {
   const nameInput = elements.studentRankingListContainer.querySelector('#studentSearchName');
   const rollInput = elements.studentRankingListContainer.querySelector('#studentSearchRoll');
 
+  const enabled = uiTabState.active === 'students';
+
   if (nameInput) {
     elements.studentSearchNameInput = nameInput;
+    nameInput.disabled = !enabled;
     uiManager.addListener(nameInput, 'input', (event) => {
+      if (!enabled) return;
       _handleStudentSearchChange('name', event.target.value || '');
     });
   }
   if (rollInput) {
     elements.studentSearchRollInput = rollInput;
+    rollInput.disabled = !enabled;
     uiManager.addListener(rollInput, 'input', (event) => {
+      if (!enabled) return;
       _handleStudentSearchChange('roll', event.target.value || '');
     });
   }
@@ -653,6 +654,7 @@ function _handleStudentSearchChange(field, rawValue) {
 }
 
 function _rerenderStudentCardsWithFilters() {
+  if (uiTabState.active !== 'students') return;
   if (!cachedRankingData.rankedStudents || cachedRankingData.rankedStudents.length === 0) return;
   _renderRankingList(
     cachedRankingData.rankedStudents,
@@ -683,6 +685,8 @@ function _filterStudentsForSearch(rankedStudents = []) {
   });
 }
 
+/* ---------------- helpers ---------------- */
+
 const BN_TO_EN_DIGITS = {
   '০': '0',
   '১': '1',
@@ -702,10 +706,8 @@ function _normalizeRollString(value) {
     .toString()
     .trim()
     .replace(/\s+/g, '')
-    .replace(/[০-৯]/g, (digit) => BN_TO_EN_DIGITS[digit] || digit);
+    .replace(/[০-৯]/g, (d) => BN_TO_EN_DIGITS[d] || d);
 }
-
-/* ---------------- helpers ---------------- */
 
 function _formatLabel(value) {
   if (value === null || value === undefined) return '';
@@ -726,70 +728,52 @@ function _escapeHtml(value) {
 
 function _getScorePalette(score) {
   const n = Number(score) || 0;
-  if (n >= 85) return { solid: '#22c55e', shadow: 'rgba(34,197,94,0.28)' };
-  if (n >= 70) return { solid: '#0ea5e9', shadow: 'rgba(14,165,233,0.25)' };
-  if (n >= 55) return { solid: '#f59e0b', shadow: 'rgba(245,158,11,0.25)' };
-  return { solid: '#f43f5e', shadow: 'rgba(244,63,94,0.25)' };
-}
-
-const ROLE_BADGE_META = {
-  'team-leader': {
-    label: 'টিম লিডার',
-    icon: 'fa-crown',
-    className:
-      'bg-amber-100 text-amber-900 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-50 dark:border-amber-400/30',
-  },
-  'time-keeper': {
-    label: 'টাইম কিপার',
-    icon: 'fa-stopwatch',
-    className:
-      'bg-sky-100 text-sky-900 border border-sky-200 dark:bg-sky-500/20 dark:text-sky-50 dark:border-sky-400/30',
-  },
-  reporter: {
-    label: 'রিপোর্টার',
-    icon: 'fa-pen-nib',
-    className:
-      'bg-purple-100 text-purple-900 border border-purple-200 dark:bg-purple-500/20 dark:text-purple-50 dark:border-purple-400/30',
-  },
-  'resource-manager': {
-    label: 'রিসোর্স ম্যানেজার',
-    icon: 'fa-box-open',
-    className:
-      'bg-emerald-100 text-emerald-900 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-50 dark:border-emerald-400/30',
-  },
-  'peace-maker': {
-    label: 'পিস মেকার',
-    icon: 'fa-dove',
-    className:
-      'bg-rose-100 text-rose-900 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-50 dark:border-rose-400/30',
-  },
-};
-
-function _renderRoleBadge(roleCode) {
-  const role = (roleCode || '').toString().trim();
-  if (!role) return '';
-  const meta =
-    ROLE_BADGE_META[role] || {
-      label: role,
-      icon: 'fa-id-badge',
-      className:
-        'bg-gray-100 text-gray-800 border border-gray-200 dark:bg-gray-700/40 dark:text-gray-100 dark:border-gray-600/50',
+  if (n >= 85) {
+    return {
+      name: 'green',
+      solid: '#16a34a',
+      shadow: 'rgba(22,163,74,.35)',
+      grad: 'linear-gradient(90deg,#16a34a 0%,#22c55e 40%,#86efac 100%)',
     };
-  const label = _formatLabel(meta.label || role);
-  return `<span class="rk-chip px-2 py-0.5 rk-micro font-semibold ${meta.className}"><i class="fas ${meta.icon} mr-1"></i>${label}</span>`;
+  }
+  if (n >= 70) {
+    return {
+      name: 'sky',
+      solid: '#0284c7',
+      shadow: 'rgba(2,132,199,.30)',
+      grad: 'linear-gradient(90deg,#0284c7 0%,#0ea5e9 40%,#7dd3fc 100%)',
+    };
+  }
+  if (n >= 55) {
+    return {
+      name: 'amber',
+      solid: '#d97706',
+      shadow: 'rgba(217,119,6,.35)',
+      grad: 'linear-gradient(90deg,#d97706 0%,#f59e0b 40%,#facc15 100%)',
+    };
+  }
+  return {
+    name: 'rose',
+    solid: '#e11d48',
+    shadow: 'rgba(225,29,72,.40)',
+    grad: 'linear-gradient(90deg,#e11d48 0%,#f43f5e 40%,#fb7185 100%)',
+  };
 }
 
-/** compact circular meter */
-function _buildCircularMeter(percent, palette, size = 78) {
+function _buildCircularMeter(percent, palette, size = 72) {
   const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
   const display = helpers?.convertToBanglaNumber
     ? helpers.convertToBanglaNumber(clamped.toFixed(2))
     : clamped.toFixed(2);
-  const d = typeof size === 'number' ? size : 78;
+  const d = typeof size === 'number' ? size : 72;
   return `
     <div class="relative flex items-center justify-center" style="width:${d}px;height:${d}px;">
-      <div class="absolute inset-0 rounded-full" style="background: conic-gradient(${palette.solid} ${clamped}%, rgba(0,0,0,0.08) ${clamped}% 100%);"></div>
-      <div class="absolute inset-[18%] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center" style="box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 8px 18px ${palette.shadow};">
+      <div class="absolute inset-0 rounded-full"
+           style="background: conic-gradient(${palette.solid} ${clamped}%,
+                                             rgba(0,0,0,0.08) ${clamped}% 100%);
+                  filter: drop-shadow(0 6px 16px ${palette.shadow});">
+      </div>
+      <div class="rk-meter-outer absolute inset-[18%] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center">
         <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">${display}%</span>
       </div>
     </div>
@@ -798,20 +782,8 @@ function _buildCircularMeter(percent, palette, size = 78) {
 
 function _toBnRank(n) {
   const num = Number(n) || 0;
-  const ordinalMap = {
-    1: '১ম',
-    2: '২য়',
-    3: '৩য়',
-    4: '৪র্থ',
-    5: '৫ম',
-    6: '৬ষ্ঠ',
-    7: '৭ম',
-    8: '৮ম',
-    9: '৯ম',
-    10: '১০ম',
-  };
+  const ordinalMap = { 1: '১ম', 2: '২য়', 3: '৩য়', 4: '৪র্থ', 5: '৫ম', 6: '৬ষ্ঠ', 7: '৭ম', 8: '৮ম', 9: '৯ম', 10: '১০ম' };
   if (ordinalMap[num]) return `${ordinalMap[num]} র‍্যাঙ্ক`;
-
   const raw = `${num}`;
   const bnNumber = helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(raw) : raw;
   return `${bnNumber}তম র‍্যাঙ্ক`;
