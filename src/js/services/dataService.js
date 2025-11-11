@@ -12,6 +12,32 @@ const CACHE_KEYS = {
 };
 const DEFAULT_CACHE_DURATION_MINUTES = 5;
 
+// --- Local Utility Helpers ---
+function normalizeString(value) {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number') return String(value).trim();
+  return '';
+}
+
+function normalizeName(value) {
+  const normalized = normalizeString(value);
+  return normalized ? normalized.toLowerCase() : '';
+}
+
+function hasCachedNameConflict(cacheKey, normalizedName, excludeId = null) {
+  if (!normalizedName) return false;
+  const cached = cacheManager.get(cacheKey);
+  if (!Array.isArray(cached) || cached.length === 0) return false;
+  return cached.some((item) => {
+    if (!item || (excludeId && item.id === excludeId)) return false;
+    const candidate =
+      typeof item.nameLower === 'string' && item.nameLower
+        ? item.nameLower
+        : normalizeName(item.name);
+    return candidate === normalizedName;
+  });
+}
+
 // --- Generic Helper Functions ---
 async function loadData(collectionName, cacheKey, options = {}) {
   const cachedData = cacheManager.get(cacheKey);
@@ -88,10 +114,23 @@ async function deleteDocument(collectionName, docId, cacheKey) {
 
 // Groups
 export const loadGroups = () => loadData('groups', CACHE_KEYS.GROUPS, { orderByField: 'name' });
-export const addGroup = (data) =>
-  addDocument('groups', { ...data, nameLower: data.name.toLowerCase() }, CACHE_KEYS.GROUPS); // Add nameLower
-export const updateGroup = (id, data) =>
-  updateDocument('groups', id, { ...data, nameLower: data.name.toLowerCase() }, CACHE_KEYS.GROUPS); // Update nameLower
+export const addGroup = (data = {}) => {
+  const name = normalizeString(data.name);
+  if (!name) throw new Error('Group name is required.');
+  const payload = { ...data, name, nameLower: normalizeName(name) };
+  return addDocument('groups', payload, CACHE_KEYS.GROUPS);
+};
+export const updateGroup = (id, data = {}) => {
+  if (!id) throw new Error('Group ID required for update.');
+  const payload = { ...data };
+  if (Object.prototype.hasOwnProperty.call(data, 'name')) {
+    const name = normalizeString(data.name);
+    if (!name) throw new Error('Group name cannot be empty.');
+    payload.name = name;
+    payload.nameLower = normalizeName(name);
+  }
+  return updateDocument('groups', id, payload, CACHE_KEYS.GROUPS);
+};
 export const deleteGroup = (id) => deleteDocument('groups', id, CACHE_KEYS.GROUPS);
 
 // Students
@@ -118,12 +157,20 @@ export const deleteStudent = (id) => deleteDocument('students', id, CACHE_KEYS.S
 
 // Tasks
 export const loadTasks = () => loadData('tasks', CACHE_KEYS.TASKS, { orderByField: 'date', orderByDirection: 'desc' });
-export const addTask = (data) =>
-  addDocument('tasks', { ...data, nameLower: data.name.toLowerCase() }, CACHE_KEYS.TASKS); // Add nameLower
+export const addTask = (data = {}) => {
+  const name = normalizeString(data.name);
+  if (!name) throw new Error('Task name is required.');
+  const payload = { ...data, name, nameLower: normalizeName(name) };
+  return addDocument('tasks', payload, CACHE_KEYS.TASKS);
+};
 export const updateTask = (id, data = {}) => {
+  if (!id) throw new Error('Task ID required for update.');
   const payload = { ...data };
-  if (typeof data.name === 'string') {
-    payload.nameLower = data.name.toLowerCase();
+  if (Object.prototype.hasOwnProperty.call(data, 'name')) {
+    const name = normalizeString(data.name);
+    if (!name) throw new Error('Task name cannot be empty.');
+    payload.name = name;
+    payload.nameLower = normalizeName(name);
   }
   return updateDocument('tasks', id, payload, CACHE_KEYS.TASKS);
 };
@@ -196,14 +243,16 @@ export async function getAdminData(userId) {
 
 // --- Specific Queries ---
 export async function checkStudentUniqueness(roll, academicGroup, excludeId = null) {
-  if (!roll || !academicGroup) {
+  const normalizedRoll = normalizeString(roll);
+  const normalizedGroup = normalizeString(academicGroup);
+  if (!normalizedRoll || !normalizedGroup) {
     throw new Error('Roll and Academic Group required.');
   }
   try {
     let query = db
       .collection('students')
-      .where('roll', '==', roll.trim())
-      .where('academicGroup', '==', academicGroup.trim())
+      .where('roll', '==', normalizedRoll)
+      .where('academicGroup', '==', normalizedGroup)
       .limit(1);
     const snapshot = await query.get();
     if (snapshot.empty) return false;
@@ -220,8 +269,11 @@ export async function checkStudentUniqueness(roll, academicGroup, excludeId = nu
 }
 
 export const checkGroupNameExists = async (name, excludeId = null) => {
-  const normalizedName = name.trim().toLowerCase();
+  const normalizedName = normalizeName(name);
   if (!normalizedName) return false;
+  if (hasCachedNameConflict(CACHE_KEYS.GROUPS, normalizedName, excludeId)) {
+    return true;
+  }
   try {
     // Requires Firestore index: groups / nameLower ASC
     let query = db.collection('groups').where('nameLower', '==', normalizedName).limit(1);
@@ -248,8 +300,11 @@ export const checkGroupNameExists = async (name, excludeId = null) => {
  */
 export const checkTaskNameExists = async (name, excludeId = null) => {
   // <-- ADDED THIS FUNCTION
-  const normalizedName = name.trim().toLowerCase();
+  const normalizedName = normalizeName(name);
   if (!normalizedName) return false;
+  if (hasCachedNameConflict(CACHE_KEYS.TASKS, normalizedName, excludeId)) {
+    return true;
+  }
   try {
     // Requires Firestore index: tasks / nameLower ASC
     let query = db.collection('tasks').where('nameLower', '==', normalizedName).limit(1);

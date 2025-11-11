@@ -379,12 +379,6 @@ class SmartGroupEvaluator {
 
 // --- Application Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
-  if (typeof firebase === 'undefined' || typeof firebase.app !== 'function') {
-    console.error('❌ Firebase core library not loaded!');
-    document.body.innerHTML =
-      '<div style="color: red; padding: 20px; text-align: center; font-size: 1.2rem;">Firebase লোড হতে ব্যর্থ হয়েছে। স্ক্রিপ্ট ট্যাগ পরীক্ষা করুন।</div>';
-    return;
-  }
   try {
     const app = new SmartGroupEvaluator();
     window.smartEvaluator = app; // Make instance globally accessible

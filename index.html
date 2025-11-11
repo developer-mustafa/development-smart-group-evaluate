@@ -8,6 +8,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
@@ -19,48 +21,8 @@
       referrerpolicy="no-referrer"
     />
 
-    <!-- Tailwind, fonts/icons -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="main.css" />
+    <!-- Tailwind compiled via Vite -->
 
-    <!-- Firebase v8 (as you already use elsewhere) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-    <!-- jsPDF + AutoTable (keep only one set) -->
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-
-    <!-- Chart.js v4 + plugins -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
-    <!-- Other libs you use -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-
-    <script>
-      // Tailwind config
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: {
-              bengali: ['"Noto Sans Bengali"', 'Hind Siliguri', 'SolaimanLipi', 'Arial', 'sans-serif'],
-            },
-          },
-        },
-      };
-      // Chart plugins (v4) — register when DOM ready
-      document.addEventListener('DOMContentLoaded', () => {
-        if (typeof ChartDataLabels !== 'undefined') Chart.register(ChartDataLabels);
-        if (typeof ChartZoom !== 'undefined') Chart.register(ChartZoom);
-      });
-    </script>
   </head>
 
   <body
@@ -841,25 +803,39 @@
               </div>
             </div>
             <div class="card">
-              <div class="card-header">শিক্ষার্থী ফিল্টার</div>
-              <div class="card-body grid grid-cols-1 md:grid-cols-3 gap-4">
-                <select id="membersFilterGroup" class="form-select" aria-label="Filter members by group">
-                  <option value="all">সকল গ্রুপ</option>
-                </select>
-                <select
-                  id="membersFilterAcademicGroup"
-                  class="form-select"
-                  aria-label="Filter members by academic group"
-                >
-                  <option value="all">সকল একাডেমিক গ্রুপ</option>
-                </select>
-                <input
-                  id="studentSearchInput"
-                  type="search"
-                  placeholder="নাম/রোল/গ্রুপ..."
-                  class="form-input"
-                  aria-label="Search members"
-                />
+              <div class="card-header">ফিল্টার ও অনুসন্ধান</div>
+              <div class="card-body grid grid-cols-1 gap-4 md:grid-cols-3 text-sm font-medium text-gray-600 dark:text-gray-300">
+                <label class="flex flex-col gap-2">
+                  <span>গ্রুপ নির্বাচন</span>
+                  <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-blue-500 dark:text-blue-300">
+                      <i class="fas fa-layer-group"></i>
+                    </span>
+                    <select id="membersFilterGroup" class="form-select pl-10" aria-label="Filter members by group">
+                      <option value="all">সকল গ্রুপ</option>
+                    </select>
+                  </div>
+                </label>
+                <label class="flex flex-col gap-2">
+                  <span>একাডেমিক গ্রুপ</span>
+                  <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-500 dark:text-emerald-300">
+                      <i class="fas fa-graduation-cap"></i>
+                    </span>
+                    <select id="membersFilterAcademicGroup" class="form-select pl-10" aria-label="Filter members by academic group">
+                      <option value="all">সকল একাডেমিক গ্রুপ</option>
+                    </select>
+                  </div>
+                </label>
+                <label class="flex flex-col gap-2">
+                  <span>সদস্য খুঁজুন</span>
+                  <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-purple-500 dark:text-purple-300">
+                      <i class="fas fa-magnifying-glass"></i>
+                    </span>
+                    <input id="studentSearchInput" type="search" placeholder="উদাহরণ: নাম, রোল, গ্রুপ" class="form-input pl-10" aria-label="Search members" />
+                  </div>
+                </label>
               </div>
             </div>
             <div class="card">
@@ -1431,9 +1407,7 @@
         </div>
       </div>
     </div>
-    <script type="module" src="js/app.js"></script>
-    <script type="module" src="js/components/student-result-details.js"></script>
-    <script type="module" src="js/components/group-result-details.js"></script>
+    <script type="module" src="/src/main.js"></script>
 
     <!-- Student Detail Modal (scrollable, with table/chart toggle) -->
     <div id="studentDetailModal" class="fixed inset-0 z-[9998] hidden">

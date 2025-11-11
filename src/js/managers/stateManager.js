@@ -127,11 +127,11 @@ class StateManager {
   updateFilters(sectionKey, filterUpdates) {
     if (!(sectionKey in this.state.filters)) {
       console.warn(`Attempted to update filters for unknown section: ${sectionKey}`);
-      return;
+      return false;
     }
     if (typeof filterUpdates !== 'object' || filterUpdates === null) {
       console.warn(`Invalid filterUpdates provided for section ${sectionKey}:`, filterUpdates);
-      return;
+      return false;
     }
     const sectionFilters = this.state.filters[sectionKey];
     let changed = false;
@@ -145,7 +145,7 @@ class StateManager {
         console.warn(`Attempted to update unknown filter key "${key}" in section "${sectionKey}"`);
       }
     }
-    // if (changed) console.log(`Filters updated for section ${sectionKey}:`, sectionFilters);
+    return changed;
   }
 
   resetAllFilters() {

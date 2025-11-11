@@ -34,6 +34,14 @@ const elements = {
 let membersSearchDebouncer;
 let cardsSearchDebouncer;
 
+const renderScopeKeys = {
+  membersList: 'members-list',
+  studentCards: 'student-cards',
+};
+
+let lastGroupOptionsSignature = '';
+let lastAcademicOptionsSignature = '';
+
 const BADGE_BASE_CLASS = 'inline-flex items-center px-2 py-2 text-xs font-semibold rounded-full border';
 
 const ROLE_BADGE_META = {
@@ -208,6 +216,64 @@ function _getAcademicKey(academicGroup) {
   return 'other';
 }
 
+function _safeLower(value) {
+  if (typeof value === 'string') return value.toLowerCase();
+  if (value === null || value === undefined) return '';
+  return String(value).toLowerCase();
+}
+
+function _normalizeTimestampValue(value) {
+  if (!value) return '';
+  if (typeof value === 'number' || typeof value === 'string') return String(value);
+  if (typeof value === 'object') {
+    if (typeof value.toMillis === 'function') {
+      try {
+        return String(value.toMillis());
+      } catch {
+        /* ignore */
+      }
+    }
+    if (typeof value.seconds === 'number') {
+      const nanos = typeof value.nanoseconds === 'number' ? value.nanoseconds : 0;
+      return `${value.seconds}:${nanos}`;
+    }
+  }
+  return JSON.stringify(value);
+}
+
+function _buildStudentRenderSignature(students, filters, scopeKey) {
+  const canonical = [...students].sort((a, b) => {
+    const groupCompare = (a.groupId || '').localeCompare(b.groupId || '');
+    if (groupCompare !== 0) return groupCompare;
+    const rollCompare = `${a.roll ?? ''}`.localeCompare(`${b.roll ?? ''}`, undefined, { numeric: true });
+    if (rollCompare !== 0) return rollCompare;
+    return (a.name || '').localeCompare(b.name || '', 'bn');
+  });
+  const studentPayload = canonical
+    .map((student) => {
+      const rollValue = student.roll === undefined || student.roll === null ? '' : `${student.roll}`;
+      return [
+        student.id || '',
+        student.name || '',
+        rollValue,
+        student.groupId || '',
+        student.academicGroup || '',
+        student.session || '',
+        student.gender || '',
+        student.role || '',
+        student.contact || '',
+        _normalizeTimestampValue(student.updatedAt),
+      ].join('|');
+    })
+    .join('~');
+  const filterPayload = JSON.stringify({
+    group: filters?.groupFilter || 'all',
+    academic: filters?.academicFilter || 'all',
+    search: (filters?.searchTerm || '').toLowerCase(),
+  });
+  return `${scopeKey}::${filterPayload}::${studentPayload}`;
+}
+
 /**
  * Members কম্পোনেন্ট শুরু করে (Initialize)।
  */
@@ -317,18 +383,21 @@ function _setupEventListeners() {
 
     // Filters (Members List)
     uiManager.addListener(elements.membersFilterGroup, 'change', (e) => {
-      stateManager.updateFilters('membersList', { groupFilter: e.target.value });
-      _renderStudentsList();
+      if (stateManager.updateFilters('membersList', { groupFilter: e.target.value })) {
+        _renderStudentsList();
+      }
     });
     uiManager.addListener(elements.membersFilterAcademicGroup, 'change', (e) => {
-      stateManager.updateFilters('membersList', { academicFilter: e.target.value });
-      _renderStudentsList();
+      if (stateManager.updateFilters('membersList', { academicFilter: e.target.value })) {
+        _renderStudentsList();
+      }
     });
     uiManager.addListener(elements.studentSearchInput, 'input', (e) => {
       const searchTerm = e.target.value.trim();
       membersSearchDebouncer(() => {
-        stateManager.updateFilters('membersList', { searchTerm: searchTerm });
-        _renderStudentsList();
+        if (stateManager.updateFilters('membersList', { searchTerm })) {
+          _renderStudentsList();
+        }
       });
     });
 
@@ -345,18 +414,21 @@ function _setupEventListeners() {
   if (elements.cardsPage) {
     // Filters (Cards View)
     uiManager.addListener(elements.cardsFilterGroup, 'change', (e) => {
-      stateManager.updateFilters('studentCards', { groupFilter: e.target.value });
-      _renderStudentCardsList();
+      if (stateManager.updateFilters('studentCards', { groupFilter: e.target.value })) {
+        _renderStudentCardsList();
+      }
     });
     uiManager.addListener(elements.cardsFilterAcademicGroup, 'change', (e) => {
-      stateManager.updateFilters('studentCards', { academicFilter: e.target.value });
-      _renderStudentCardsList();
+      if (stateManager.updateFilters('studentCards', { academicFilter: e.target.value })) {
+        _renderStudentCardsList();
+      }
     });
     uiManager.addListener(elements.allStudentsSearchInput, 'input', (e) => {
       const searchTerm = e.target.value.trim();
       cardsSearchDebouncer(() => {
-        stateManager.updateFilters('studentCards', { searchTerm: searchTerm });
-        _renderStudentCardsList();
+        if (stateManager.updateFilters('studentCards', { searchTerm })) {
+          _renderStudentCardsList();
+        }
       });
     });
   }
@@ -434,38 +506,45 @@ function _handleStudentCardActivation(event) {
  * ফিল্টার ড্রপডাউনগুলো (গ্রুপ ও একাডেমিক গ্রুপ) পপুলেট করে।
  */
 export function populateFilters() {
-  // গ্রুপ ড্রপডাউন পপুলেট করি (groups কম্পোনেন্ট থেকে)
-  const groupSelectIds = [];
-  if (elements.studentGroupInput) groupSelectIds.push('studentGroupInput');
-  if (elements.membersFilterGroup) groupSelectIds.push('membersFilterGroup');
-  if (elements.cardsFilterGroup) groupSelectIds.push('cardsFilterGroup');
+  const groups = stateManager.get('groups') || [];
+  const groupSignature = JSON.stringify(groups.map((g) => `${g.id || ''}:${g.name || ''}`));
 
-  // Access groups component via app instance
-  if (app.components.groups && app.components.groups.populateGroupSelects) {
-    app.components.groups.populateGroupSelects(groupSelectIds, 'সকল গ্রুপ');
-    // Override default text for the add student form
-    if (elements.studentGroupInput) {
-      app.components.groups.populateGroupSelects(['studentGroupInput'], 'গ্রুপ নির্বাচন করুন');
-      // Make "Select..." option disabled
-      if (elements.studentGroupInput.options[0]) elements.studentGroupInput.options[0].disabled = true;
+  if (groupSignature !== lastGroupOptionsSignature) {
+    lastGroupOptionsSignature = groupSignature;
+    const filterSelectIds = [];
+    if (elements.membersFilterGroup) filterSelectIds.push('membersFilterGroup');
+    if (elements.cardsFilterGroup) filterSelectIds.push('cardsFilterGroup');
+
+    if (app.components.groups && app.components.groups.populateGroupSelects) {
+      if (filterSelectIds.length) {
+        app.components.groups.populateGroupSelects(filterSelectIds, 'সমস্ত গ্রুপ');
+      }
+      if (elements.studentGroupInput) {
+        app.components.groups.populateGroupSelects(['studentGroupInput'], 'একটি গ্রুপ নির্বাচন করুন');
+        if (elements.studentGroupInput.options[0]) {
+          elements.studentGroupInput.options[0].disabled = true;
+        }
+      }
+    } else if (filterSelectIds.length || elements.studentGroupInput) {
+      console.warn('Members: Groups component not available to populate group selects.');
     }
-  } else {
-    console.warn('Members: Groups component not available to populate group selects.');
   }
 
-  // একাডেমিক গ্রুপ ড্রপডাউন পপুলেট করি (শিক্ষার্থীদের ডেটা থেকে)
-  const students = stateManager.get('students');
+  const students = stateManager.get('students') || [];
   const academicGroups = [...new Set(students.map((s) => s.academicGroup).filter(Boolean))].sort((a, b) =>
     (a || '').localeCompare(b || '', 'bn')
   );
-  const academicOptions = academicGroups.map((ag) => ({ value: ag, text: ag }));
-
-  const academicSelects = [elements.membersFilterAcademicGroup, elements.cardsFilterAcademicGroup];
-  academicSelects.forEach((select) => {
-    if (select) {
-      uiManager.populateSelect(select, academicOptions, 'সকল একাডেমিক গ্রুপ');
-    }
-  });
+  const academicSignature = JSON.stringify(academicGroups);
+  if (academicSignature !== lastAcademicOptionsSignature) {
+    lastAcademicOptionsSignature = academicSignature;
+    const academicOptions = academicGroups.map((ag) => ({ value: ag, text: ag }));
+    const academicSelects = [elements.membersFilterAcademicGroup, elements.cardsFilterAcademicGroup];
+    academicSelects.forEach((select) => {
+      if (select) {
+        uiManager.populateSelect(select, academicOptions, 'সকল একাডেমিক গ্রুপ');
+      }
+    });
+  }
 }
 
 // --- Rendering Logic ---
@@ -479,11 +558,16 @@ function _renderStudentsList() {
 
   const filters = stateManager.getFilterSection('membersList');
   const filteredStudents = _applyFilters(filters);
+  const renderSignature = _buildStudentRenderSignature(filteredStudents, filters, renderScopeKeys.membersList);
+  if (elements.studentsListContainer.dataset.renderSignature === renderSignature) {
+    return;
+  }
 
   uiManager.clearContainer(elements.studentsListContainer);
 
   if (!filteredStudents.length) {
     uiManager.displayEmptyMessage(elements.studentsListContainer, 'কোনো শিক্ষার্থী পাওয়া যায়নি।');
+    elements.studentsListContainer.dataset.renderSignature = renderSignature;
     return;
   }
 
@@ -616,6 +700,7 @@ function _renderStudentsList() {
     .join('');
 
   elements.studentsListContainer.innerHTML = sections;
+  elements.studentsListContainer.dataset.renderSignature = renderSignature;
 }
 
 /**
@@ -628,6 +713,11 @@ function _renderStudentCardsList() {
   const filters = stateManager.getFilterSection('studentCards');
   const filteredStudents = _applyFilters(filters);
 
+  const renderSignature = _buildStudentRenderSignature(filteredStudents, filters, renderScopeKeys.studentCards);
+  if (elements.allStudentsCardsContainer.dataset.renderSignature === renderSignature) {
+    return;
+  }
+
   filteredStudents.sort(
     (a, b) => (a.groupId || '').localeCompare(b.groupId || '') || (a.name || '').localeCompare(b.name || '', 'bn')
   );
@@ -635,6 +725,7 @@ function _renderStudentCardsList() {
 
   if (!filteredStudents.length) {
     uiManager.displayEmptyMessage(elements.allStudentsCardsContainer, 'কোনো শিক্ষার্থী পাওয়া যায়নি।');
+    elements.allStudentsCardsContainer.dataset.renderSignature = renderSignature;
     return;
   }
 
@@ -910,6 +1001,7 @@ function _renderStudentCardsList() {
       ${cards}
     </div>
   `;
+  elements.allStudentsCardsContainer.dataset.renderSignature = renderSignature;
 }
 
 /**
@@ -919,20 +1011,20 @@ function _renderStudentCardsList() {
  * @private
  */
 function _applyFilters(filters) {
-  const students = stateManager.get('students');
-  if (!students) return []; // Return empty array if state not ready
+  const students = stateManager.get('students') || [];
 
   const { groupFilter, academicFilter, searchTerm } = filters || {};
-  const term = (searchTerm || '').toLowerCase();
+  const term = _safeLower(searchTerm || '');
 
   return students.filter((student) => {
     const matchesGroup = !groupFilter || groupFilter === 'all' || student.groupId === groupFilter;
-    const matchesAcademic = !academicFilter || academicFilter === 'all' || student.academicGroup === academicFilter;
+    const matchesAcademic =
+      !academicFilter || academicFilter === 'all' || student.academicGroup === academicFilter;
     const matchesSearch =
       !term ||
-      (student.name || '').toLowerCase().includes(term) ||
-      (student.roll || '').toLowerCase().includes(term) ||
-      (student.academicGroup || '').toLowerCase().includes(term);
+      _safeLower(student.name).includes(term) ||
+      _safeLower(student.roll).includes(term) ||
+      _safeLower(student.academicGroup).includes(term);
     return matchesGroup && matchesAcademic && matchesSearch;
   });
 }

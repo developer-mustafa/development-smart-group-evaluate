@@ -1,4 +1,6 @@
-﻿/* global window, document */
+﻿import { firebase } from '../config/firebase.js';
+
+/* global window, document */
 (() => {
   'use strict';
 
@@ -217,7 +219,7 @@
   // ---------- Firestore latest role (optional; no-op if Firebase not present) ----------
   async function fetchStudentRoleFromFirestore(studentId) {
     try {
-      const fb = window.firebase || window.Firebase || null;
+      const fb = firebase || window.firebase || window.Firebase || null;
       if (!fb?.firestore) return null;
       const db = fb.firestore();
       const direct = await db.collection('students').doc(String(studentId)).get();

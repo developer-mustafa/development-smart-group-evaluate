@@ -2733,16 +2733,30 @@ async function _createPdfFromElement(element, fileName) {
   uiManager.showLoading('PDF প্রস্তুত করা হচ্ছে...');
   try {
     const canvas = await html2canvas(element, { scale: 2 });
+    const canvasWidth = canvas?.width || 0;
+    const canvasHeight = canvas?.height || 0;
+
+    if (!canvasWidth || !canvasHeight) {
+      uiManager.showToast('PDF তৈরির জন্য লক্ষ্য এলাকাটি খালি।', 'error');
+      return;
+    }
+
     const imgData = canvas.toDataURL('image/png');
     const { jsPDF } = jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = doc.internal.pageSize.getWidth();
     const pdfHeight = doc.internal.pageSize.getHeight();
-    const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
-    const imgWidth = canvas.width * ratio;
-    const imgHeight = canvas.height * ratio;
-    const x = (pdfWidth - imgWidth) / 2;
-    const y = 15; // Top margin
+
+    const ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
+    const imgWidth = Math.max(canvasWidth * ratio, 1);
+    const imgHeight = Math.max(canvasHeight * ratio, 1);
+    const x = Math.max((pdfWidth - imgWidth) / 2, 0);
+    const y = 12; // Top margin
+
+    if (![imgWidth, imgHeight, x, y].every(Number.isFinite)) {
+      uiManager.showToast('PDF তৈরির সময় গাণিতিক ত্রুটি হয়েছে।', 'error');
+      return;
+    }
 
     doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
     doc.save(fileName);
