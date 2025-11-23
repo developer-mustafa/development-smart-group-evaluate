@@ -8,6 +8,7 @@ const elements = {};
 const DEFAULT_ASSIGNMENT_HOUR = 11;
 const DEFAULT_ASSIGNMENT_MINUTE = 55;
 const DEFAULT_ASSIGNMENT_SECOND = 0;
+const MIN_EVALUATIONS_FOR_RANKING = 1;
 const KNOWN_TASK_TIME_KEYS = [
   'time',
   'scheduledTime',
@@ -72,7 +73,7 @@ export function render() {
     // Render dynamic lists
     _renderTopGroups(stats.groupPerformanceData);
     _renderAcademicGroups(stats.academicGroupStats);
-    _renderGroupsRanking(stats.groupPerformanceData);
+    _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
 
     console.log('✅ Dashboard rendered successfully.');
   } catch (error) {
@@ -822,6 +823,7 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
   const pendingRoles = students.filter((s) => !s.role || s.role === '').length;
 
   const groupPerformanceData = _calculateGroupPerformance(groups, students, evaluations, tasks);
+  const groupRankingMeta = _calculateLeaderboardRankingMeta(groups, students, evaluations);
   const validGroupPerformances = groupPerformanceData.filter((g) => g.evalCount > 0);
   const totalOverallScore = validGroupPerformances.reduce((acc, group) => acc + group.averageScore, 0);
   const groupOverallProgress =
@@ -864,6 +866,7 @@ function _calculateStats(groups = [], students = [], tasks = [], evaluations = [
     latestAssignmentAverage,
     assignmentSummaries,
     groupPerformanceData,
+    groupRankingMeta,
     academicGroupStats,
     latestAssignmentSummary,
     assignmentOverview,
@@ -967,6 +970,97 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
       };
     })
     .sort((a, b) => b.averageScore - a.averageScore);
+}
+
+function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluations = []) {
+  if (!Array.isArray(groups) || !Array.isArray(students) || !Array.isArray(evaluations)) {
+    return { list: [], map: new Map() };
+  }
+
+  const studentToGroup = new Map(
+    students.map((student) => [String(student.id), _normalizeGroupId(student.groupId)])
+  );
+  const groupSize = {};
+  students.forEach((student) => {
+    const gid = _normalizeGroupId(student.groupId);
+    groupSize[gid] = (groupSize[gid] || 0) + 1;
+  });
+
+  const groupAgg = {};
+  evaluations.forEach((evaluation) => {
+    const maxScore = parseFloat(evaluation.maxPossibleScore) || 60;
+    const ts =
+      _normalizeTimestamp(evaluation.taskDate) ||
+      _normalizeTimestamp(evaluation.updatedAt) ||
+      _normalizeTimestamp(evaluation.evaluationDate) ||
+      _normalizeTimestamp(evaluation.createdAt);
+    const scores = evaluation.scores || {};
+    const countedGroups = new Set();
+    Object.entries(scores).forEach(([rawStudentId, scoreData]) => {
+      const sid = rawStudentId != null ? String(rawStudentId) : '';
+      const gid = studentToGroup.get(sid) || '__none';
+      const normalizedGroupId = _normalizeGroupId(gid);
+      if (!groupAgg[normalizedGroupId]) {
+        groupAgg[normalizedGroupId] = {
+          evalCount: 0,
+          totalScore: 0,
+          maxScoreSum: 0,
+          latestMs: null,
+          participants: new Set(),
+        };
+      }
+      const rec = groupAgg[normalizedGroupId];
+      if (!countedGroups.has(normalizedGroupId)) {
+        rec.evalCount += 1;
+        countedGroups.add(normalizedGroupId);
+      }
+      rec.totalScore += parseFloat(scoreData?.totalScore) || 0;
+      rec.maxScoreSum += maxScore;
+      rec.participants.add(sid);
+      if (ts) rec.latestMs = rec.latestMs ? Math.max(rec.latestMs, ts) : ts;
+    });
+  });
+
+  const ranked = Object.entries(groupAgg)
+    .map(([gid, agg]) => {
+      if (agg.evalCount < MIN_EVALUATIONS_FOR_RANKING) return null;
+      const efficiency = agg.maxScoreSum > 0 ? (agg.totalScore / agg.maxScoreSum) * 100 : 0;
+      const size = groupSize[gid] || 0;
+      const participantsCount = agg.participants.size;
+      return {
+        groupId: gid,
+        efficiency,
+        evalCount: agg.evalCount,
+        totalScore: agg.totalScore,
+        maxScoreSum: agg.maxScoreSum,
+        latestEvaluationMs: agg.latestMs || 0,
+        participantsCount,
+        groupSize: size,
+        remainingCount: Math.max(0, size - participantsCount),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (b.efficiency !== a.efficiency) return b.efficiency - a.efficiency;
+      if (b.evalCount !== a.evalCount) return b.evalCount - a.evalCount;
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+      if (b.maxScoreSum !== a.maxScoreSum) return b.maxScoreSum - a.maxScoreSum;
+      return (b.latestEvaluationMs || 0) - (a.latestEvaluationMs || 0);
+    });
+
+  ranked.forEach((entry, index) => {
+    entry.rank = index + 1;
+  });
+
+  return {
+    list: ranked,
+    map: new Map(ranked.map((entry) => [entry.groupId, entry])),
+  };
+}
+
+function _normalizeGroupId(value) {
+  if (value === null || value === undefined || value === '') return '__none';
+  return String(value);
 }
 
 function _getEvaluationAveragePercent(evaluation, taskMap) {
@@ -1821,7 +1915,7 @@ function _buildRankCard(data, rank) {
 
 
 /** UPDATED: Renders group ranking list using new Rank Card */
-function _renderGroupsRanking(groupData) {
+function _renderGroupsRanking(groupData, rankingMeta = null) {
   if (!elements.groupsRankingList) return;
   uiManager.clearContainer(elements.groupsRankingList);
 
@@ -1831,18 +1925,26 @@ function _renderGroupsRanking(groupData) {
     return;
   }
 
-  // tie-aware rank (same logic as before)
-  let rank = 0;
-  let lastScore = -1;
-  let lastEvalCount = -1;
+  const normalizedRankingMap =
+    rankingMeta && rankingMeta.map instanceof Map ? rankingMeta.map : new Map();
+  const normalizeId = (value) => _normalizeGroupId(value);
 
-  const cards = evaluatedGroups
-    .map((data, index) => {
-      if (data.averageScore !== lastScore || data.evalCount !== lastEvalCount) {
-        rank = index + 1;
-        lastScore = data.averageScore;
-        lastEvalCount = data.evalCount;
-      }
+  const sortedGroups = [...evaluatedGroups].sort((a, b) => {
+    const aMeta = normalizedRankingMap.get(normalizeId(a.group?.id));
+    const bMeta = normalizedRankingMap.get(normalizeId(b.group?.id));
+    if (aMeta && bMeta) return aMeta.rank - bMeta.rank;
+    if (aMeta) return -1;
+    if (bMeta) return 1;
+    if (b.averageScore !== a.averageScore) return b.averageScore - a.averageScore;
+    if (b.evalCount !== a.evalCount) return b.evalCount - a.evalCount;
+    return (a.groupName || '').localeCompare(b.groupName || '', 'bn');
+  });
+
+  let fallbackRank = 0;
+  const cards = sortedGroups
+    .map((data) => {
+      const meta = normalizedRankingMap.get(normalizeId(data.group?.id));
+      const rank = meta?.rank ?? ++fallbackRank;
       return _buildRankCard(data, rank);
     })
     .join('');

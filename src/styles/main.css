@@ -1240,3 +1240,8 @@ details[open] .prereq-content {
 .dark .soft3d-value {
   text-shadow: none;
 }
+
+/* Ensure Tailwind's hidden utility takes precedence after custom components */
+.hidden {
+  display: none !important;
+}
