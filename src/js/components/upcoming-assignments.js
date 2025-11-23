@@ -230,6 +230,33 @@ function _coerceDate(raw) {
   }
 }
 
+function _buildAssignmentNumberMap(tasks = []) {
+  const enriched =
+    tasks
+      ?.map((task, index) => {
+        const createdAtDate = _coerceDate(task?.createdAt);
+        const fallbackDate = _coerceDate(task?.date);
+        const createdAtTs = createdAtDate?.getTime();
+        const fallbackTs = fallbackDate?.getTime();
+        const timestamp = Number.isFinite(createdAtTs)
+          ? createdAtTs
+          : Number.isFinite(fallbackTs)
+          ? fallbackTs
+          : index;
+        return { id: task?.id, timestamp, fallbackIndex: index };
+      })
+      .filter((entry) => entry.id) || [];
+
+  enriched.sort((a, b) => {
+    if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
+    return a.fallbackIndex - b.fallbackIndex;
+  });
+
+  const map = new Map();
+  enriched.forEach((entry, idx) => map.set(entry.id, idx + 1));
+  return map;
+}
+
 /** If date looks date-only (00:00:00), set local time to 10:20 AM */
 function _applyDefaultTimeIfDateOnly(dateObj) {
   if (!dateObj) return null;
@@ -313,7 +340,7 @@ function _countdownLabel(parts, isStart = true) {
       : `শেষ হতে বাকি: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড`;
   }
   return isStart
-    ? `শুরু হয়েছে: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড আগে`
+    ? `শেষ হয়েছে গত: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড আগে`
     : `শেষ হয়েছে: ${D} দিন ${H} ঘন্টা ${M} মিনিট ${S} সেকেন্ড আগে`;
 }
 
@@ -335,9 +362,10 @@ export function render() {
 
   const tasks = stateManager.get('tasks') || [];
   const evaluations = stateManager.get('evaluations') || [];
+  const assignmentNumberMap = _buildAssignmentNumberMap(tasks);
 
   // Normalize (with 10:20 rule) so status/ISO are correct
-  const normalized = tasks.map((task) => _normalizeTask(task, evaluations));
+  const normalized = tasks.map((task) => _normalizeTask(task, evaluations, assignmentNumberMap));
 
   // Focus-first sorting:
   // upcoming by urgency (remainingMs asc) → ongoing → completed (recent first)
@@ -367,8 +395,14 @@ export function render() {
     return tms(b) - tms(a);
   });
 
-  // Assign running serial in the current sorted view
-  normalized.forEach((t, i) => (t.assignmentNumber = i + 1));
+  const hasStableNumbers = assignmentNumberMap && assignmentNumberMap.size > 0;
+  if (!hasStableNumbers) {
+    normalized.forEach((t, i) => (t.assignmentNumber = i + 1));
+  } else {
+    normalized.forEach((t, i) => {
+      if (!t.assignmentNumber) t.assignmentNumber = i + 1;
+    });
+  }
 
   _renderSummary(normalized);
   _renderAssignments(normalized);
@@ -654,13 +688,21 @@ function _animateToggle(panel, open) {
    Normalize + Status (10:20 rule)
 ========================= */
 
-function _normalizeTask(task, evaluations) {
+function _normalizeTask(task, evaluations, assignmentNumberMap) {
   const raw = _coerceDate(task.date);
   const adjusted = _applyDefaultTimeIfDateOnly(raw) || raw;
 
   const status = _getTaskStatus({ ...task, date: adjusted });
   const dateInfo = _getDateInfo(adjusted);
   const participants = _countParticipants(task.id, evaluations);
+  const stableNumber =
+    assignmentNumberMap instanceof Map ? assignmentNumberMap.get(task.id) : undefined;
+  const derivedNumber =
+    typeof stableNumber === 'number' && Number.isFinite(stableNumber)
+      ? stableNumber
+      : typeof task.assignmentNumber === 'number' && task.assignmentNumber > 0
+      ? task.assignmentNumber
+      : 0;
 
   return {
     id: task.id,
@@ -672,7 +714,7 @@ function _normalizeTask(task, evaluations) {
     startTimeLabel: dateInfo.startTimeLabel,
     description: task.description || '',
     participants,
-    assignmentNumber: task.assignmentNumber,
+    assignmentNumber: derivedNumber,
     dateISO: adjusted ? adjusted.toISOString() : '',
     _dateObj: adjusted,
   };
