@@ -178,12 +178,7 @@ export function render() {
                   অমূল্যায়িত শিক্ষার্থী
                 </div>
               </label>
-              <label class="group relative cursor-pointer select-none">
-                <input type="checkbox" value="absent_task" class="peer sr-only sf-extra-check">
-                <div class="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 text-xs font-medium transition-all peer-checked:bg-rose-50 peer-checked:text-rose-600 peer-checked:border-rose-200 dark:peer-checked:bg-rose-900/30 dark:peer-checked:text-rose-300 dark:peer-checked:border-rose-700/50 hover:bg-gray-100 dark:hover:bg-gray-700">
-                  টাস্ক নম্বর নেই
-                </div>
-              </label>
+             
               <label class="group relative cursor-pointer select-none">
                 <input type="checkbox" value="absent_mcq" class="peer sr-only sf-extra-check">
                 <div class="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 text-xs font-medium transition-all peer-checked:bg-rose-50 peer-checked:text-rose-600 peer-checked:border-rose-200 dark:peer-checked:bg-rose-900/30 dark:peer-checked:text-rose-300 dark:peer-checked:border-rose-700/50 hover:bg-gray-100 dark:hover:bg-gray-700">
