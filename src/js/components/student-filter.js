@@ -126,8 +126,8 @@ export function render() {
             <div class="relative">
                <select id="sfGender" class="w-full form-select rounded-lg border-gray-200 dark:bg-gray-700/50 dark:border-gray-600 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 transition-all">
                 <option value="all">সকল</option>
-                <option value="male">ছেলে</option>
-                <option value="female">মেয়ে</option>
+                <option value="ছেলে">ছেলে</option>
+                <option value="মেয়ে">মেয়ে</option>
               </select>
             </div>
           </div>
@@ -387,21 +387,8 @@ function _applyFiltersAndRender() {
          if (filterId === 'unevaluated') {
              if (studentEvaluations.length > 0) return false;
          } else if (filterId === 'absent') {
-             // Check if student has ANY 'absent' status
-             // Assuming absent is tracked via attendance flag being false? 
-             // Or maybe a specific topic?
-             // Based on evaluation.js, attendance is a boolean. 
-             // If attendance is false, are they absent? 
-             // Or is there a specific 'absent' record?
-             // For now, let's assume if they have NO evaluations, they might be absent? No, that's unevaluated.
-             // Let's check if they have an evaluation where attendance is explicitly false?
-             // The user asked for "Absent Student".
-             // If the attendance checkbox is unchecked, it means "Not Regular Attendance".
-             // Let's assume 'absent' means they have NO score or specific absent flag.
-             // Given the context, let's skip strict implementation of 'absent' unless we know the data.
-             // But wait, if they are absent, they probably don't have a score entry?
-             // Or maybe they have an entry with 0 score?
-             return false; // Placeholder
+             // Placeholder for absent logic
+             return false; 
          } else {
              // Check for specific criteria in ANY evaluation
              const hasCriteria = studentEvaluations.some(e => {
@@ -496,10 +483,17 @@ function _applyFiltersAndRender() {
           }
       }
 
+      // Gender Display Logic
+      let genderDisplay = '-';
+      const gender = (s.gender || '').trim();
+      if (gender === 'ছেলে' || gender.toLowerCase() === 'male') genderDisplay = 'ছেলে';
+      else if (gender === 'মেয়ে' || gender.toLowerCase() === 'female') genderDisplay = 'মেয়ে';
+      else if (gender) genderDisplay = gender; // Fallback to whatever is there
+
       tr.innerHTML = `
         <td class="px-6 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">${s.name}</td>
         <td class="px-6 py-3">${helpers.convertToBanglaNumber(s.roll)}</td>
-        <td class="px-6 py-3">${(s.gender || '').toLowerCase() === 'male' ? 'ছেলে' : (s.gender || '').toLowerCase() === 'female' ? 'মেয়ে' : '-'}</td>
+        <td class="px-6 py-3">${genderDisplay}</td>
         <td class="px-6 py-3 whitespace-nowrap">${groupName}</td>
         <td class="px-6 py-3 whitespace-nowrap">${_renderAcademicBadge(s.academicGroup)}</td>
         <td class="px-6 py-3">${s.session || '-'}</td>
