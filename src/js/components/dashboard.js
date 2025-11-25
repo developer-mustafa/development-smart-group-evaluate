@@ -135,7 +135,7 @@ function _getDashboardHTMLStructure() {
     <div class="max-w-7xl mx-auto space-y-3">
      
 
-    <section class="relative overflow-hidden rounded-3xl border border-slate-300/60
+    <section id="dashboard-hero" class="relative overflow-hidden rounded-3xl border border-slate-300/60
   bg-gradient-to-br from-white via-slate-50 to-slate-200
   text-slate-900 shadow-[0_4px_10px_rgba(0,0,0,0.10),0_10px_28px_rgba(255,255,255,0.65)]
   hover:shadow-[0_8px_18px_rgba(0,0,0,0.14),0_14px_34px_rgba(255,255,255,0.75)]
@@ -384,7 +384,7 @@ function _getDashboardHTMLStructure() {
   </div>
 </section>
 
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <section id="dashboard-stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <article class="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white p-4 shadow-sm dark:border-gray-700/70 dark:bg-gray-900/70">
           <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent"></div>
           <div class="relative flex items-start justify-between">
@@ -512,7 +512,7 @@ function _getDashboardHTMLStructure() {
         </article>
       </section>
 
-      <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+      <section id="dashboard-top-groups" class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
         <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -527,7 +527,7 @@ function _getDashboardHTMLStructure() {
         <div id="topGroupsContainer" class="p-6"></div>
       </section>
 
-      <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+      <section id="dashboard-academic-stats" class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
         <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -542,7 +542,7 @@ function _getDashboardHTMLStructure() {
         <div id="academicGroupStatsList" class="p-6"></div>
       </section>
 
-      <section class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
+      <section id="dashboard-ranking" class="relative overflow-hidden rounded-3xl border border-gray-200/70 bg-white shadow-sm transition hover:shadow-lg dark:border-gray-700/70 dark:bg-gray-900/70">
         <div class="border-b border-gray-200/60 px-6 py-4 dark:border-gray-800/80">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>

@@ -26,6 +26,7 @@ import * as policy from './components/policy.js';
 import * as upcomingAssignments from './components/upcoming-assignments.js';
 import * as statistics from './components/statistics.js';
 import * as studentFilter from './components/student-filter.js';
+import * as settings from './components/settings.js';
 
 /**
  * Main application class. Acts as the central controller/coordinator.
@@ -115,6 +116,7 @@ class SmartGroupEvaluator {
       this.components.upcomingAssignments = upcomingAssignments.init(dependencies);
       this.components.statistics = statistics.init(dependencies);
       this.components.studentFilter = studentFilter.init(dependencies);
+      this.components.settings = settings.init(dependencies);
 
       console.log('👍 All components initialized.');
     } catch (error) {
@@ -303,6 +305,7 @@ class SmartGroupEvaluator {
     const userData = this.managers.stateManager.get('currentUserData');
     const userType = userData?.type || 'user';
     if (pageId === 'admin-management') return userType === 'super-admin';
+    if (pageId === 'settings') return userType === 'admin' || userType === 'super-admin';
     return userType === 'admin' || userType === 'super-admin';
   }
 

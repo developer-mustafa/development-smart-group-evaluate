@@ -380,7 +380,10 @@ class UIManager {
     const isAdmin = userType === 'admin' || userType === 'super-admin';
     const isSuperAdmin = userType === 'super-admin';
     const disabledClass = 'disabled-nav';
-    this.elements.privateTabs?.forEach((tab) => {
+    
+    // Query dynamically because settings.js might have changed classes
+    const privateTabs = document.querySelectorAll('.private-tab');
+    privateTabs.forEach((tab) => {
       const page = tab.dataset.page;
       let enabled = false;
       if (isLoggedIn) {
@@ -390,7 +393,9 @@ class UIManager {
       tab.disabled = !enabled;
       tab.classList.toggle(disabledClass, !enabled);
     });
-    this.elements.privateTabDividers?.forEach((divider) => {
+
+    const dividers = document.querySelectorAll('.private-tab-divider');
+    dividers.forEach((divider) => {
       divider.classList.toggle('hidden', !isAdmin && !isSuperAdmin);
     });
   }

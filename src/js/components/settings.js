@@ -55,9 +55,13 @@ function _mergeDefaults() {
     if (!_settings.sidebar[key]) {
       _settings.sidebar[key] = DEFAULT_SETTINGS.sidebar[key];
     } else {
-      if (DEFAULT_SETTINGS.sidebar[key].locked !== undefined) {
-        _settings.sidebar[key].locked = DEFAULT_SETTINGS.sidebar[key].locked;
+      // If locked, force defaults for critical properties
+      if (DEFAULT_SETTINGS.sidebar[key].locked) {
+        _settings.sidebar[key].locked = true;
+        _settings.sidebar[key].visible = true; // Force visible if locked
+        _settings.sidebar[key].type = DEFAULT_SETTINGS.sidebar[key].type; // Force type if locked
       }
+      
       _settings.sidebar[key].label = DEFAULT_SETTINGS.sidebar[key].label;
       _settings.sidebar[key].icon = DEFAULT_SETTINGS.sidebar[key].icon;
     }
@@ -323,9 +327,14 @@ function _applySettings() {
 function _refreshSidebarAuth() {
   const currentUser = stateManager.get('currentUserData');
   const isAdmin = currentUser && (currentUser.type === 'admin' || currentUser.type === 'super-admin');
+  
+  console.log('🔄 _refreshSidebarAuth called');
+  console.log('👤 Current User Data:', currentUser);
+  console.log('🛡️ Is Admin:', isAdmin);
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
     if (btn.hasAttribute('data-settings-hidden')) {
+      // console.log(`Hidden by settings: ${btn.dataset.page}`);
       btn.classList.add('hidden');
       return;
     }
@@ -333,8 +342,10 @@ function _refreshSidebarAuth() {
     if (btn.classList.contains('private-tab')) {
       if (isAdmin) {
         btn.classList.remove('hidden');
+        // console.log(`Showing private tab: ${btn.dataset.page}`);
       } else {
         btn.classList.add('hidden');
+        // console.log(`Hiding private tab (not admin): ${btn.dataset.page}`);
       }
     } else {
       btn.classList.remove('hidden');

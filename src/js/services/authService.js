@@ -217,6 +217,9 @@ class AuthService {
       // Trigger dashboard render if app instance is available
       window.smartEvaluator?.components.dashboard?.render();
     }
+    
+    // Always refresh settings/sidebar visibility on auth change
+    window.smartEvaluator?.components.settings?.applySettings();
   }
 }
 
