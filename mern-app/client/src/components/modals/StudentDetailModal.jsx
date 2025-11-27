@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
 import { useGetEvaluationsQuery } from '../../services/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 // Helper: Bangla Number
 const toBanglaNumber = (num) => {
@@ -8,15 +13,26 @@ const toBanglaNumber = (num) => {
 };
 
 // Helper: Role Badge
-const getRoleBadgeClass = (role) => {
+const getRoleBadgeVariant = (role) => {
   const map = {
-    'team-leader': 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700',
-    'time-keeper': 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-700',
-    'reporter': 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700',
-    'resource-manager': 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700',
-    'peace-maker': 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700',
+    'team-leader': 'default', // amber equivalent? default is primary. Let's use outline or secondary and custom classes if needed.
+    'time-keeper': 'secondary',
+    'reporter': 'secondary',
+    'resource-manager': 'secondary',
+    'peace-maker': 'destructive',
   };
-  return map[role] || 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
+  return map[role] || 'secondary';
+};
+
+const getRoleBadgeClass = (role) => {
+    const map = {
+      'team-leader': 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300',
+      'time-keeper': 'bg-sky-100 text-sky-800 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-300',
+      'reporter': 'bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300',
+      'resource-manager': 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300',
+      'peace-maker': 'bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300',
+    };
+    return map[role] || '';
 };
 
 const getRoleLabel = (role) => {
@@ -32,10 +48,10 @@ const getRoleLabel = (role) => {
 
 // Helper: Score Palette
 const getScorePalette = (pct) => {
-  if (pct >= 85) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
-  if (pct >= 70) return 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
-  if (pct >= 55) return 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
-  return 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
+  if (pct >= 85) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
+  if (pct >= 70) return 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300';
+  if (pct >= 55) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+  return 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300';
 };
 
 export default function StudentDetailModal({ student, onClose }) {
@@ -89,26 +105,26 @@ export default function StudentDetailModal({ student, onClose }) {
   }, [studentEvaluations]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-        
-        {/* Header */}
-        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-start bg-gray-50 dark:bg-gray-900/50">
+    <Dialog open={!!student} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+        <DialogHeader>
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-3xl font-bold text-blue-600 dark:text-blue-400 shadow-sm">
-              {student.name.charAt(0)}
-            </div>
+            <Avatar className="h-16 w-16 border-2 border-zinc-100 dark:border-zinc-700">
+              <AvatarFallback className="bg-blue-100 text-blue-600 text-2xl font-bold dark:bg-blue-900/30 dark:text-blue-300">
+                {student.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{student.name}</h2>
+              <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-zinc-900 dark:text-zinc-50">
+                {student.name}
                 {student.role && (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getRoleBadgeClass(student.role)}`}>
+                  <Badge variant="outline" className={getRoleBadgeClass(student.role)}>
                     <i className="fas fa-id-badge mr-1"></i>
                     {getRoleLabel(student.role)}
-                  </span>
+                  </Badge>
                 )}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500 dark:text-gray-400">
+              </DialogTitle>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 <span>রোল: {toBanglaNumber(student.roll)}</span>
                 <span>•</span>
                 <span>গ্রুপ: {student.group?.name || '-'}</span>
@@ -117,112 +133,105 @@ export default function StudentDetailModal({ student, onClose }) {
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-            <i className="fa fa-times text-xl"></i>
-          </button>
-        </div>
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50 dark:bg-gray-800">
-          
+        <div className="space-y-6">
           {/* Summary Cards */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-xl border dark:border-gray-600 shadow-sm">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">গড় টাস্ক স্কোর</div>
-                <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{toBanglaNumber(stats.avgTask.toFixed(1))}</div>
-              </div>
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-xl border dark:border-gray-600 shadow-sm">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">গড় টিম স্কোর</div>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{toBanglaNumber(stats.avgTeam.toFixed(1))}</div>
-              </div>
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-xl border dark:border-gray-600 shadow-sm">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">গড় অতিরিক্ত</div>
-                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{toBanglaNumber(stats.avgAdditional.toFixed(1))}</div>
-              </div>
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-xl border dark:border-gray-600 shadow-sm">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">গড় MCQ স্কোর</div>
-                <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">{toBanglaNumber(stats.avgMcq.toFixed(1))}</div>
-              </div>
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-xl border dark:border-gray-600 shadow-sm">
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">গড় মোট স্কোর</div>
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{toBanglaNumber(stats.avgTotal.toFixed(1))}</div>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <Card className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <CardContent className="p-4 text-center">
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">গড় টাস্ক স্কোর</div>
+                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{toBanglaNumber(stats.avgTask.toFixed(1))}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <CardContent className="p-4 text-center">
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">গড় টিম স্কোর</div>
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{toBanglaNumber(stats.avgTeam.toFixed(1))}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <CardContent className="p-4 text-center">
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">গড় অতিরিক্ত</div>
+                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{toBanglaNumber(stats.avgAdditional.toFixed(1))}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <CardContent className="p-4 text-center">
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">গড় MCQ স্কোর</div>
+                  <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">{toBanglaNumber(stats.avgMcq.toFixed(1))}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                <CardContent className="p-4 text-center">
+                  <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">গড় মোট স্কোর</div>
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{toBanglaNumber(stats.avgTotal.toFixed(1))}</div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* Detailed Table */}
-          <div className="bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 overflow-hidden shadow-sm">
-            <div className="p-4 border-b dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
-              <h3 className="font-bold text-gray-800 dark:text-white">মূল্যায়ন ইতিহাস</h3>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                মোট {toBanglaNumber(studentEvaluations.length)} টি মূল্যায়ন
-              </span>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold border-b dark:border-gray-600">
-                  <tr>
-                    <th className="px-4 py-3">অ্যাসাইনমেন্ট</th>
-                    <th className="px-4 py-3 text-right">টাস্ক</th>
-                    <th className="px-4 py-3 text-right">টিম</th>
-                    <th className="px-4 py-3 text-right">অতিরিক্ত</th>
-                    <th className="px-4 py-3 text-right">MCQ</th>
-                    <th className="px-4 py-3 text-right">মোট</th>
-                    <th className="px-4 py-3 text-center">%</th>
-                    <th className="px-4 py-3">মন্তব্য</th>
-                    <th className="px-4 py-3 text-right">তারিখ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-600">
+          <Card className="bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 overflow-hidden">
+            <CardHeader className="py-4 border-b border-zinc-200 dark:border-zinc-700">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base text-zinc-900 dark:text-zinc-50">মূল্যায়ন ইতিহাস</CardTitle>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  মোট {toBanglaNumber(studentEvaluations.length)} টি মূল্যায়ন
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader className="bg-zinc-50 dark:bg-zinc-900/50">
+                  <TableRow className="border-zinc-200 dark:border-zinc-700 hover:bg-transparent">
+                    <TableHead className="text-zinc-700 dark:text-zinc-300">অ্যাসাইনমেন্ট</TableHead>
+                    <TableHead className="text-right text-zinc-700 dark:text-zinc-300">টাস্ক</TableHead>
+                    <TableHead className="text-right text-zinc-700 dark:text-zinc-300">টিম</TableHead>
+                    <TableHead className="text-right text-zinc-700 dark:text-zinc-300">অতিরিক্ত</TableHead>
+                    <TableHead className="text-right text-zinc-700 dark:text-zinc-300">MCQ</TableHead>
+                    <TableHead className="text-right text-zinc-700 dark:text-zinc-300">মোট</TableHead>
+                    <TableHead className="text-center text-zinc-700 dark:text-zinc-300">%</TableHead>
+                    <TableHead className="text-zinc-700 dark:text-zinc-300">মন্তব্য</TableHead>
+                    <TableHead className="text-right text-zinc-700 dark:text-zinc-300">তারিখ</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {studentEvaluations.map((ev) => (
-                    <tr key={ev._id} className="hover:bg-gray-50 dark:hover:bg-gray-600/50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                        {ev.task?.name || 'Unknown Task'}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
-                        {toBanglaNumber(ev.taskScore)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
-                        {toBanglaNumber(ev.teamScore)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
-                        {toBanglaNumber(ev.additional)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">
-                        {toBanglaNumber(ev.mcq)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">
-                        {toBanglaNumber(ev.total)}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${getScorePalette(ev.pct)}`}>
+                    <TableRow key={ev._id} className="border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700/50">
+                      <TableCell className="font-medium text-zinc-900 dark:text-zinc-50">{ev.task?.name || 'Unknown Task'}</TableCell>
+                      <TableCell className="text-right text-zinc-600 dark:text-zinc-300">{toBanglaNumber(ev.taskScore)}</TableCell>
+                      <TableCell className="text-right text-zinc-600 dark:text-zinc-300">{toBanglaNumber(ev.teamScore)}</TableCell>
+                      <TableCell className="text-right text-zinc-600 dark:text-zinc-300">{toBanglaNumber(ev.additional)}</TableCell>
+                      <TableCell className="text-right text-zinc-600 dark:text-zinc-300">{toBanglaNumber(ev.mcq)}</TableCell>
+                      <TableCell className="text-right font-bold text-zinc-900 dark:text-zinc-50">{toBanglaNumber(ev.total)}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={getScorePalette(ev.pct)}>
                           {toBanglaNumber(ev.pct.toFixed(0))}%
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 max-w-[200px] truncate" title={ev.comment}>
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate text-zinc-500 dark:text-zinc-400" title={ev.comment}>
                         {ev.comment || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap text-zinc-500 dark:text-zinc-400">
                         {new Date(ev.createdAt).toLocaleDateString('bn-BD')}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
                   {studentEvaluations.length === 0 && (
-                    <tr>
-                      <td colSpan="9" className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-zinc-500 dark:text-zinc-400">
                         কোনো মূল্যায়ন পাওয়া যায়নি
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

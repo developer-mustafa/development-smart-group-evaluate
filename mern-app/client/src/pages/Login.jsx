@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../store/authSlice';
 import { useLoginMutation } from '../services/api';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function Login() {
   const navigate = useNavigate();
@@ -29,52 +33,47 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-md w-full">
-        <div className="card">
-          <div className="card-body">
-            <h2 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
-              স্মার্ট ইভ্যালুয়েটর
-            </h2>
-            <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
-              লগইন করুন
-            </p>
-
+        <Card>
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">স্মার্ট ইভ্যালুয়েটর</CardTitle>
+            <CardDescription className="text-center">
+              আপনার অ্যাকাউন্টে লগইন করুন
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="label">ইমেইল</label>
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="email">ইমেইল</Label>
+                <Input
+                  id="email"
                   type="email"
-                  className="form-input"
+                  placeholder="name@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </div>
-
-              <div>
-                <label className="label">পাসওয়ার্ড</label>
-                <input
+              <div className="space-y-2">
+                <Label htmlFor="password">পাসওয়ার্ড</Label>
+                <Input
+                  id="password"
                   type="password"
-                  className="form-input"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                 />
               </div>
-
-              <button
-                type="submit"
-                className="btn btn-primary w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'লগইন হচ্ছে...' : 'লগইন'}
-              </button>
+              </Button>
             </form>
-
-            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+          </CardContent>
+          <CardFooter>
+            <p className="text-center text-sm text-gray-500 w-full">
               Test: admin@test.com / admin123
             </p>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

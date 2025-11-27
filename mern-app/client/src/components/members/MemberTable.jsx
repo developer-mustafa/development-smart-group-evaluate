@@ -1,104 +1,92 @@
 import { useState } from 'react';
 import StudentDetailModal from '../modals/StudentDetailModal';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function MemberTable({ members, onEdit, onDelete }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
 
   if (members.length === 0) {
     return (
-      <div className="card card-body text-center py-12">
-        <i className="fa fa-users text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
-        <p className="text-gray-500 dark:text-gray-400">কোনো সদস্য পাওয়া যায়নি</p>
-      </div>
+      <Card className="text-center py-12">
+        <CardContent>
+          <i className="fa fa-users text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+          <p className="text-gray-500 dark:text-gray-400">কোনো সদস্য পাওয়া যায়নি</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <>
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  নাম
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  ইমেইল
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  রোল
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  গ্রুপ
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                  স্ট্যাটাস
-                </th>
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px]">নাম</TableHead>
+                <TableHead>ইমেইল</TableHead>
+                <TableHead>রোল</TableHead>
+                <TableHead>গ্রুপ</TableHead>
+                <TableHead>স্ট্যাটাস</TableHead>
                 {(onEdit || onDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                    অ্যাকশন
-                  </th>
+                  <TableHead className="text-right">অ্যাকশন</TableHead>
                 )}
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {members.map((member) => (
-                <tr key={member._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <TableRow key={member._id}>
+                  <TableCell className="font-medium">
                     <button 
                       onClick={() => setSelectedStudent(member)}
-                      className="font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 text-left"
+                      className="hover:underline text-left"
                     >
                       {member.name}
                     </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                    {member.email || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                    <span className="font-mono font-semibold">{member.roll || '-'}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                    {member.group?.name || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      member.isActive
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                    }`}>
+                  </TableCell>
+                  <TableCell>{member.email || '-'}</TableCell>
+                  <TableCell className="font-mono">{member.roll || '-'}</TableCell>
+                  <TableCell>{member.group?.name || '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant={member.isActive ? "default" : "secondary"} className={member.isActive ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300" : ""}>
                       {member.isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
-                    </span>
-                  </td>
+                    </Badge>
+                  </TableCell>
                   {(onEdit || onDelete) && (
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {onEdit && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => onEdit(member)}
-                            className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400"
+                            className="h-8 w-8 text-blue-600 hover:text-blue-900 dark:hover:text-blue-400"
                           >
                             <i className="fa fa-edit"></i>
-                          </button>
+                          </Button>
                         )}
                         {onDelete && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => onDelete(member._id)}
-                            className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                            className="h-8 w-8 text-red-600 hover:text-red-900 dark:hover:text-red-400"
                           >
                             <i className="fa fa-trash"></i>
-                          </button>
+                          </Button>
                         )}
                       </div>
-                    </td>
+                    </TableCell>
                   )}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {selectedStudent && (
         <StudentDetailModal 

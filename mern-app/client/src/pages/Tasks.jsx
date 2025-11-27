@@ -117,11 +117,13 @@ export default function Tasks() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
             টাস্ক ম্যানেজমেন্ট
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">মোট টাস্ক: {tasks.length}</p>
+          <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">
+            মোট টাস্ক: {tasks.length}
+          </p>
         </div>
         {canWrite && (
           <button onClick={() => { resetForm(); setShowForm(true); }} className="btn btn-primary">

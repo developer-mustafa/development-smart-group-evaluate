@@ -36,7 +36,7 @@ const getRoleBadgeMeta = (role) => {
     'resource-manager': { icon: 'fa-box-open', bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
     'peace-maker': { icon: 'fa-dove', bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-200' },
   };
-  return map[r] || { icon: 'fa-id-badge', bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' };
+  return map[r] || { icon: 'fa-id-badge', bg: 'bg-zinc-100', text: 'text-zinc-800', border: 'border-zinc-200' };
 };
 
 const getRoleLabel = (role) => {
@@ -56,7 +56,7 @@ const getBranchBadgeMeta = (group) => {
   if (/arts|মানবিক/.test(g)) return { icon: 'fa-palette', bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-200' };
   if (/commerce|ব্যবসা|কমার্স/.test(g)) return { icon: 'fa-chart-line', bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-200' };
   if (/vocational|ভোকেশনাল/.test(g)) return { icon: 'fa-tools', bg: 'bg-cyan-100', text: 'text-cyan-800', border: 'border-cyan-200' };
-  return { icon: 'fa-layer-group', bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200' };
+  return { icon: 'fa-layer-group', bg: 'bg-zinc-100', text: 'text-zinc-800', border: 'border-zinc-200' };
 };
 
 // --- Components ---
@@ -75,8 +75,8 @@ const CircularMeter = ({ percent, palette, size = 72 }) => {
           filter: filter,
         }}
       />
-      <div className="absolute inset-[18%] rounded-full bg-white dark:bg-gray-900 flex items-center justify-center shadow-inner">
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+      <div className="absolute inset-[18%] rounded-full bg-white dark:bg-zinc-900 flex items-center justify-center shadow-inner">
+        <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
           {toBanglaNumber(clamped.toFixed(2))}%
         </span>
       </div>
@@ -227,35 +227,34 @@ export default function Ranking() {
   const activePalette = topItem ? getScorePalette(topItem.efficiency) : getScorePalette(70);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/50 to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8 font-sans transition-colors duration-300">
       
       {/* Header Section */}
-      <div className="max-w-5xl mx-auto mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-          র‍্যাঙ্কিং লিডারবোর্ড
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          শীর্ষ পারফরমার এবং গ্রুপগুলোর তালিকা
-        </p>
+      <div className="max-w-5xl mx-auto mb-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+            র‍্যাঙ্কিং লিডারবোর্ড
+          </h1>
+          <p className="text-sm md:text-base text-zinc-500 dark:text-zinc-400">
+            শীর্ষ পারফরমার এবং গ্রুপগুলোর তালিকা
+          </p>
+        </div>
       </div>
 
       <div className="max-w-5xl mx-auto space-y-6">
         
         {/* Tab Bar & Search */}
         <div 
-          className="rounded-2xl p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border border-white/20 flex flex-col md:flex-row gap-4 items-center justify-between transition-all duration-300"
-          style={{
-            boxShadow: '0 8px 32px ' + activePalette.shadow + ', inset 0 0 0 1px rgba(255,255,255,0.5)'
-          }}
+          className="rounded-2xl p-3 bg-white dark:bg-zinc-900 shadow-sm border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 items-center justify-between transition-all duration-300"
         >
           {/* Tabs */}
-          <div className="flex p-1 bg-gray-100/50 dark:bg-gray-700/50 rounded-full border border-gray-200/50 dark:border-gray-600/50">
+          <div className="flex p-1 bg-zinc-100 dark:bg-zinc-800 rounded-full border border-zinc-200 dark:border-zinc-700">
             <button
               onClick={() => setActiveTab('students')}
               className={'px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ' + (
                 activeTab === 'students' 
                   ? 'text-white shadow-md transform scale-105' 
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-gray-600/50'
+                  : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
               )}
               style={activeTab === 'students' ? { background: activePalette.grad } : {}}
             >
@@ -266,7 +265,7 @@ export default function Ranking() {
               className={'px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ' + (
                 activeTab === 'groups' 
                   ? 'text-white shadow-md transform scale-105' 
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200/50 dark:hover:bg-gray-600/50'
+                  : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
               )}
               style={activeTab === 'groups' ? { background: activePalette.grad } : {}}
             >
@@ -282,7 +281,7 @@ export default function Ranking() {
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
               disabled={activeTab !== 'students'}
-              className="px-4 py-2 rounded-xl bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full md:w-48 text-sm shadow-sm"
+              className="px-4 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full md:w-48 text-sm text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-500"
             />
             <input
               type="text"
@@ -290,7 +289,7 @@ export default function Ranking() {
               value={searchRoll}
               onChange={(e) => setSearchRoll(e.target.value)}
               disabled={activeTab !== 'students'}
-              className="px-4 py-2 rounded-xl bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full md:w-32 text-sm shadow-sm"
+              className="px-4 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full md:w-32 text-sm text-zinc-900 dark:text-zinc-50 placeholder-zinc-400 dark:placeholder-zinc-500"
             />
           </div>
         </div>
@@ -308,27 +307,27 @@ export default function Ranking() {
                   <div 
                     key={student._id}
                     onClick={() => setSelectedStudent(student)}
-                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer"
+                    className="group relative bg-white dark:bg-zinc-900 rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-zinc-200 dark:border-zinc-800 overflow-hidden cursor-pointer"
                   >
                     {/* Accent Background Glow */}
                     <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"
+                      className="absolute inset-0 opacity-0 group-hover:opacity-5 dark:group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"
                       style={{ background: palette.grad }}
                     />
                     
                     <div className="flex items-center gap-4 md:gap-6 min-w-0 z-10">
                       {/* Rank Chip */}
-                      <div className="flex flex-col items-center justify-center w-16 h-14 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600 shadow-inner shrink-0">
-                        <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{toBanglaRank(student.rank).split(' ')[0]}</span>
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider">র‍্যাঙ্ক</span>
+                      <div className="flex flex-col items-center justify-center w-16 h-14 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700 shadow-sm shrink-0">
+                        <span className="text-lg font-bold text-zinc-900 dark:text-zinc-50">{toBanglaRank(student.rank).split(' ')[0]}</span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">র‍্যাঙ্ক</span>
                       </div>
 
                       {/* Info */}
                       <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 truncate mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {student.name}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 truncate">
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2 truncate">
                           রোল: {toBanglaNumber(student.roll)} · গ্রুপ: {student.group?.name || 'গ্রুপ নেই'}
                         </p>
                         
@@ -337,7 +336,7 @@ export default function Ranking() {
                           <Badge meta={roleMeta} label={getRoleLabel(student.role)} />
                         </div>
 
-                        <div className="flex gap-6 mt-3 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                        <div className="flex gap-6 mt-3 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
                           <span className="hidden sm:inline">গড়: {toBanglaNumber(student.efficiency.toFixed(2))}%</span>
                           <span>এসাইনমেন্ট: {toBanglaNumber(student.evalCount)} টি</span>
                         </div>
@@ -347,13 +346,13 @@ export default function Ranking() {
                     {/* Meter */}
                     <div className="flex flex-col items-center gap-1 shrink-0 z-10">
                       <CircularMeter percent={student.efficiency} palette={palette} size={72} />
-                      <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Avg%</span>
+                      <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Avg%</span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="text-center py-12 text-gray-500">কোনো শিক্ষার্থী পাওয়া যায়নি</div>
+              <div className="text-center py-12 text-zinc-500 dark:text-zinc-400">কোনো শিক্ষার্থী পাওয়া যায়নি</div>
             )
           ) : (
             rankedGroups.length > 0 ? (
@@ -364,34 +363,34 @@ export default function Ranking() {
                   <div 
                     key={group._id}
                     onClick={() => setSelectedGroup(group)}
-                    className="group relative bg-white dark:bg-gray-800 rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden cursor-pointer"
+                    className="group relative bg-white dark:bg-zinc-900 rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all duration-300 border border-zinc-200 dark:border-zinc-800 overflow-hidden cursor-pointer"
                   >
                     <div 
-                      className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"
+                      className="absolute inset-0 opacity-0 group-hover:opacity-5 dark:group-hover:opacity-10 transition-opacity duration-500 pointer-events-none"
                       style={{ background: palette.grad }}
                     />
 
                     <div className="flex items-center gap-4 md:gap-6 min-w-0 z-10">
-                      <div className="flex flex-col items-center justify-center w-16 h-14 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600 shadow-inner shrink-0">
-                        <span className="text-lg font-bold text-gray-800 dark:text-gray-100">{toBanglaRank(group.rank).split(' ')[0]}</span>
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider">র‍্যাঙ্ক</span>
+                      <div className="flex flex-col items-center justify-center w-16 h-14 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-700 shadow-sm shrink-0">
+                        <span className="text-lg font-bold text-zinc-900 dark:text-zinc-50">{toBanglaRank(group.rank).split(' ')[0]}</span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">র‍্যাঙ্ক</span>
                       </div>
 
                       <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50 truncate mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {group.name}
                         </h3>
                         
                         <div className="flex gap-2 mt-1 mb-2">
-                           <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+                           <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-300">
                              গড়: {toBanglaNumber(group.efficiency.toFixed(2))}%
                            </span>
-                           <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+                           <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-300">
                              অংশগ্রহণ: {toBanglaNumber(group.evalCount)}
                            </span>
                         </div>
 
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
                           মোট সদস্য: {toBanglaNumber(group.totalMembers)} · পরীক্ষায় অংশগ্রহণ: {toBanglaNumber(group.uniqueParticipants)} · বাকি: {toBanglaNumber(group.remainingMembers)}
                         </p>
                       </div>
@@ -399,13 +398,13 @@ export default function Ranking() {
 
                     <div className="flex flex-col items-center gap-1 shrink-0 z-10">
                       <CircularMeter percent={group.efficiency} palette={palette} size={72} />
-                      <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Avg%</span>
+                      <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Avg%</span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="text-center py-12 text-gray-500">কোনো গ্রুপ ডেটা পাওয়া যায়নি</div>
+              <div className="text-center py-12 text-zinc-500 dark:text-zinc-400">কোনো গ্রুপ ডেটা পাওয়া যায়নি</div>
             )
           )}
         </div>
@@ -429,4 +428,3 @@ export default function Ranking() {
     </div>
   );
 }
-

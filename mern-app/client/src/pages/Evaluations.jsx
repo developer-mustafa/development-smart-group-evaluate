@@ -161,22 +161,27 @@ export default function Evaluations() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-500 bg-clip-text text-transparent">
-        মূল্যায়ন
-      </h1>
+      <div className="flex flex-col gap-1 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white">
+          মূল্যায়ন
+        </h1>
+        <p className="text-sm md:text-base text-zinc-500 dark:text-zinc-400">
+          শিক্ষার্থী এবং গ্রুপের পারফরম্যান্স মূল্যায়ন করুন
+        </p>
+      </div>
 
-      <div className="card card-body">
+      <div className="card card-body bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="label">টাস্ক নির্বাচন করুন</label>
-            <select value={selectedTaskId} onChange={(e) => setSelectedTaskId(e.target.value)} className="form-input">
+            <label className="label text-zinc-700 dark:text-zinc-300">টাস্ক নির্বাচন করুন</label>
+            <select value={selectedTaskId} onChange={(e) => setSelectedTaskId(e.target.value)} className="form-input bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
               <option value="">নির্বাচন করুন...</option>
               {tasks.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">গ্রুপ নির্বাচন করুন</label>
-            <select value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)} className="form-input">
+            <label className="label text-zinc-700 dark:text-zinc-300">গ্রুপ নির্বাচন করুন</label>
+            <select value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)} className="form-input bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100">
               <option value="">নির্বাচন করুন...</option>
               {groups.map(g => <option key={g._id} value={g._id}>{g.name}</option>)}
             </select>
@@ -185,9 +190,9 @@ export default function Evaluations() {
 
         {selectedTaskId && selectedGroupId && (
           <form onSubmit={handleSubmit}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
+            <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <table className="w-full text-sm text-left text-zinc-500 dark:text-zinc-400">
+                <thead className="text-xs text-zinc-700 uppercase bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
                     <th className="p-3">রোল</th>
                     <th className="p-3">নাম</th>
@@ -198,23 +203,23 @@ export default function Evaluations() {
                     <th className="p-3 text-center">মোট ({selectedTask.maxScore})</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-800">
                   {groupMembers.map(member => {
                     const memberScore = scores[member._id] || { 
                       taskScore: '', teamScore: '', mcqScore: '', additionalCriteria: { topic: '', homework: false, attendance: false }, totalScore: 0 
                     };
                     
                     return (
-                      <tr key={member._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="p-3 font-medium">{member.roll}</td>
+                      <tr key={member._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        <td className="p-3 font-medium text-zinc-900 dark:text-zinc-50">{member.roll}</td>
                         <td className="p-3">
-                          <div>{member.name}</div>
-                          <div className="text-xs text-gray-500">{member.role}</div>
+                          <div className="font-medium text-zinc-900 dark:text-zinc-50">{member.name}</div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">{member.role}</div>
                         </td>
                         <td className="p-3">
                           <input 
                             type="number" 
-                            className="form-input w-20 text-center mx-auto"
+                            className="form-input w-20 text-center mx-auto bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50 focus:ring-blue-500 dark:focus:ring-blue-400"
                             value={memberScore.taskScore}
                             onChange={(e) => handleScoreChange(member._id, 'taskScore', e.target.value)}
                             max={breakdown.task}
@@ -223,7 +228,7 @@ export default function Evaluations() {
                         <td className="p-3">
                           <input 
                             type="number" 
-                            className="form-input w-20 text-center mx-auto"
+                            className="form-input w-20 text-center mx-auto bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50 focus:ring-blue-500 dark:focus:ring-blue-400"
                             value={memberScore.teamScore}
                             onChange={(e) => handleScoreChange(member._id, 'teamScore', e.target.value)}
                             max={breakdown.team}
@@ -232,51 +237,51 @@ export default function Evaluations() {
                         <td className="p-3">
                           <input 
                             type="number" 
-                            className="form-input w-20 text-center mx-auto"
+                            className="form-input w-20 text-center mx-auto bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50 focus:ring-blue-500 dark:focus:ring-blue-400"
                             value={memberScore.mcqScore}
                             onChange={(e) => handleScoreChange(member._id, 'mcqScore', e.target.value)}
                             max={breakdown.mcq}
                           />
                         </td>
-                        <td className="p-3 bg-gray-50 dark:bg-gray-900/30">
+                        <td className="p-3 bg-zinc-50 dark:bg-zinc-900/30">
                           <div className="space-y-2">
                             <div className="flex flex-wrap gap-2">
                               {ADDITIONAL_CRITERIA.topic.map(opt => (
-                                <label key={opt.id} className="flex items-center space-x-1 text-xs cursor-pointer">
+                                <label key={opt.id} className="flex items-center space-x-1 text-xs cursor-pointer text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400">
                                   <input 
                                     type="radio" 
                                     name={`topic-${member._id}`}
                                     checked={memberScore.additionalCriteria?.topic === opt.id}
                                     onChange={() => handleScoreChange(member._id, 'criteria.topic', opt.id)}
-                                    className="text-blue-600"
+                                    className="text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700"
                                   />
                                   <span>{opt.text} ({opt.marks})</span>
                                 </label>
                               ))}
                             </div>
-                            <div className="flex gap-3 border-t pt-1 dark:border-gray-600">
-                              <label className="flex items-center space-x-1 text-xs cursor-pointer">
+                            <div className="flex gap-3 border-t pt-1 border-zinc-200 dark:border-zinc-700">
+                              <label className="flex items-center space-x-1 text-xs cursor-pointer text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400">
                                 <input 
                                   type="checkbox" 
                                   checked={memberScore.additionalCriteria?.homework}
                                   onChange={(e) => handleScoreChange(member._id, 'criteria.homework', e.target.checked)}
-                                  className="rounded text-blue-600"
+                                  className="rounded text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700"
                                 />
                                 <span>বাড়ির কাজ (+5)</span>
                               </label>
-                              <label className="flex items-center space-x-1 text-xs cursor-pointer">
+                              <label className="flex items-center space-x-1 text-xs cursor-pointer text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400">
                                 <input 
                                   type="checkbox" 
                                   checked={memberScore.additionalCriteria?.attendance}
                                   onChange={(e) => handleScoreChange(member._id, 'criteria.attendance', e.target.checked)}
-                                  className="rounded text-blue-600"
+                                  className="rounded text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700"
                                 />
                                 <span>উপস্থিতি (+10)</span>
                               </label>
                             </div>
                           </div>
                         </td>
-                        <td className="p-3 text-center font-bold text-lg">
+                        <td className="p-3 text-center font-bold text-lg text-zinc-900 dark:text-zinc-50">
                           {memberScore.totalScore}
                         </td>
                       </tr>
