@@ -1,0 +1,11 @@
+{
+  "name": "mern-app-root",
+  "version": "1.0.0",
+  "description": "Root for Vercel Deployment of MERN App",
+  "scripts": {
+    "dev": "cd client && npm run dev",
+    "build": "cd client && npm install && npm run build && cd .. && rm -rf dist && cp -r client/dist dist"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
