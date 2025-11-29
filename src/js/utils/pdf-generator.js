@@ -33,12 +33,12 @@ async function _printHTML(htmlContent) {
           print-color-adjust: exact;
         }
         @media print {
-          @page { margin: 15mm; size: A4; }
+          @page { margin: 5mm; size: A4; }
           body { -webkit-print-color-adjust: exact; }
         }
       </style>
     </head>
-    <body class="bg-white text-gray-900 p-8">
+    <body class="bg-white text-gray-900 p-4">
       ${htmlContent}
       <script>
         // Wait for fonts and styles to load before printing
@@ -549,11 +549,398 @@ export async function generateAssignmentResultPDF(assignmentIndex, groups, stude
     <div class="font-bengali">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-indigo-700">স্মার্ট গ্রুপ ইভালুয়েটর</h1>
-        <h2 class="text-lg font-semibold text-gray-600">অ্যাসাইনমেন্ট রিপোর্ট: ${taskName}</h2>
+        <h2 class="text-lg font-semibold text-gray-600">অ্যাসাইনমেন্ট রিপোর্ট:</h2>
+        <h2 class="text-lg font-semibold text-gray-600">${taskName}</h2>
         <p class="text-sm text-gray-500">তারিখ: ${date}</p>
       </div>
       <div class="space-y-6">
         ${contentHtml || '<p class="text-center text-gray-500">এই অ্যাসাইনমেন্টের জন্য কোনো ফলাফল পাওয়া যায়নি।</p>'}
+      </div>
+    </div>
+  `;
+
+  await _printHTML(html);
+  uiManager.showToast('প্রিন্ট ডায়ালগ ওপেন হচ্ছে...', 'info');
+}
+/**
+ * Generates "Group Wise Full Details Result PDF"
+ * Professional report with detailed metrics for every student in every group.
+ */
+export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, evaluations, uiManager, filterTaskId = 'all') {
+  const date = new Date().toLocaleDateString('bn-BD');
+  let contentHtml = '';
+
+  // Sort groups by name
+  const sortedGroups = [...groups].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'bn'));
+
+  // Determine if a specific task is selected
+  const isSingleTask = filterTaskId !== 'all';
+  const selectedTask = isSingleTask ? tasks.find(t => String(t.id) === String(filterTaskId)) : null;
+  // For single task, we don't need a text title as we have the pill. For all tasks, we need the title.
+  const reportTitle = isSingleTask ? '' : 'গ্রুপ ভিত্তিক বিস্তারিত ফলাফল রিপোর্ট';
+  const reportDate = isSingleTask && selectedTask?.date ? new Date(selectedTask.date).toLocaleDateString('bn-BD') : date;
+
+  // Pre-calculate student scores based on filter
+  const studentScoresMap = new Map();
+  students.forEach(s => {
+    studentScoresMap.set(s.id, {
+      totalScore: 0,
+      maxPossible: 0,
+      evalCount: 0,
+      taskScore: 0,
+      teamScore: 0,
+      additionalScore: 0,
+      mcqScore: 0,
+      comment: ''
+    });
+  });
+
+  evaluations.forEach(ev => {
+    // Filter by task if needed
+    if (isSingleTask && String(ev.taskId) !== String(filterTaskId)) return;
+
+    const task = tasks.find(t => String(t.id) === String(ev.taskId));
+    const max = parseFloat(ev.maxPossibleScore) || parseFloat(task?.maxScore) || 100;
+    
+    if (ev.scores) {
+      Object.entries(ev.scores).forEach(([sid, sc]) => {
+        const data = studentScoresMap.get(sid);
+        if (data) {
+          const total = parseFloat(sc.totalScore) || 0;
+          data.totalScore += total;
+          data.maxPossible += max;
+          data.evalCount++;
+          
+          // Accumulate detailed scores
+          data.taskScore += parseFloat(sc.taskScore) || 0;
+          data.teamScore += parseFloat(sc.teamScore) || 0;
+          data.additionalScore += parseFloat(sc.additionalScore) || 0;
+          data.mcqScore += parseFloat(sc.mcqScore) || 0;
+          
+          // For single task, keep the comment
+          if (isSingleTask) {
+            data.comment = sc.comments || '';
+          }
+        }
+      });
+    }
+  });
+
+  for (const group of sortedGroups) {
+    const groupStudents = students.filter(s => s.groupId === group.id);
+    if (groupStudents.length === 0) continue;
+
+    // Calculate group aggregate stats
+    let groupTotalPct = 0;
+    let groupActiveStudents = 0;
+
+    const studentRows = groupStudents.map(s => {
+      const stats = studentScoresMap.get(s.id);
+      
+      // For single task, maxPossible is just that task's max.
+      // For all tasks, it's sum of all maxes.
+      const avgPct = stats.maxPossible > 0 ? (stats.totalScore / stats.maxPossible) * 100 : 0;
+      
+      if (stats.evalCount > 0) {
+        groupTotalPct += avgPct;
+        groupActiveStudents++;
+      }
+
+      // Prepare display values (average for 'all', actual for 'single')
+      const divisor = isSingleTask ? 1 : (stats.evalCount || 1);
+      const displayStats = {
+        task: (stats.taskScore / divisor).toFixed(1),
+        team: (stats.teamScore / divisor).toFixed(1),
+        add: (stats.additionalScore / divisor).toFixed(1),
+        mcq: (stats.mcqScore / divisor).toFixed(1),
+        total: stats.totalScore.toFixed(1),
+        max: stats.maxPossible
+      };
+
+      return {
+        ...s,
+        stats,
+        displayStats,
+        avgPct
+      };
+    }).sort((a, b) => b.avgPct - a.avgPct); // Sort by performance
+
+    const groupAvg = groupActiveStudents > 0 ? groupTotalPct / groupActiveStudents : 0;
+
+    const rowsHtml = studentRows.map((s, idx) => `
+      <tr class="border-b border-gray-100 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-indigo-50 transition-colors">
+        <td class="px-2 py-2 text-center border-r border-gray-100">${_bn(s.roll)}</td>
+        <td class="px-3 py-2 font-medium border-r border-gray-100">
+          ${s.name}
+          <div class="text-[10px] text-gray-500">${s.academicGroup || ''}</div>
+        </td>
+        <td class="px-2 py-2 text-center border-r border-gray-100 whitespace-nowrap">
+          <span class="px-2 py-0.5 rounded-full text-[10px] border ${_roleBadgeClass(s.role)}">
+            ${_prettyRoleBn(s.role) || 'সদস্য'}
+          </span>
+        </td>
+        ${!isSingleTask ? `<td class="px-2 py-2 text-center border-r border-gray-100">${_bn(s.stats.evalCount)}</td>` : ''}
+        <td class="px-2 py-2 text-center text-gray-600 border-r border-gray-100">${s.displayStats.task}</td>
+        <td class="px-2 py-2 text-center text-gray-600 border-r border-gray-100">${s.displayStats.team}</td>
+        <td class="px-2 py-2 text-center text-gray-600 border-r border-gray-100">${s.displayStats.add}</td>
+        <td class="px-2 py-2 text-center text-gray-600 border-r border-gray-100">${s.displayStats.mcq}</td>
+        <td class="px-2 py-2 text-right font-mono text-gray-800 font-bold border-r border-gray-100">${s.displayStats.total} / ${s.displayStats.max}</td>
+        <td class="px-2 py-2 text-right">
+          <span class="font-bold ${_pctBadgeClass(s.avgPct)} px-1.5 py-0.5 rounded">
+            ${s.avgPct.toFixed(1)}%
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+    // Assignment Header for each group (if single task)
+    const groupAssignmentHeader = isSingleTask ? `
+      <div class="bg-indigo-50 border-b border-indigo-100 px-4 py-2 flex justify-between items-center text-xs text-indigo-800">
+        <div class="font-semibold"><i class="fas fa-file-alt mr-1"></i> ${selectedTask?.name || ''}</div>
+        <div><i class="far fa-calendar-alt mr-1"></i> ${reportDate}</div>
+      </div>
+    ` : '';
+
+    contentHtml += `
+      <div class="break-inside-avoid mb-8 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 p-4 flex justify-between items-center">
+          <div>
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-layer-group text-indigo-500"></i> ${group.name}
+            </h3>
+            <p class="text-xs text-gray-500 mt-1">সদস্য: ${_bn(groupStudents.length)} জন</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-gray-500">গ্রুপ গড়</div>
+            <div class="text-xl font-bold text-indigo-600">${groupAvg.toFixed(1)}%</div>
+          </div>
+        </div>
+        
+        ${groupAssignmentHeader}
+
+        <table class="w-full text-xs table-fixed border-collapse">
+          <thead class="bg-indigo-600 text-white uppercase tracking-wider text-[10px]">
+            <tr>
+              <th class="px-2 py-3 text-center font-bold w-[6%] border-r border-indigo-500/30">রোল</th>
+              <th class="px-3 py-3 text-left font-bold w-[20%] border-r border-indigo-500/30">নাম</th>
+              <th class="px-2 py-3 text-center font-bold w-[16%] border-r border-indigo-500/30 whitespace-nowrap">দায়িত্ব</th>
+              ${!isSingleTask ? '<th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">মূল্যায়ন</th>' : ''}
+              <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">টাস্ক</th>
+              <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">টিম</th>
+              <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">অতিরিক্ত</th>
+              <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">MCQ</th>
+              <th class="px-2 py-3 text-right font-bold w-[9%] border-r border-indigo-500/30">মোট</th>
+              <th class="px-2 py-3 text-right font-bold w-[9%]">গড় %</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  const html = `
+    <div class="font-bengali bg-white min-h-screen">
+      <!-- Top Header Section -->
+      <div class="flex justify-between items-end border-b-[3px] border-indigo-600 pb-4 mb-8">
+        <div>
+          <h1 class="text-4xl font-extrabold text-indigo-800 tracking-tight mb-1">স্মার্ট গ্রুপ ইভালুয়েটর</h1>
+          <div class="flex items-center gap-2 text-sm text-gray-600 font-medium">
+            <span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded">অটোমেটেড রিপোর্ট</span>
+            <span>|</span>
+            <span>সেশন: ২০২৪-২৫</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">রিপোর্ট জেনারেশন তারিখ</div>
+          <div class="text-xl font-bold text-gray-800 font-mono bg-gray-50 px-3 py-1 rounded border border-gray-200 inline-block">
+            ${new Date().toLocaleDateString('bn-BD')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Title Card -->
+      <div class="mb-10 bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 p-6 shadow-sm text-center relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-purple-400"></div>
+        
+        ${reportTitle ? `<h2 class="text-2xl font-bold text-gray-800 mb-2">${reportTitle}</h2>` : ''}
+        ${isSingleTask ? `<div class="inline-block bg-white border border-indigo-100 text-indigo-600 px-4 py-1 rounded-full text-sm font-semibold shadow-sm mb-4">${selectedTask?.name}</div>` : ''}
+        
+        <div class="flex justify-center flex-wrap gap-4 mt-2">
+          <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+            <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600"><i class="fas fa-layer-group"></i></div>
+            <div class="text-left">
+              <div class="text-[10px] text-gray-400 uppercase font-bold">মোট গ্রুপ</div>
+              <div class="text-sm font-bold text-gray-700">${_bn(sortedGroups.length)}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+            <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><i class="fas fa-users"></i></div>
+            <div class="text-left">
+              <div class="text-[10px] text-gray-400 uppercase font-bold">মোট শিক্ষার্থী</div>
+              <div class="text-sm font-bold text-gray-700">${_bn(students.length)}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+             <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600"><i class="far fa-calendar-alt"></i></div>
+             <div class="text-left">
+               <div class="text-[10px] text-gray-400 uppercase font-bold">তারিখ</div>
+               <div class="text-sm font-bold text-gray-700">${reportDate}</div>
+             </div>
+          </div>
+        </div>
+
+        <!-- Developer Info -->
+        <div class="mt-6 pt-4 border-t border-indigo-50">
+          <div class="inline-flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-full border border-indigo-100">
+            <i class="fas fa-code text-indigo-500 text-sm"></i>
+            <span class="text-xs font-medium text-indigo-800">
+              সফটওয়্যার নির্মাতা: <span class="font-bold">মোস্তফা রহমান স্যার</span>, সফটওয়্যার ইন্জিনিয়ার, তুরষ্ক (রিমোট জব) | কুয়েরি: <span class="font-mono font-bold">01840-643936</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Main Content -->
+      <div class="space-y-8">
+        ${contentHtml}
+      </div>
+      
+      <!-- Footer -->
+      <div class="mt-16 pt-8 border-t border-gray-200 flex justify-between items-end">
+        <div class="text-xs text-gray-400">
+          <p class="font-semibold text-gray-500 mb-1">স্মার্ট গ্রুপ ইভালুয়েটর সিস্টেম</p>
+          <p>একটি অটোমেটেড পারফরম্যান্স অ্যানালাইসিস টুল</p>
+        </div>
+        <div class="text-right text-xs">
+          <p class="text-gray-400 mb-1">ডেভেলাপড বাই</p>
+          <p class="font-bold text-indigo-600 text-sm">মোঃ মোস্তফা রাহমান স্যার</p>
+          <p class="text-[10px] text-gray-400 mt-0.5">© ${new Date().getFullYear()} স্মার্ট গ্রুপ ইভালুয়েটর সিস্টেম</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  await _printHTML(html);
+  uiManager.showToast('প্রিন্ট ডায়ালগ ওপেন হচ্ছে...', 'info');
+}
+
+/**
+ * Generates "Single Group Analysis Dashboard PDF"
+ * Replicates the dashboard view in a print-friendly format.
+ */
+export async function generateSingleGroupAnalysisPDF(groupData, uiManager) {
+  const date = new Date().toLocaleDateString('bn-BD');
+  const metric = groupData.metric || {};
+  const groupName = metric.groupName || 'Group';
+  const members = groupData.members || [];
+  const evaluations = groupData.evaluations || [];
+
+  // 1. Overview Cards
+  const cardsHtml = `
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <div class="text-xs text-blue-600 uppercase font-semibold">মোট মূল্যায়ন</div>
+        <div class="text-2xl font-bold text-blue-800">${_bn(metric.evaluationCount)}</div>
+      </div>
+      <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+        <div class="text-xs text-emerald-600 uppercase font-semibold">গড় মোট স্কোর</div>
+        <div class="text-2xl font-bold text-emerald-800">${_bn(metric.averageScore)}%</div>
+      </div>
+      <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+        <div class="text-xs text-indigo-600 uppercase font-semibold">অংশগ্রহণের হার</div>
+        <div class="text-2xl font-bold text-indigo-800">${_bn(metric.participationRate)}%</div>
+      </div>
+      <div class="p-4 bg-amber-50 rounded-lg border border-amber-100">
+        <div class="text-xs text-amber-600 uppercase font-semibold">লম্বিত শিক্ষার্থী</div>
+        <div class="text-2xl font-bold text-amber-800">${_bn(metric.pendingStudents)}</div>
+      </div>
+    </div>
+  `;
+
+  // 2. Members Table
+  const memberRows = members.map((m, idx) => `
+    <tr class="border-b border-gray-100 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+      <td class="px-3 py-2 font-medium">${m.name}</td>
+      <td class="px-3 py-2 text-center">${_bn(m.roll)}</td>
+      <td class="px-3 py-2 text-center text-xs">
+        <span class="px-2 py-0.5 rounded-full border ${_roleBadgeClass(m.role)}">
+          ${_prettyRoleBn(m.role)}
+        </span>
+      </td>
+      <td class="px-3 py-2 text-center">${_bn(m.evaluationCount)}</td>
+      <td class="px-3 py-2 text-center">${m.avgTaskScore ? m.avgTaskScore.toFixed(1) : '-'}</td>
+      <td class="px-3 py-2 text-center font-bold text-indigo-700">${m.avgTotalScore ? m.avgTotalScore.toFixed(1) : '-'}</td>
+    </tr>
+  `).join('');
+
+  const membersHtml = `
+    <div class="mb-8 break-inside-avoid">
+      <h3 class="text-lg font-bold text-gray-800 mb-3 border-b pb-2">সদস্যদের সারাংশ</h3>
+      <table class="w-full text-xs border border-gray-200">
+        <thead class="bg-gray-100 text-gray-600 uppercase">
+          <tr>
+            <th class="px-3 py-2 text-left">নাম</th>
+            <th class="px-3 py-2 text-center">রোল</th>
+            <th class="px-3 py-2 text-center">দায়িত্ব</th>
+            <th class="px-3 py-2 text-center">মূল্যায়ন</th>
+            <th class="px-3 py-2 text-center">টাস্ক স্কোর</th>
+            <th class="px-3 py-2 text-center">গড় স্কোর</th>
+          </tr>
+        </thead>
+        <tbody>${memberRows}</tbody>
+      </table>
+    </div>
+  `;
+
+  // 3. Evaluations History
+  const evalRows = evaluations.map((e, idx) => `
+    <tr class="border-b border-gray-100 ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+      <td class="px-3 py-2 font-medium">${e.taskName}</td>
+      <td class="px-3 py-2 text-center">${e.dateLabel}</td>
+      <td class="px-3 py-2 text-center">${_bn(e.assessedCount)} / ${_bn(e.assessedCount + e.pendingCount)}</td>
+      <td class="px-3 py-2 text-center">${e.avgTaskScore.toFixed(1)}</td>
+      <td class="px-3 py-2 text-center font-bold text-indigo-700">${e.averagePercentage.toFixed(1)}%</td>
+    </tr>
+  `).join('');
+
+  const evalsHtml = `
+    <div class="mb-8 break-inside-avoid">
+      <h3 class="text-lg font-bold text-gray-800 mb-3 border-b pb-2">মূল্যায়ন ইতিহাস</h3>
+      <table class="w-full text-xs border border-gray-200">
+        <thead class="bg-gray-100 text-gray-600 uppercase">
+          <tr>
+            <th class="px-3 py-2 text-left">এসাইনমেন্ট</th>
+            <th class="px-3 py-2 text-center">তারিখ</th>
+            <th class="px-3 py-2 text-center">অংশগ্রহণ</th>
+            <th class="px-3 py-2 text-center">গড় টাস্ক</th>
+            <th class="px-3 py-2 text-center">গড় %</th>
+          </tr>
+        </thead>
+        <tbody>${evalRows}</tbody>
+      </table>
+    </div>
+  `;
+
+  const html = `
+    <div class="font-bengali">
+      <div class="text-center mb-8 border-b-2 border-gray-100 pb-6">
+        <h1 class="text-2xl font-bold text-indigo-700 mb-2">স্মার্ট গ্রুপ ইভালুয়েটর</h1>
+        <h2 class="text-xl font-semibold text-gray-700">গ্রুপ বিশ্লেষণ ড্যাশবোর্ড: ${groupName}</h2>
+        <div class="flex justify-center gap-4 mt-2 text-sm text-gray-500">
+          <span>তারিখ: ${date}</span>
+          <span>সদস্য: ${_bn(metric.studentCount)} জন</span>
+        </div>
+      </div>
+      
+      ${cardsHtml}
+      ${membersHtml}
+      ${evalsHtml}
+      
+      <div class="mt-8 text-xs text-gray-400 text-center border-t pt-2">
+        রিপোর্ট জেনারেটেড বাই স্মার্ট গ্রুপ ইভালুয়েটর সিস্টেম
       </div>
     </div>
   `;

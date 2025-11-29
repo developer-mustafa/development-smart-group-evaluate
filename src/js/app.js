@@ -12,6 +12,7 @@ import * as dataService from './services/dataService.js';
 // Import Utility Functions (Import all as a namespace)
 import * as helpers from './utils/helpers.js'; // <-- helpers.* হিসেবে ব্যবহারের জন্য
 import * as permissionHelper from './utils/permissionHelper.js';
+import * as pdfGenerator from './utils/pdf-generator.js';
 
 // Import Page Component Modules
 import * as dashboard from './components/dashboard.js';
@@ -39,7 +40,7 @@ class SmartGroupEvaluator {
       auth: { loginWithEmail, registerWithEmail, signInWithGoogle, logout, authServiceInstance: authService },
     };
     this.managers = { stateManager, uiManager, cacheManager };
-    this.utils = { ...helpers, permissionHelper }; // <-- helpers এবং permissionHelper অবজেক্ট পাস করা হয়েছে
+    this.utils = { ...helpers, permissionHelper, pdfGenerator }; // <-- helpers এবং permissionHelper অবজেক্ট পাস করা হয়েছে
 
     this.components = {}; // Holds initialized component instances
 

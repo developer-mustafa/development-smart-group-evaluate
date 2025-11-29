@@ -5,6 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Group Evaluator</title>
+    <link rel="icon" type="image/png" href="/images/smart.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -242,6 +243,16 @@
         >
           <i class="fas fa-moon text-base sm:text-lg"></i>
         </button>
+
+        <div class="flex items-center gap-2 mt-4">
+          <select id="exportAssignmentFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+            <option value="all">সকল মূল্যায়ন</option>
+          </select>
+          <button id="exportGroupFullDetailsPDFBtn" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+            <i class="fas fa-file-pdf"></i>
+            Group Wise Full Details Result (PDF)
+          </button>
+        </div>
 
         <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
           <div id="userInfo" class="hidden text-right">
@@ -1080,18 +1091,15 @@
                   রিপোর্ট এক্সপোর্ট
                 </div>
                 <div class="card-body space-y-2">
-                  <button id="exportAnalysisPDFBtn" class="btn btn-danger w-full">
-                    <i class="fas fa-chart-pie mr-2"></i>
-                    বিশ্লেষণ রিপোর্ট (PDF)
-                  </button>
-                  <button id="exportGroupAnalysisPDFBtn" class="btn btn-info w-full">
-                    <i class="fas fa-file-pdf mr-2"></i>
-                    গ্রুপ বিশ্লেষণ (PDF)
-                  </button>
-                  <button id="printReportBtn" class="btn btn-light w-full">
-                    <i class="fas fa-print mr-2"></i>
-                    প্রিন্ট রিপোর্ট
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <select id="exportAssignmentFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
+                      <option value="all">সকল মূল্যায়ন</option>
+                    </select>
+                    <button id="exportGroupFullDetailsPDFBtn" class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+                      <i class="fas fa-file-pdf"></i>
+                      Group Wise Full Details Result (PDF)
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

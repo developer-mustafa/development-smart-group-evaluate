@@ -57,6 +57,42 @@ export function render() {
   }
   console.log('Rendering Export page...');
   _updateStats();
+  _populateAssignmentFilter();
+}
+
+/**
+ * Populates the assignment filter dropdown.
+ * @private
+ */
+function _populateAssignmentFilter() {
+  if (!elements.exportAssignmentFilter) return;
+
+  const tasks = stateManager.get('tasks') || [];
+  const currentVal = elements.exportAssignmentFilter.value;
+
+  // Clear existing options except the first one
+  while (elements.exportAssignmentFilter.options.length > 1) {
+    elements.exportAssignmentFilter.remove(1);
+  }
+
+  // Sort tasks by date (newest first)
+  const sortedTasks = [...tasks].sort((a, b) => {
+    const dateA = new Date(a.date || 0);
+    const dateB = new Date(b.date || 0);
+    return dateB - dateA;
+  });
+
+  sortedTasks.forEach(task => {
+    const option = document.createElement('option');
+    option.value = task.id;
+    option.textContent = task.name;
+    elements.exportAssignmentFilter.appendChild(option);
+  });
+
+  // Restore selection if possible
+  if (currentVal && Array.from(elements.exportAssignmentFilter.options).some(o => o.value === currentVal)) {
+    elements.exportAssignmentFilter.value = currentVal;
+  }
 }
 
 /**
@@ -82,15 +118,10 @@ function _cacheDOMElements() {
     elements.exportAllDataZipBtn =
       elements.page.querySelector('#exportAllDataZipBtn') ||
       elements.page.querySelector('button[onclick*="exportAllDataAsZip"]');
-    elements.exportAnalysisPDFBtn =
-      elements.page.querySelector('#exportAnalysisPDFBtn') ||
-      elements.page.querySelector('button[onclick*="exportAnalysisPDF"]');
-    elements.exportGroupAnalysisPDFBtn =
-      elements.page.querySelector('#exportGroupAnalysisPDFBtn') ||
-      elements.page.querySelector('button[onclick*="exportGroupAnalysisPDF"]');
-    elements.printReportBtn =
-      elements.page.querySelector('#printGroupAnalysisBtn') ||
-      elements.page.querySelector('button[onclick*="printGroupAnalysis"]');
+    elements.exportGroupFullDetailsPDFBtn = 
+      elements.page.querySelector('#exportGroupFullDetailsPDFBtn');
+    elements.exportAssignmentFilter = 
+      elements.page.querySelector('#exportAssignmentFilter');
 
     // Statistics Cards
     elements.totalStudentsCount = elements.page.querySelector('#totalStudentsCount');
@@ -117,9 +148,7 @@ function _removeOnclickAttributes() {
     elements.exportEvaluationsCSVBtn,
     elements.exportAllDataJSONBtn,
     elements.exportAllDataZipBtn,
-    elements.exportAnalysisPDFBtn,
-    elements.exportGroupAnalysisPDFBtn,
-    elements.printReportBtn,
+    elements.exportAllDataZipBtn,
   ];
   buttons.forEach((btn) => {
     if (btn && btn.hasAttribute && btn.hasAttribute('onclick')) {
@@ -144,31 +173,14 @@ function _setupEventListeners() {
   uiManager.addListener(elements.exportAllDataJSONBtn, 'click', _handleExportAllDataJSON);
   uiManager.addListener(elements.exportAllDataZipBtn, 'click', _handleExportAllDataZip);
 
-  // PDF/Print Exports (call functions from analysis component via 'app')
-  uiManager.addListener(elements.exportAnalysisPDFBtn, 'click', () => {
-    if (app.components.analysis?.generateGroupAnalysisPDF) {
-      uiManager.showToast('গ্রুপ বিশ্লেষণ PDF তৈরি হচ্ছে...', 'info');
-      app.components.analysis.generateGroupAnalysisPDF();
+  // New: Group Wise Full Details Result PDF
+  uiManager.addListener(elements.exportGroupFullDetailsPDFBtn, 'click', () => {
+    if (app.components.analysis?.generateGroupWiseFullDetailsPDF) {
+      uiManager.showToast('গ্রুপ ভিত্তিক বিস্তারিত ফলাফল PDF তৈরি হচ্ছে...', 'info');
+      const filterTaskId = elements.exportAssignmentFilter ? elements.exportAssignmentFilter.value : 'all';
+      app.components.analysis.generateGroupWiseFullDetailsPDF(filterTaskId);
     } else {
-      uiManager.showToast('PDF এক্সপোর্টের জন্য বিশ্লেষণ মডিউল অনুপलब্ধ।', 'error');
-    }
-  });
-  uiManager.addListener(elements.exportGroupAnalysisPDFBtn, 'click', () => {
-    if (app.components.analysis?.generateSelectedGroupPDF) {
-      uiManager.showToast('নির্বাচিত গ্রুপের PDF তৈরি হচ্ছে...', 'info');
-      app.components.analysis.generateSelectedGroupPDF();
-    } else if (app.components.analysis?.generateGroupAnalysisPDF) {
-      uiManager.showToast('নির্বাচিত গ্রুপের PDF নেই; পুরো রিপোর্ট এক্সপোর্ট করা হচ্ছে।', 'warning');
-      app.components.analysis.generateGroupAnalysisPDF();
-    } else {
-      uiManager.showToast('প্রিন্টের জন্য বিশ্লেষণ মডিউল অনুপलब্ধ।', 'error');
-    }
-  });
-  uiManager.addListener(elements.printReportBtn, 'click', () => {
-    if (app.components.analysis?.printGroupAnalysis) {
-      app.components.analysis.printGroupAnalysis();
-    } else {
-      uiManager.showToast('প্রিন্টের জন্য বিশ্লেষণ মডিউল অনুপलब্ধ।', 'error');
+      uiManager.showToast('ফাংশনটি এখনো বিশ্লেষণ মডিউলে যুক্ত করা হয়নি।', 'error');
     }
   });
 }

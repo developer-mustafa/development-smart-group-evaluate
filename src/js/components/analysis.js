@@ -119,7 +119,8 @@ const CRITERIA_META_INDEX = (() => {
 // --- END CRITERIA ---
 
 // Module state
-let pdfFontPromise = null;
+// let pdfFontPromise = null; // Removed
+
 let topicBarChart = null;
 let criteriaPieChart = null;
 let summaryEvaluationChart = null;
@@ -170,6 +171,7 @@ export function init(dependencies) {
     render: _renderAll,
     generateGroupAnalysisPDF,
     generateSelectedGroupPDF,
+    generateGroupWiseFullDetailsPDF,
     printGroupAnalysis,
   };
 
@@ -178,6 +180,7 @@ export function init(dependencies) {
     renderGraphs: _renderGraphSection,
     generateGroupAnalysisPDF,
     generateSelectedGroupPDF,
+    generateGroupWiseFullDetailsPDF,
     printGroupAnalysis,
   };
 }
@@ -2691,13 +2694,23 @@ function _isMcqEvaluation(task) {
 // ===================================================================
 
 async function generateGroupAnalysisPDF() {
-  await _ensurePdfFont();
-  const container = document.getElementById('printableAnalysisArea');
-  if (!container) {
-    uiManager.showToast('PDF তৈরির জন্য বিশ্লেষণ ডেটা পাওয়া যায়নি।', 'warning');
-    return;
+  uiManager.showLoading('PDF তৈরি হচ্ছে...');
+  try {
+    const filters = stateManager.getFilterSection(ANALYSIS_FILTER_KEY);
+    const data = _buildAnalysisData(filters); // Re-build data to ensure it's fresh
+    
+    if (!data || !data.groupMetrics || data.groupMetrics.length === 0) {
+      uiManager.showToast('এক্সপোর্ট করার মতো ডেটা নেই।', 'warning');
+      return;
+    }
+
+    await helpers.pdfGenerator.generateGroupAnalysisPDF(data.groupMetrics, uiManager);
+  } catch (error) {
+    console.error('Error generating group analysis PDF:', error);
+    uiManager.showToast('PDF তৈরি করতে সমস্যা হয়েছে।', 'error');
+  } finally {
+    uiManager.hideLoading();
   }
-  await _createPdfFromElement(container, 'group_analysis_dashboard.pdf');
 }
 
 async function generateSelectedGroupPDF() {
@@ -2706,92 +2719,66 @@ async function generateSelectedGroupPDF() {
     uiManager.showToast('অনুগ্রহ করে প্রথমে একটি গ্রুপ নির্বাচন করুন।', 'info');
     return;
   }
-  await _ensurePdfFont();
-  const container = document.getElementById('printableAnalysisArea');
-  if (!container) {
-    uiManager.showToast('PDF তৈরির জন্য বিশ্লেষণ ডেটা পাওয়া যায়নি।', 'warning');
-    return;
+
+  uiManager.showLoading('PDF তৈরি হচ্ছে...');
+  try {
+    const data = _buildAnalysisData(filters);
+    const groupDetails = data.groupDetails || new Map();
+    const selectedGroupData = groupDetails.get(filters.groupFilter);
+
+    if (!selectedGroupData) {
+      uiManager.showToast('নির্বাচিত গ্রুপের ডেটা পাওয়া যায়নি।', 'warning');
+      return;
+    }
+
+    await helpers.pdfGenerator.generateSingleGroupAnalysisPDF(selectedGroupData, uiManager);
+  } catch (error) {
+    console.error('Error generating selected group PDF:', error);
+    uiManager.showToast('PDF তৈরি করতে সমস্যা হয়েছে।', 'error');
+  } finally {
+    uiManager.hideLoading();
   }
-  await _createPdfFromElement(container, `group_${filters.groupFilter}_analysis.pdf`);
 }
 
 function printGroupAnalysis() {
   window.print();
 }
 
+// Removed _createPdfFromElement and _ensurePdfFont as they are no longer needed.
+
+
+
+
 /**
- * Creates a PDF from an HTML element using html2canvas.
- * @param {HTMLElement} element - The element to capture.
- * @param {string} fileName - The desired output filename.
+ * Generates the "Group Wise Full Details Result" PDF.
+ * Retrieves data from stateManager and calls the utility function.
  */
-async function _createPdfFromElement(element, fileName) {
-  if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
-    uiManager.showToast('PDF তৈরি করার জন্য প্রয়োজনীয় লাইব্রেরি পাওয়া যায়নি।', 'error');
-    return;
-  }
-
-  uiManager.showLoading('PDF প্রস্তুত করা হচ্ছে...');
+async function generateGroupWiseFullDetailsPDF(filterTaskId = 'all') {
+  uiManager.showLoading('PDF তৈরি হচ্ছে...');
   try {
-    const canvas = await html2canvas(element, { scale: 2 });
-    const canvasWidth = canvas?.width || 0;
-    const canvasHeight = canvas?.height || 0;
+    const groups = stateManager.get('groups') || [];
+    const students = stateManager.get('students') || [];
+    const tasks = stateManager.get('tasks') || [];
+    const evaluations = stateManager.get('evaluations') || [];
 
-    if (!canvasWidth || !canvasHeight) {
-      uiManager.showToast('PDF তৈরির জন্য লক্ষ্য এলাকাটি খালি।', 'error');
+    if (groups.length === 0) {
+      uiManager.showToast('কোনো গ্রুপ পাওয়া যায়নি।', 'warning');
       return;
     }
 
-    const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = doc.internal.pageSize.getWidth();
-    const pdfHeight = doc.internal.pageSize.getHeight();
-
-    const ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
-    const imgWidth = Math.max(canvasWidth * ratio, 1);
-    const imgHeight = Math.max(canvasHeight * ratio, 1);
-    const x = Math.max((pdfWidth - imgWidth) / 2, 0);
-    const y = 12; // Top margin
-
-    if (![imgWidth, imgHeight, x, y].every(Number.isFinite)) {
-      uiManager.showToast('PDF তৈরির সময় গাণিতিক ত্রুটি হয়েছে।', 'error');
-      return;
-    }
-
-    doc.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-    doc.save(fileName);
-    uiManager.showToast('PDF সফলভাবে ডাউনলোড হয়েছে।', 'success');
+    await helpers.pdfGenerator.generateGroupWiseFullDetailsPDF(
+      groups,
+      students,
+      tasks,
+      evaluations,
+      uiManager,
+      filterTaskId
+    );
   } catch (error) {
-    console.error('❌ PDF তৈরিতে সমস্যা:', error);
-    uiManager.showToast(`PDF তৈরিতে সমস্যা হয়েছে: ${error.message}`, 'error');
+    console.error('Error generating group wise full details PDF:', error);
+    uiManager.showToast('PDF তৈরি করতে সমস্যা হয়েছে।', 'error');
   } finally {
     uiManager.hideLoading();
   }
 }
-
-/**
- * Ensures the Bengali font is loaded for jsPDF.
- */
-async function _ensurePdfFont() {
-  if (pdfFontPromise) return pdfFontPromise;
-  if (typeof jspdf === 'undefined' || typeof jspdf.jsPDF === 'undefined') {
-    return Promise.resolve();
-  }
-
-  pdfFontPromise = (async () => {
-    try {
-      const { jsPDF } = jspdf;
-      jsPDF.API.addFileToVFS('HindSiliguri-Regular.ttf', PDF_FONT_BASE64);
-      jsPDF.API.addFont('HindSiliguri-Regular.ttf', 'HindSiliguri', 'normal');
-    } catch (error) {
-      console.warn('PDF ফন্ট লোড করা যায়নি:', error);
-      pdfFontPromise = null; // Allow retry
-    }
-  })();
-  return pdfFontPromise;
-}
-
-
-
-
 
