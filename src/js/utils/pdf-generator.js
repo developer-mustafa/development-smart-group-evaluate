@@ -972,3 +972,117 @@ export async function generateSingleGroupAnalysisPDF(groupData, uiManager) {
   await _printHTML(html);
   uiManager.showToast('প্রিন্ট ডায়ালগ ওপেন হচ্ছে...', 'info');
 }
+
+/**
+ * Generates "Filtered Student List PDF"
+ */
+export async function generateStudentListPDF(students, activeFilters, evaluations, groupMap, extraMap, taskMap) {
+  const date = new Date().toLocaleDateString('bn-BD');
+  
+  // Helper to get filter text
+  const getFilterText = () => {
+      const parts = [];
+      if (activeFilters.group !== 'all') parts.push(`গ্রুপ: ${groupMap.get(activeFilters.group)?.name || activeFilters.group}`);
+      if (activeFilters.academicGroup !== 'all') parts.push(`বিভাগ: ${activeFilters.academicGroup}`);
+      if (activeFilters.session !== 'all') parts.push(`সেশন: ${activeFilters.session}`);
+      if (activeFilters.gender !== 'all') parts.push(`লিঙ্গ: ${activeFilters.gender}`);
+      if (activeFilters.role !== 'all') parts.push(`দায়িত্ব: ${activeFilters.role}`);
+      // Assignment is handled separately in header title
+      
+      // Add Extra Filters
+      if (activeFilters.extra && activeFilters.extra.length > 0) {
+          const extraNames = activeFilters.extra.map(id => extraMap.get(id) || id).join(', ');
+          parts.push(`অতিরিক্ত: ${extraNames}`);
+      }
+      
+      return parts.length > 0 ? parts.join(' | ') : 'সকল শিক্ষার্থী';
+  };
+
+  // Get Assignment Name
+  let assignmentName = '';
+  if (activeFilters.assignment !== 'all' && taskMap) {
+      assignmentName = taskMap.get(activeFilters.assignment)?.name || '';
+  }
+
+  const rows = students.map((s, index) => {
+      const groupName = groupMap.get(s.groupId)?.name || '-';
+      
+      // Calculate Scores
+      const studentEvaluations = [];
+      evaluations.forEach(evalDoc => {
+          if (evalDoc.scores && evalDoc.scores[s.id]) {
+              studentEvaluations.push({
+                  taskId: evalDoc.taskId,
+                  ...evalDoc.scores[s.id]
+              });
+          }
+      });
+
+      const totalScore = studentEvaluations.reduce((sum, e) => sum + (e.totalScore || 0), 0);
+      const avg = studentEvaluations.length ? (totalScore / studentEvaluations.length).toFixed(1) : 0;
+      const avgDisplay = studentEvaluations.length ? _bn(avg) : '-';
+      
+      let specificDisplay = '-';
+      if (activeFilters.assignment !== 'all') {
+          const assignEval = studentEvaluations.find(e => e.taskId === activeFilters.assignment);
+          if (assignEval) {
+              specificDisplay = _bn(assignEval.totalScore);
+          }
+      }
+
+      return `
+        <tr class="border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+          <td class="py-2 px-3 text-center text-gray-500">${_bn(index + 1)}</td>
+          <td class="py-2 px-3 text-left">${s.name}</td>
+          <td class="py-2 px-3 text-center">${_bn(s.roll)}</td>
+          <td class="py-2 px-3 text-center">${s.gender || '-'}</td>
+          <td class="py-2 px-3 text-center">${groupName}</td>
+          <td class="py-2 px-3 text-center">${s.academicGroup || '-'}</td>
+          <td class="py-2 px-3 text-center">${s.session || '-'}</td>
+          <td class="py-2 px-3 text-center">${s.role === 'member' ? 'সদস্য' : (s.role || '-')}</td>
+          <td class="py-2 px-3 text-center">${avgDisplay}</td>
+          ${activeFilters.assignment !== 'all' ? `<td class="py-2 px-3 text-center font-bold">${specificDisplay}</td>` : ''}
+        </tr>
+      `;
+  }).join('');
+
+  const html = `
+    <div class="font-bengali">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-blue-700 mb-2">স্মার্ট গ্রুপ ইভালুয়েটর</h1>
+        <h2 class="text-xl font-semibold text-gray-700">শিক্ষার্থী তালিকা রিপোর্ট</h2>
+        ${assignmentName ? `<h3 class="text-lg font-medium text-blue-600 mt-1">${assignmentName}</h3>` : ''}
+        <div class="flex flex-col items-center gap-1 mt-2">
+            <p class="text-sm text-gray-600 font-medium text-center px-4">${getFilterText()}</p>
+            <p class="text-xs text-gray-500">তারিখ: ${date} | মোট শিক্ষার্থী: ${_bn(students.length)} জন</p>
+        </div>
+      </div>
+      
+      <table class="w-full border-collapse border border-gray-300 text-xs">
+        <thead>
+          <tr class="bg-gray-100 text-gray-700">
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300 w-12">#</th>
+            <th class="py-2 px-3 text-left font-semibold border border-gray-300">নাম</th>
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300">রোল</th>
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300">লিঙ্গ</th>
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300">গ্রুপ</th>
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300">বিভাগ</th>
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300">সেশন</th>
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300">দায়িত্ব</th>
+            <th class="py-2 px-3 text-center font-semibold border border-gray-300">গড় স্কোর</th>
+            ${activeFilters.assignment !== 'all' ? `<th class="py-2 px-3 text-center font-semibold border border-gray-300">এসাইনমেন্ট</th>` : ''}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      
+      <div class="mt-8 text-xs text-gray-400 text-center border-t pt-2">
+        রিপোর্ট জেনারেটেড বাই স্মার্ট গ্রুপ ইভালুয়েটর সিস্টেম
+      </div>
+    </div>
+  `;
+
+  await _printHTML(html);
+}

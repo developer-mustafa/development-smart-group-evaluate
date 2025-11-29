@@ -1,11 +1,13 @@
 // js/components/student-filter.js
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { generateStudentListPDF } from '../utils/pdf-generator.js';
 
 // Register the plugin
 Chart.register(ChartDataLabels);
 
 let stateManager, uiManager, dataService, helpers, app;
+let currentFilteredStudents = []; // Store filtered students for printing
 
 const elements = {
   page: null,
@@ -231,7 +233,9 @@ export function render() {
               </button>
             </div>
 
-            <button id="sfExportBtn" class="btn btn-sm btn-success hidden shadow-sm"><i class="fas fa-file-excel mr-1"></i> এক্সপোর্ট</button>
+            <button id="sfPrintBtn" class="btn btn-sm btn-primary shadow-sm flex items-center gap-2">
+              <i class="fas fa-print"></i> প্রিন্ট লিস্ট
+            </button>
           </div>
         </div>
 
@@ -240,6 +244,7 @@ export function render() {
           <table class="w-full text-sm text-left">
             <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900/30 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
               <tr>
+                <th class="px-6 py-3 font-semibold tracking-wider">#</th>
                 <th class="px-6 py-3 font-semibold tracking-wider">নাম</th>
                 <th class="px-6 py-3 font-semibold tracking-wider">রোল</th>
                 <th class="px-6 py-3 font-semibold tracking-wider">লিঙ্গ</th>
@@ -415,6 +420,31 @@ function _attachEventListeners() {
           _ensureDataLoaded();
       });
   }
+
+  // Print Button
+  const printBtn = container.querySelector('#sfPrintBtn');
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      if (currentFilteredStudents.length === 0) {
+        uiManager.showToast('কোনো শিক্ষার্থী নেই প্রিন্ট করার জন্য', 'warning');
+        return;
+      }
+      
+      const evaluations = stateManager.get('evaluations') || [];
+      const groups = stateManager.get('groups') || [];
+      const tasks = stateManager.get('tasks') || [];
+      
+      const groupMap = new Map(groups.map(g => [g.id, g]));
+      const taskMap = new Map(tasks.map(t => [t.id, t]));
+      
+      // Prepare Extra Filter Map
+      const extraMap = new Map(EXTRA_FILTERS.map(f => [f.id, f.text]));
+      extraMap.set('unevaluated', 'অমূল্যায়িত শিক্ষার্থী');
+      extraMap.set('absent_mcq', 'MCQ নম্বর নেই');
+
+      generateStudentListPDF(currentFilteredStudents, activeFilters, evaluations, groupMap, extraMap, taskMap);
+    });
+  }
 }
 
 function _updateViewToggleUI() {
@@ -540,6 +570,9 @@ function _applyFiltersAndRender() {
     return true;
   });
 
+  // Update global filtered list for print
+  currentFilteredStudents = filtered;
+
   // 2. Render
   const tbody = elements.container.querySelector('#sfTableBody');
   const countEl = elements.container.querySelector('#sfResultCount');
@@ -588,7 +621,7 @@ function _applyFiltersAndRender() {
         if (specificTh) specificTh.remove();
     }
 
-    filtered.forEach(s => {
+    filtered.forEach((s, index) => {
       const tr = document.createElement('tr');
       tr.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer';
       
@@ -633,6 +666,7 @@ function _applyFiltersAndRender() {
       }
 
       tr.innerHTML = `
+        <td class="px-6 py-3 font-medium text-gray-500 dark:text-gray-400">${helpers.convertToBanglaNumber(index + 1)}</td>
         <td class="px-6 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">${s.name}</td>
         <td class="px-6 py-3">${helpers.convertToBanglaNumber(s.roll)}</td>
         <td class="px-6 py-3">${genderDisplay}</td>
