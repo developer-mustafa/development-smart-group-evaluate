@@ -50,7 +50,14 @@ export function init(dependencies) {
 }
 
 function _mergeDefaults() {
-  // Merge sidebar keys
+  // 1. Clean up stale keys from _settings.sidebar that are not in DEFAULT_SETTINGS.sidebar
+  Object.keys(_settings.sidebar).forEach(key => {
+    if (!DEFAULT_SETTINGS.sidebar.hasOwnProperty(key)) {
+      delete _settings.sidebar[key];
+    }
+  });
+
+  // 2. Merge sidebar keys
   Object.keys(DEFAULT_SETTINGS.sidebar).forEach(key => {
     if (!_settings.sidebar[key]) {
       _settings.sidebar[key] = DEFAULT_SETTINGS.sidebar[key];
@@ -186,7 +193,11 @@ function _renderDashboardToggle(key, title, subtitle, icon, color) {
 }
 
 function _renderSidebarRows() {
-  return Object.entries(_settings.sidebar).map(([key, item]) => {
+  // Use DEFAULT_SETTINGS keys to ensure order and prevent stale keys from showing
+  return Object.keys(DEFAULT_SETTINGS.sidebar).map(key => {
+    const item = _settings.sidebar[key];
+    if (!item) return ''; // Should not happen due to _mergeDefaults
+
     const isLocked = item.locked;
     return `
     <tr class="group hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0">
