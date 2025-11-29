@@ -354,12 +354,14 @@ function _getDashboardHTMLStructure() {
         <div class="grid grid-cols-2 gap-4">
           <!-- Average -->
           <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
-            <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-2xl border border-emerald-300/60 
-              bg-gradient-to-br from-emerald-100 via-emerald-200 to-emerald-300 
-              shadow-[0_6px_16px_rgba(16,185,129,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] 
-              dark:border-emerald-300/30 dark:from-emerald-900/40 dark:via-slate-900 dark:to-emerald-900/10 flex items-center justify-center"
+            <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-full border border-emerald-300/60 
+              bg-emerald-50 dark:bg-slate-800
+              shadow-[0_6px_16px_rgba(16,185,129,0.25)] 
+              dark:border-emerald-300/30 flex items-center justify-center"
               id="latestAssignmentCircle">
-              <p id="latestAssignmentAverage" class="text-2xl sm:text-3xl font-bold text-emerald-900 dark:text-emerald-100">-</p>
+              <div class="absolute inset-3 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
+                <p id="latestAssignmentAverage" class="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">-</p>
+              </div>
             </div>
             <p class="text-[0.8rem] sm:text-sm font-bold text-emerald-800 dark:text-white/80 text-center">
               সর্বশেষ এসাইনমেন্ট গড়
@@ -368,12 +370,14 @@ function _getDashboardHTMLStructure() {
 
           <!-- Overall -->
           <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
-            <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-2xl border border-sky-300/60 
-              bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 
-              shadow-[0_6px_16px_rgba(14,165,233,0.25),inset_0_1px_2px_rgba(255,255,255,0.8)] 
-              dark:border-sky-300/30 dark:from-sky-900/40 dark:via-slate-900 dark:to-sky-900/10 flex items-center justify-center"
+            <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-full border border-sky-300/60 
+              bg-sky-50 dark:bg-slate-800
+              shadow-[0_6px_16px_rgba(14,165,233,0.25)] 
+              dark:border-sky-300/30 flex items-center justify-center"
               id="overallProgressCircle">
-              <p id="overallProgress" class="text-2xl sm:text-3xl font-bold text-sky-900 dark:text-sky-100">-</p>
+              <div class="absolute inset-3 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm">
+                <p id="overallProgress" class="text-2xl sm:text-3xl font-bold text-sky-600 dark:text-sky-400">-</p>
+              </div>
             </div>
             <p class="text-[0.8rem] sm:text-sm font-bold text-sky-800 dark:text-white/80 text-center">
               সামগ্রিক ‍উন্নতি
@@ -1410,22 +1414,27 @@ function _renderStats(stats) {
     }
   }
 
-  const circlePalette = _getScorePalette(progressValue);
   if (elements.overallProgressCircle) {
     const progressDeg = (progressValue / 100) * 360;
-    elements.overallProgressCircle.style.background = `conic-gradient(${circlePalette.solid} ${progressDeg}deg, rgba(255,255,255,0.08) ${progressDeg}deg)`;
-    elements.overallProgressCircle.style.boxShadow = `0 0 25px ${circlePalette.shadow}`;
+    // Fixed Sky Palette for Overall Progress
+    const skySolid = '#0ea5e9'; 
+    const skySoft = 'rgba(14,165,233,0.1)';
+    elements.overallProgressCircle.style.background = `conic-gradient(${skySolid} ${progressDeg}deg, ${skySoft} ${progressDeg}deg)`;
+    elements.overallProgressCircle.style.boxShadow = `0 0 20px rgba(14,165,233,0.3)`;
   }
   if (elements.overallProgress) {
-    elements.overallProgress.style.color = circlePalette.solid;
+    // elements.overallProgress.style.color = circlePalette.solid; // Keep text color consistent with theme
   }
   if (elements.latestAssignmentCircle && latestAssignmentAverageValue !== null) {
-    const latestCirclePalette = _getScorePalette(latestAssignmentAverageValue);
     const latestDeg = (latestAssignmentAverageValue / 100) * 360;
-    elements.latestAssignmentCircle.style.background = `conic-gradient(${latestCirclePalette.solid} ${latestDeg}deg, rgba(255,255,255,0.08) ${latestDeg}deg)`;
-    elements.latestAssignmentCircle.style.boxShadow = `0 0 25px ${latestCirclePalette.shadow}`;
+    // Fixed Emerald Palette for Latest Assignment
+    const emeraldSolid = '#10b981';
+    const emeraldSoft = 'rgba(16,185,129,0.1)';
+    elements.latestAssignmentCircle.style.background = `conic-gradient(${emeraldSolid} ${latestDeg}deg, ${emeraldSoft} ${latestDeg}deg)`;
+    elements.latestAssignmentCircle.style.boxShadow = `0 0 20px rgba(16,185,129,0.3)`;
+    
     if (elements.latestAssignmentAverage) {
-      elements.latestAssignmentAverage.style.color = latestCirclePalette.solid;
+      // elements.latestAssignmentAverage.style.color = latestCirclePalette.solid; // Keep text color consistent with theme
     }
   }
 
