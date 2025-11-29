@@ -109,30 +109,30 @@ function _getDashboardHTMLStructure() {
       }
       .glow-ring::before {
         background: conic-gradient(from 0deg,
-          rgba(255,200,90,0) 0deg,
-          rgba(255,210,110,0.15) 180deg,
-          rgba(255,225,160,0.9) 300deg,
-          rgba(255,240,200,1) 340deg,
-          rgba(255,200,90,0) 360deg);
-        mask: radial-gradient(circle, transparent 70%, black 78%);
-        -webkit-mask: radial-gradient(circle, transparent 70%, black 78%);
-        box-shadow: 0 0 40px rgba(255,210,120,0.6), 0 0 80px rgba(255,220,160,0.4);
-        animation: glowOrbit 4s linear infinite;
+          rgba(255,180,0,0) 0deg,
+          rgba(255,190,0,0.2) 180deg,
+          rgba(255,200,0,0.9) 300deg,
+          rgba(255,215,0,1) 340deg,
+          rgba(255,180,0,0) 360deg);
+        mask: radial-gradient(circle, transparent 65%, black 72%);
+        -webkit-mask: radial-gradient(circle, transparent 65%, black 72%);
+        box-shadow: 0 0 40px rgba(255,180,0,0.7), 0 0 80px rgba(255,200,0,0.5);
+        animation: glowOrbit 3s linear infinite;
       }
       .glow-ring::after {
         background: conic-gradient(from 0deg,
-          rgba(255,210,100,0) 0deg,
-          rgba(255,230,160,0.25) 240deg,
-          rgba(255,240,200,0.8) 320deg,
-          rgba(255,210,100,0) 360deg);
-        mask: radial-gradient(circle, transparent 60%, black 72%);
-        -webkit-mask: radial-gradient(circle, transparent 60%, black 72%);
-        filter: blur(14px);
-        opacity: 0.9;
-        animation: glowOrbit 6s linear infinite;
+          rgba(255,160,0,0) 0deg,
+          rgba(255,180,0,0.3) 240deg,
+          rgba(255,200,0,0.9) 320deg,
+          rgba(255,160,0,0) 360deg);
+        mask: radial-gradient(circle, transparent 55%, black 68%);
+        -webkit-mask: radial-gradient(circle, transparent 55%, black 68%);
+        filter: blur(12px);
+        opacity: 1;
+        animation: glowOrbit 5s linear infinite;
       }
     </style>
-    <div class="max-w-7xl mx-auto space-y-3">
+    <div class="max-w-7xl mx-auto space-y-2">
      
 
     <section id="dashboard-hero" class="relative overflow-hidden rounded-3xl border border-slate-300/60
@@ -147,7 +147,7 @@ function _getDashboardHTMLStructure() {
   <!-- subtle radial aura -->
   <div aria-hidden class="absolute inset-0 opacity-30 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(99,102,241,0.35),transparent_60%)]"></div>
 
-  <div class="relative p-3 sm:p-4 space-y-4">
+  <div class="relative p-2 sm:p-3 space-y-2">
 
     <!-- Card (hero row) -->
     <section class="relative overflow-hidden rounded-3xl border
@@ -164,8 +164,8 @@ function _getDashboardHTMLStructure() {
       <div aria-hidden class="pointer-events-none absolute -inset-px rounded-[24px] opacity-[0.10] blur-2xl"
            style="background: conic-gradient(#fde68a, #f0abfc, #93c5fd, #fde68a)"></div>
 
-      <div class="relative p-3 sm:p-4">
-        <div class="flex flex-col items-center justify-between gap-4 md:flex-row">
+      <div class="relative p-2 sm:p-3">
+        <div class="flex flex-col items-center justify-between gap-2 md:flex-row">
 
           <!-- Left: title & icon -->
           <div class="flex w-full items-center gap-3 md:w-auto justify-center md:justify-start">
@@ -227,15 +227,15 @@ function _getDashboardHTMLStructure() {
     </section>
 
     <!-- Two-column content -->
-    <div class="grid gap-4 lg:grid-cols-2 items-stretch">
+    <div class="grid gap-3 lg:grid-cols-2 items-stretch">
 
       <!-- Students & Groups -->
       <article class="rounded-3xl border border-slate-300/70 bg-gradient-to-br from-white via-slate-50 to-slate-100 
         text-slate-900 shadow-[0_8px_24px_rgba(0,0,0,0.10),0_0_24px_rgba(255,255,255,0.5)]
         backdrop-blur dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-black 
-        dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full p-3">
+        dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full p-2">
 
-        <div class="space-y-4">
+        <div class="space-y-2">
           <div class="flex items-center justify-center text-xs font-semibold text-slate-800 dark:text-white/80">
             <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-slate-900 
               ring-1 ring-slate-200 shadow-sm dark:bg-white/10 dark:text-white">
@@ -279,7 +279,7 @@ function _getDashboardHTMLStructure() {
           </div>
         </div>
 
-          <div class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-3 md:grid-cols-2">
             <!-- শিক্ষার্থী -->
             <div class="rounded-2xl border border-emerald-300/70 bg-gradient-to-br from-white via-emerald-50 to-emerald-100/70 
               shadow-[0_6px_16px_rgba(16,185,129,0.18)] px-4 py-2
@@ -330,7 +330,7 @@ function _getDashboardHTMLStructure() {
       <article class="relative rounded-3xl border border-slate-300/70 
         bg-gradient-to-br from-blue-50 via-sky-100 to-emerald-50 
         text-slate-900 shadow-[0_10px_25px_rgba(0,0,0,0.08),0_0_35px_rgba(255,255,255,0.6)] 
-        backdrop-blur p-4 sm:p-5 transition-all duration-500 
+        backdrop-blur p-3 sm:p-4 transition-all duration-500 
         dark:border-slate-700/70 dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 
         dark:text-white dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.06),0_12px_32px_rgba(0,0,0,0.7)] h-full">
 
@@ -351,7 +351,7 @@ function _getDashboardHTMLStructure() {
        
 
         <!-- Content: 3-column on sm+ -->
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-3">
           <!-- Average -->
           <div class="flex flex-col items-center justify-center gap-2 sm:gap-3">
             <div class="relative h-24 w-24 sm:h-26 sm:w-26 rounded-full border border-emerald-300/60 
@@ -1835,7 +1835,7 @@ function _buildRankCard(data, rank) {
           </span>
           <span class="inline-flex items-center justify-center rounded-lg bg-slate-900/5 px-2 py-1 text-slate-700
                        dark:bg-white/10 dark:text-slate-100">
-            এসাইনমেন্ট অংশগ্রহন: ${evals}
+            এসাইনমেন্ট অংশগ্রহন: ${evals} টি
           </span>
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-300 truncate" title="${summaryLine}">

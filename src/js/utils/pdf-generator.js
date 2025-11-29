@@ -348,7 +348,7 @@ function _computeGroupPerformance(groupId, groups, students, tasks, evaluations)
 }
 
 function _generateGroupHTML(group, students, tasks, evaluations) {
-  const { perEval, groupAvg, rank } = _computeGroupPerformance(group.id, [group], students, tasks, evaluations); // Pass single group for rank calc context? No, rank needs all groups.
+  const { perEval, groupAvg, rank } = _computeGroupPerformance(group.id, groups, students, tasks, evaluations);
   // Actually, _computeGroupPerformance needs ALL groups to calculate rank properly.
   // Let's adjust _computeGroupPerformance to accept all groups, but we are calling it inside a loop in generateAllGroupsResultPDF.
   // To avoid re-calculating rank every time, we could optimize, but for PDF generation (client-side), it's okay.
@@ -662,11 +662,16 @@ export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, e
         max: stats.maxPossible
       };
 
+      const participationRate = stats.evalCount > 0 ? 100 : 0; // Or calculate based on total tasks if needed
+      const participationClass = participationRate >= 80 ? 'text-emerald-600' : participationRate >= 50 ? 'text-amber-600' : 'text-rose-600';
+
       return {
         ...s,
         stats,
         displayStats,
-        avgPct
+        avgPct,
+        participationRate,
+        participationClass
       };
     }).sort((a, b) => b.avgPct - a.avgPct); // Sort by performance
 
@@ -683,6 +688,9 @@ export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, e
           <span class="px-2 py-0.5 rounded-full text-[10px] border ${_roleBadgeClass(s.role)}">
             ${_prettyRoleBn(s.role) || 'সদস্য'}
           </span>
+        </td>
+        <td class="px-2 py-2 text-center border-r border-gray-100 font-bold text-gray-700">
+             ${_bn(s.stats.evalCount > 0 ? 1 : 0)}
         </td>
         ${!isSingleTask ? `<td class="px-2 py-2 text-center border-r border-gray-100">${_bn(s.stats.evalCount)}</td>` : ''}
         <td class="px-2 py-2 text-center text-gray-600 border-r border-gray-100">${s.displayStats.task}</td>
@@ -728,7 +736,8 @@ export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, e
             <tr>
               <th class="px-2 py-3 text-center font-bold w-[6%] border-r border-indigo-500/30">রোল</th>
               <th class="px-3 py-3 text-left font-bold w-[20%] border-r border-indigo-500/30">নাম</th>
-              <th class="px-2 py-3 text-center font-bold w-[16%] border-r border-indigo-500/30 whitespace-nowrap">দায়িত্ব</th>
+              <th class="px-2 py-3 text-center font-bold w-[12%] border-r border-indigo-500/30 whitespace-nowrap">দায়িত্ব</th>
+              <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">অংশগ্রহণ</th>
               ${!isSingleTask ? '<th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">মূল্যায়ন</th>' : ''}
               <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">টাস্ক</th>
               <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">টিম</th>
