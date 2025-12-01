@@ -100,11 +100,8 @@ export function render() {
   const cardsHtml = sections.map(_renderSectionCard).join('');
 
   elements.policySectionsContainer.innerHTML = `
-    <div class="space-y-8">
-      ${_renderHero(sections)}
-      <div class="grid gap-6 lg:grid-cols-2" aria-live="polite">
-        ${cardsHtml}
-      </div>
+    <div class="grid gap-4 lg:grid-cols-2" aria-live="polite">
+      ${cardsHtml}
     </div>
   `;
 }
@@ -131,40 +128,7 @@ function _cacheDOMElements() {
   elements.policySectionsContainer = document.getElementById('policySections');
 }
 
-function _renderHero(sections) {
-  const totalSections = sections.length;
-  const totalRules = sections.reduce((sum, section) => sum + section.rules.length, 0);
-  const teamsFocus = sections.find((section) => /টিম|গঠন/i.test(section.title))?.rules.length || 0;
 
-  const format = (value) =>
-    helpers?.convertToBanglaNumber ? helpers.convertToBanglaNumber(String(value)) : String(value);
-
-  return `
-    <section class="rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-800 p-6 text-white shadow-2xl">
-      <div class="space-y-3">
-        <p class="text-xs uppercase tracking-[0.4em] text-white/70">Policy Update</p>
-        <h2 class="text-3xl font-semibold"> গ্রুপ পলিসি </h2>
-        <p class="text-sm text-white/80 max-w-2xl">
-          টিমকে সংগঠিত রাখা, সুষম মূল্যায়ন করা এবং সবার জন্য স্পষ্ট প্রত্যাশা জানানোর জন্য এই কয়েকটি নিয়মই যথেষ্ট।
-        </p>
-      </div>
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        ${_heroStat('মোট সেকশন', format(totalSections))}
-        ${_heroStat('মোট নিয়ম', format(totalRules))}
-        ${_heroStat('টিম ফোকাস', format(teamsFocus))}
-      </div>
-    </section>
-  `;
-}
-
-function _heroStat(label, value) {
-  return `
-    <div class="rounded-2xl border border-white/20 bg-white/10 backdrop-blur p-4">
-      <p class="text-xs uppercase tracking-wide text-white/70">${label}</p>
-      <p class="mt-2 text-2xl font-semibold">${value}</p>
-    </div>
-  `;
-}
 
 function _renderSectionCard(section, index) {
   const { title, icon, rules, tone } = section;
@@ -184,17 +148,17 @@ function _renderSectionCard(section, index) {
   return `
     <article class="rounded-2xl border ${
       toneStyle.border
-    } bg-white dark:bg-gray-900/80 p-6 shadow-sm hover:shadow-xl transition-shadow duration-300">
-      <div class="flex items-center gap-4">
-        <span class="flex h-12 w-12 items-center justify-center rounded-2xl ${toneStyle.icon}">
-          <i class="${icon} text-lg"></i>
+    } bg-white dark:bg-gray-900/80 p-4 shadow-sm hover:shadow-xl transition-shadow duration-300">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl ${toneStyle.icon}">
+          <i class="${icon} text-base"></i>
         </span>
         <div>
-          <p class="text-xs font-semibold text-gray-400">নিয়ম ${step}</p>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${_escapeHtml(title)}</h3>
+          <p class="text-[10px] font-semibold text-gray-400">নিয়ম ${step}</p>
+          <h3 class="text-base font-semibold text-gray-900 dark:text-white">${_escapeHtml(title)}</h3>
         </div>
       </div>
-      <ul class="mt-4 space-y-2">${ruleItems}</ul>
+      <ul class="mt-3 space-y-1.5">${ruleItems}</ul>
     </article>
   `;
 }

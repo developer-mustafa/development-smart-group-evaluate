@@ -24,8 +24,12 @@
 
     <!-- Tailwind compiled via Vite -->
 
-    <script type="module" crossorigin src="/assets/index-BbTrhlnu.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DzZn0FS2.css">
+    <!-- Google API -->
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script type="module" crossorigin src="/assets/index-8v2iQoTE.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DmVYdT1Z.css">
   </head>
 
   <body
@@ -415,6 +419,7 @@
       >
         <div id="appContainer" class="space-y-6 max-w-7xl mx-auto">
           <div id="page-dashboard" class="page space-y-6 hidden">
+
             <!-- Elite Group (Top 3) -->
             <section id="elite-groups" aria-label="Elite Groups">
               <!-- Header -->
@@ -1327,6 +1332,19 @@
         <div class="flex justify-end space-x-3">
           <button id="cancelDelete" class="btn btn-light">বাতিল</button>
           <button id="confirmDelete" class="btn btn-danger">ডিলিট করুন</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal hidden" aria-modal="true" role="alertdialog">
+      <div class="modal-content max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
+        <h3 id="confirmModalTitle" class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+          নিশ্চিতকরণ
+        </h3>
+        <p id="confirmModalText" class="text-gray-600 dark:text-gray-400 mb-6 whitespace-pre-line">...</p>
+        <div class="flex justify-end space-x-3">
+          <button id="cancelConfirm" class="btn btn-light">বাতিল</button>
+          <button id="actionConfirm" class="btn btn-primary">নিশ্চিত করুন</button>
         </div>
       </div>
     </div>
