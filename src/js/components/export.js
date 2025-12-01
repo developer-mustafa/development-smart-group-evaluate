@@ -23,7 +23,21 @@ const EVAL_LABELS = {
   TOTAL_SCORE: 'মোট স্কোর',
   MAX_SCORE: 'সর্বোচ্চ স্কোর',
   COMMENTS: 'মন্তব্য',
+  ACADEMIC_GROUP: 'একাডেমিক গ্রুপ',
+  STUDENT_ROLE: 'শিক্ষার্থীর দায়িত্ব',
 };
+
+// Google Drive Config
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+let driveAccessToken = null;
+
+// Credentials provided by user
+const GOOGLE_API_KEY = 'AIzaSyC3b1KNu4que0CR_E2ve7laRP_vC3ghYCA';
+const GOOGLE_CLIENT_ID = '528853580065-9rhps4e6qhhot629gjqqiolul9a2luum.apps.googleusercontent.com';
 
 /**
  * Initializes the Export component.
@@ -36,10 +50,11 @@ export function init(dependencies) {
   dataService = dependencies.services.dataService;
   helpers = dependencies.utils;
   app = dependencies.app;
-  // analysisComponent is app.components.analysis (accessed via 'app')
 
   _cacheDOMElements();
-  _setupEventListeners(); // Setup JS-based event listeners
+  _renderBackupRestoreUI(); // Render new UI section
+  _setupEventListeners();
+  _initGoogleDrive(); // Initialize Google Drive API
 
   console.log('✅ Export component initialized.');
 
@@ -48,7 +63,6 @@ export function init(dependencies) {
 
 /**
  * Renders the Export page (#page-export).
- * This function primarily updates the statistics on the page.
  */
 export function render() {
   if (!elements.page) {
@@ -70,12 +84,10 @@ function _populateAssignmentFilter() {
   const tasks = stateManager.get('tasks') || [];
   const currentVal = elements.exportAssignmentFilter.value;
 
-  // Clear existing options except the first one
   while (elements.exportAssignmentFilter.options.length > 1) {
     elements.exportAssignmentFilter.remove(1);
   }
 
-  // Sort tasks by date (newest first)
   const sortedTasks = [...tasks].sort((a, b) => {
     const dateA = new Date(a.date || 0);
     const dateB = new Date(b.date || 0);
@@ -89,7 +101,6 @@ function _populateAssignmentFilter() {
     elements.exportAssignmentFilter.appendChild(option);
   });
 
-  // Restore selection if possible
   if (currentVal && Array.from(elements.exportAssignmentFilter.options).some(o => o.value === currentVal)) {
     elements.exportAssignmentFilter.value = currentVal;
   }
@@ -102,59 +113,151 @@ function _populateAssignmentFilter() {
 function _cacheDOMElements() {
   elements.page = document.getElementById('page-export');
   if (elements.page) {
-    // Cache buttons by explicit IDs (preferred) with legacy fallback support
-    elements.exportStudentsCSVBtn =
-      elements.page.querySelector('#exportStudentsCSVBtn') ||
-      elements.page.querySelector('button[onclick*="exportStudentsCSV"]');
-    elements.exportGroupsCSVBtn =
-      elements.page.querySelector('#exportGroupsCSVBtn') ||
-      elements.page.querySelector('button[onclick*="exportGroupsCSV"]');
-    elements.exportEvaluationsCSVBtn =
-      elements.page.querySelector('#exportEvaluationsCSVBtn') ||
-      elements.page.querySelector('button[onclick*="exportEvaluationsCSV"]');
-    elements.exportAllDataJSONBtn =
-      elements.page.querySelector('#exportAllDataJSONBtn') ||
-      elements.page.querySelector('button[onclick*="exportAllData"]');
-    elements.exportAllDataZipBtn =
-      elements.page.querySelector('#exportAllDataZipBtn') ||
-      elements.page.querySelector('button[onclick*="exportAllDataAsZip"]');
-    elements.exportGroupFullDetailsPDFBtn = 
-      elements.page.querySelector('#exportGroupFullDetailsPDFBtn');
-    elements.exportAssignmentFilter = 
-      elements.page.querySelector('#exportAssignmentFilter');
+    elements.exportStudentsCSVBtn = elements.page.querySelector('#exportStudentsCSVBtn');
+    elements.exportGroupsCSVBtn = elements.page.querySelector('#exportGroupsCSVBtn');
+    elements.exportEvaluationsCSVBtn = elements.page.querySelector('#exportEvaluationsCSVBtn');
+    elements.exportAllDataJSONBtn = elements.page.querySelector('#exportAllDataJSONBtn');
+    elements.exportAllDataZipBtn = elements.page.querySelector('#exportAllDataZipBtn');
+    elements.exportGroupFullDetailsPDFBtn = elements.page.querySelector('#exportGroupFullDetailsPDFBtn');
+    elements.exportAssignmentFilter = elements.page.querySelector('#exportAssignmentFilter');
 
-    // Statistics Cards
     elements.totalStudentsCount = elements.page.querySelector('#totalStudentsCount');
     elements.totalGroupsCount = elements.page.querySelector('#totalGroupsCount');
     elements.totalEvaluationsCount = elements.page.querySelector('#totalEvaluationsCount');
     elements.lastExportTime = elements.page.querySelector('#lastExportTime');
 
-    // Remove onclick attributes to prevent double triggers
-    _removeOnclickAttributes();
+    // Backup & Restore Container (will be injected)
+    elements.backupRestoreContainer = elements.page.querySelector('#backupRestoreContainer');
+    if (!elements.backupRestoreContainer) {
+      // Create container if not exists (append to end of page)
+      const container = document.createElement('div');
+      container.id = 'backupRestoreContainer';
+      container.className = 'mt-8';
+      elements.page.appendChild(container);
+      elements.backupRestoreContainer = container;
+    }
   } else {
     console.error('❌ Export init failed: #page-export element not found!');
   }
 }
 
 /**
- * Removes inline 'onclick' attributes from cached buttons
- * to rely solely on JavaScript event listeners.
+ * Renders the Backup & Restore UI section dynamically.
  * @private
  */
-function _removeOnclickAttributes() {
-  const buttons = [
-    elements.exportStudentsCSVBtn,
-    elements.exportGroupsCSVBtn,
-    elements.exportEvaluationsCSVBtn,
-    elements.exportAllDataJSONBtn,
-    elements.exportAllDataZipBtn,
-    elements.exportAllDataZipBtn,
-  ];
-  buttons.forEach((btn) => {
-    if (btn && btn.hasAttribute && btn.hasAttribute('onclick')) {
-      btn.removeAttribute('onclick');
-    }
-  });
+function _renderBackupRestoreUI() {
+  if (!elements.backupRestoreContainer) return;
+
+  elements.backupRestoreContainer.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+          <i class="fas fa-database mr-2 text-indigo-500"></i>ব্যাকআপ এবং রিস্টোর
+        </h3>
+        <span class="text-xs text-gray-500 bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">Advanced</span>
+      </div>
+      
+      <div class="p-6 space-y-6">
+        <!-- Local Restore -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-3">
+            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">লোকাল ব্যাকআপ</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+              আপনার সম্পূর্ণ ডেটা JSON ফাইল হিসেবে ডাউনলোড করুন অথবা আগের ব্যাকআপ থেকে রিস্টোর করুন।
+            </p>
+            <div class="space-y-3">
+              <button id="downloadLocalBackupBtn" class="btn btn-primary w-full">
+                <i class="fas fa-download mr-2"></i>ব্যাকআপ ডাউনলোড করুন (JSON)
+              </button>
+              
+              <div class="relative">
+                <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                <div class="relative flex justify-center">
+                  <span class="bg-white dark:bg-gray-800 px-2 text-xs text-gray-500">অথবা রিস্টোর করুন</span>
+                </div>
+              </div>
+
+              <div class="flex gap-2">
+                <input type="file" id="restoreJSONInput" accept=".json" class="hidden" />
+                <button id="triggerRestoreBtn" class="btn btn-secondary w-full">
+                  <i class="fas fa-upload mr-2"></i>JSON ফাইল আপলোড করুন
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Google Drive -->
+          <div class="space-y-3 border-l pl-0 md:pl-6 border-gray-200 dark:border-gray-700">
+            <!-- Google Drive Sync -->
+            <div class="space-y-3">
+              <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Google Drive Sync</h4>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                আপনার ব্যাকআপ সেভ এবং রিস্টোর করতে কানেক্ট করুন।
+              </p>
+              
+              <div id="gdriveAuthSection">
+                <button id="gdriveConnectBtn" class="btn btn-dark w-full">
+                  <i class="fab fa-google-drive mr-2"></i>Google Drive কানেক্ট করুন
+                </button>
+              </div>
+
+              <div id="gdriveActionsSection" class="hidden space-y-3">
+                <!-- User Info & Status -->
+                <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                      <img id="gdriveUserAvatar" src="" alt="User" class="w-8 h-8 rounded-full hidden">
+                      <div>
+                        <p id="gdriveUserEmail" class="text-xs font-medium text-gray-700 dark:text-gray-300">Connected</p>
+                        <p class="text-[10px] text-green-600 dark:text-green-400 flex items-center">
+                          <i class="fas fa-circle text-[6px] mr-1"></i>Active
+                        </p>
+                      </div>
+                    </div>
+                    <button id="gdriveDisconnectBtn" class="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors" title="Disconnect">
+                      <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                  </div>
+                  
+                  <div class="text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-2 flex justify-between items-center">
+                    <span>Last Backup:</span>
+                    <span id="gdriveLastBackupTime" class="font-mono">Checking...</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <button id="gdriveUploadBtn" class="btn btn-success w-full text-xs">
+                    <i class="fas fa-cloud-upload-alt mr-1"></i>আপলোড
+                  </button>
+                  <button id="gdriveRestoreBtn" class="btn btn-warning w-full text-xs">
+                    <i class="fas fa-cloud-download-alt mr-1"></i>রিস্টোর
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Cache new elements
+  elements.downloadLocalBackupBtn = elements.backupRestoreContainer.querySelector('#downloadLocalBackupBtn');
+  elements.restoreJSONInput = elements.backupRestoreContainer.querySelector('#restoreJSONInput');
+  elements.triggerRestoreBtn = elements.backupRestoreContainer.querySelector('#triggerRestoreBtn');
+  elements.gdriveConnectBtn = elements.backupRestoreContainer.querySelector('#gdriveConnectBtn');
+  elements.gdriveDisconnectBtn = elements.backupRestoreContainer.querySelector('#gdriveDisconnectBtn');
+  elements.gdriveUploadBtn = elements.backupRestoreContainer.querySelector('#gdriveUploadBtn');
+  elements.gdriveRestoreBtn = elements.backupRestoreContainer.querySelector('#gdriveRestoreBtn');
+  elements.gdriveAuthSection = elements.backupRestoreContainer.querySelector('#gdriveAuthSection');
+  elements.gdriveActionsSection = elements.backupRestoreContainer.querySelector('#gdriveActionsSection');
+  
+  // New Elements
+  elements.gdriveUserAvatar = elements.backupRestoreContainer.querySelector('#gdriveUserAvatar');
+  elements.gdriveUserEmail = elements.backupRestoreContainer.querySelector('#gdriveUserEmail');
+  elements.gdriveLastBackupTime = elements.backupRestoreContainer.querySelector('#gdriveLastBackupTime');
 }
 
 /**
@@ -164,16 +267,13 @@ function _removeOnclickAttributes() {
 function _setupEventListeners() {
   if (!elements.page) return;
 
-  // CSV Exports
+  // Existing Exports
   uiManager.addListener(elements.exportStudentsCSVBtn, 'click', _handleExportStudentsCSV);
   uiManager.addListener(elements.exportGroupsCSVBtn, 'click', _handleExportGroupsCSV);
   uiManager.addListener(elements.exportEvaluationsCSVBtn, 'click', _handleExportEvaluationsCSV);
-
-  // Advanced Exports
   uiManager.addListener(elements.exportAllDataJSONBtn, 'click', _handleExportAllDataJSON);
   uiManager.addListener(elements.exportAllDataZipBtn, 'click', _handleExportAllDataZip);
 
-  // New: Group Wise Full Details Result PDF
   uiManager.addListener(elements.exportGroupFullDetailsPDFBtn, 'click', () => {
     if (app.components.analysis?.generateGroupWiseFullDetailsPDF) {
       uiManager.showToast('গ্রুপ ভিত্তিক বিস্তারিত ফলাফল PDF তৈরি হচ্ছে...', 'info');
@@ -183,12 +283,477 @@ function _setupEventListeners() {
       uiManager.showToast('ফাংশনটি এখনো বিশ্লেষণ মডিউলে যুক্ত করা হয়নি।', 'error');
     }
   });
+
+  // Local Restore
+  if (elements.downloadLocalBackupBtn) {
+    uiManager.addListener(elements.downloadLocalBackupBtn, 'click', _handleExportAllDataJSON);
+  }
+  if (elements.triggerRestoreBtn && elements.restoreJSONInput) {
+    uiManager.addListener(elements.triggerRestoreBtn, 'click', () => elements.restoreJSONInput.click());
+    uiManager.addListener(elements.restoreJSONInput, 'change', (e) => {
+      const file = e.target.files[0];
+      if (file) _handleRestoreJSON(file);
+      e.target.value = ''; // Reset
+    });
+  }
+
+  // Google Drive
+  if (elements.gdriveConnectBtn) {
+    uiManager.addListener(elements.gdriveConnectBtn, 'click', _handleDriveAuth);
+  }
+  if (elements.gdriveDisconnectBtn) {
+    uiManager.addListener(elements.gdriveDisconnectBtn, 'click', _handleDriveDisconnect);
+  }
+  if (elements.gdriveUploadBtn) {
+    uiManager.addListener(elements.gdriveUploadBtn, 'click', _handleDriveUpload);
+  }
+  if (elements.gdriveRestoreBtn) {
+    uiManager.addListener(elements.gdriveRestoreBtn, 'click', _handleDriveRestore);
+  }
 }
 
-/**
- * Updates the statistics cards on the export page.
- * @private
- */
+// --- Google Drive Integration ---
+
+function _initGoogleDrive() {
+  const script1 = document.createElement('script');
+  script1.src = "https://apis.google.com/js/api.js";
+  script1.onload = () => {
+    gapi.load('client', async () => {
+      // We don't initialize client here with API key yet, we wait for user action or config
+      // But we can set the flag
+      gapiInited = true;
+      _checkDriveReady();
+    });
+  };
+  document.head.appendChild(script1);
+
+  const script2 = document.createElement('script');
+  script2.src = "https://accounts.google.com/gsi/client";
+  script2.onload = () => {
+    gisInited = true;
+    _checkDriveReady();
+  };
+  document.head.appendChild(script2);
+}
+
+function _checkDriveReady() {
+  if (gapiInited && gisInited) {
+    console.log('Google APIs loaded.');
+    // Check for persisted token
+    const storedToken = localStorage.getItem('gdrive_access_token');
+    if (storedToken) {
+      console.log('Restoring Drive session from storage...');
+      driveAccessToken = storedToken;
+      // Ideally we should check validity, but for now we'll assume it's valid or fail gracefully later
+      // Set token for gapi if needed (though we use fetch mostly)
+      gapi.client.setToken({ access_token: storedToken });
+      
+      _updateDriveUI(true);
+      _fetchUserInfo(storedToken);
+      _fetchLastBackupTime(storedToken);
+    }
+  }
+}
+
+async function _handleDriveAuth() {
+  try {
+    await gapi.client.init({
+      // apiKey: GOOGLE_API_KEY, // Not strictly needed when using Access Token via fetch
+      discoveryDocs: [], 
+    });
+    
+    // We will use raw fetch for Drive operations to avoid discovery doc 502 errors
+    // await gapi.client.load('drive', 'v3');
+
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPES,
+      callback: '', // defined later
+    });
+
+    // Request access
+    tokenClient.callback = async (resp) => {
+      if (resp.error) {
+        throw resp;
+      }
+      console.log('Granted Scopes:', resp.scope); // Debugging
+      // Fix: hasGrantedAllScopes expects individual scopes as arguments, not a single space-separated string
+      if (!google.accounts.oauth2.hasGrantedAllScopes(resp, ...SCOPES.split(' '))) {
+        uiManager.showToast('Google Drive পারমিশন দেওয়া হয়নি।', 'error');
+        return;
+      }
+      
+      // Save token explicitly as requested
+      driveAccessToken = resp.access_token;
+      localStorage.setItem('gdrive_access_token', resp.access_token); // Persist token
+      
+      _updateDriveUI(true);
+      uiManager.showToast('Google Drive সংযুক্ত হয়েছে!', 'success');
+      
+      // Fetch User Info & Last Backup
+      _fetchUserInfo(resp.access_token);
+      _fetchLastBackupTime(resp.access_token);
+    };
+
+
+    if (gapi.client.getToken() === null) {
+      tokenClient.requestAccessToken({ prompt: 'consent', scope: SCOPES });
+    } else {
+      tokenClient.requestAccessToken({ prompt: 'consent', scope: SCOPES }); // Force consent
+    }
+  } catch (err) {
+    console.error('Drive Auth Error:', err);
+    uiManager.showToast('Google Drive কানেকশন ব্যর্থ হয়েছে।', 'error');
+  }
+}
+
+function _updateDriveUI(isConnected) {
+  if (isConnected) {
+    elements.gdriveAuthSection.classList.add('hidden');
+    elements.gdriveActionsSection.classList.remove('hidden');
+  } else {
+    elements.gdriveAuthSection.classList.remove('hidden');
+    elements.gdriveActionsSection.classList.add('hidden');
+  }
+}
+
+function _handleDriveDisconnect() {
+  uiManager.showDeleteModal(
+    'Disconnect Drive?', 
+    'আপনি কি নিশ্চিত যে আপনি Google Drive ডিসকানেক্ট করতে চান?', 
+    () => {
+      const token = gapi.client.getToken();
+      const tokenToRevoke = token?.access_token || driveAccessToken;
+      
+      if (tokenToRevoke) {
+        google.accounts.oauth2.revoke(tokenToRevoke, () => {
+          console.log('Access token revoked');
+        });
+      }
+      gapi.client.setToken(null);
+      driveAccessToken = null;
+      localStorage.removeItem('gdrive_access_token'); // Clear persisted token
+      _updateDriveUI(false);
+      uiManager.showToast('Google Drive ডিসকানেক্ট করা হয়েছে।', 'info');
+    }
+  );
+}
+
+async function _fetchUserInfo(accessToken) {
+  try {
+    console.log('Fetching user info...');
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    });
+    if (response.ok) {
+      const userData = await response.json();
+      console.log('User Data received:', userData);
+      
+      if (elements.gdriveUserEmail) {
+        console.log('Updating email element:', elements.gdriveUserEmail);
+        elements.gdriveUserEmail.textContent = userData.email;
+        uiManager.showToast(`স্বাগতম, ${userData.name || userData.email}!`, 'success');
+      } else {
+        console.error('gdriveUserEmail element not found!');
+        uiManager.showToast('User email element not found', 'error');
+      }
+
+      if (elements.gdriveUserAvatar) {
+        elements.gdriveUserAvatar.src = userData.picture || '';
+        elements.gdriveUserAvatar.classList.toggle('hidden', !userData.picture);
+      }
+    } else {
+      console.error('User info fetch failed:', response.status, response.statusText);
+      uiManager.showToast('User info fetch failed: ' + response.status, 'error');
+    }
+  } catch (error) {
+    console.error('Error fetching user info:', error);
+    uiManager.showToast('Error fetching user info', 'error');
+  }
+}
+
+async function _getOrCreateBackupFolder(accessToken) {
+  const folderName = 'Smart Evaluate Backup System';
+  const q = `mimeType = 'application/vnd.google-apps.folder' and name = '${folderName}' and trashed = false`;
+  
+  try {
+    // 1. Search for existing folder
+    const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`, {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    });
+    
+    if (!searchResp.ok) throw new Error('Folder search failed');
+    
+    const searchData = await searchResp.json();
+    if (searchData.files && searchData.files.length > 0) {
+      return searchData.files[0].id;
+    }
+    
+    // 2. Create if not exists
+    const metadata = {
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder'
+    };
+    
+    const createResp = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(metadata)
+    });
+    
+    if (!createResp.ok) throw new Error('Folder creation failed');
+    
+    const createData = await createResp.json();
+    return createData.id;
+    
+  } catch (error) {
+    console.error('Error getting/creating backup folder:', error);
+    throw error;
+  }
+}
+
+async function _fetchLastBackupTime(accessToken) {
+  try {
+    if (elements.gdriveLastBackupTime) elements.gdriveLastBackupTime.textContent = 'Checking...';
+    
+    // Get folder ID first
+    let folderId;
+    try {
+      folderId = await _getOrCreateBackupFolder(accessToken);
+    } catch (e) {
+      console.warn('Could not get backup folder for checking time, falling back to root search', e);
+    }
+
+    let q = "mimeType = 'application/json' and trashed = false";
+    if (folderId) {
+      q += ` and '${folderId}' in parents`;
+    }
+
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&orderBy=createdTime desc&pageSize=1&fields=files(createdTime)`, {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.files && data.files.length > 0) {
+        const lastTime = new Date(data.files[0].createdTime).toLocaleString('bn-BD'); // Bangla locale
+        if (elements.gdriveLastBackupTime) elements.gdriveLastBackupTime.textContent = lastTime;
+      } else {
+        if (elements.gdriveLastBackupTime) elements.gdriveLastBackupTime.textContent = 'No backup found';
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching last backup time:', error);
+    if (elements.gdriveLastBackupTime) elements.gdriveLastBackupTime.textContent = 'Error';
+  }
+}
+
+async function _handleDriveUpload() {
+  uiManager.showLoading('Google Drive-এ আপলোড হচ্ছে...');
+  try {
+    const token = gapi.client.getToken();
+    const accessToken = token?.access_token || driveAccessToken;
+
+    if (!accessToken) {
+      uiManager.showToast('দয়া করে আবার কানেক্ট করুন।', 'error');
+      uiManager.hideLoading();
+      return;
+    }
+    const { groups, students, tasks, evaluations, admins } = stateManager.getState();
+    const allData = {
+      exportDate: new Date().toISOString(),
+      groups,
+      students,
+      tasks,
+      evaluations,
+      admins: stateManager.get('currentUserData')?.type === 'super-admin' ? admins : undefined,
+    };
+    
+    const fileContent = JSON.stringify(allData, null, 2);
+    const fileName = `smart_evaluator_backup_${new Date().toISOString().split('T')[0]}.json`;
+
+    // Get or Create Folder
+    const folderId = await _getOrCreateBackupFolder(accessToken);
+
+    const file = new Blob([fileContent], { type: 'application/json' });
+    const metadata = {
+      name: fileName,
+      mimeType: 'application/json',
+      parents: [folderId] // Save in specific folder
+    };
+
+    // const accessToken = gapi.client.getToken().access_token; // Already defined above
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', file);
+
+    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+      method: 'POST',
+      headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+      body: form,
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Drive API Error Details:', data);
+      throw new Error(data.error?.message || 'Upload failed');
+    }
+
+    if (data.id) {
+      uiManager.showToast('ব্যাকআপ সফলভাবে ড্রাইভে আপলোড হয়েছে!', 'success');
+      // Update last backup time immediately
+      _fetchLastBackupTime(accessToken);
+    } else {
+      throw new Error('Upload failed');
+    }
+
+  } catch (error) {
+    console.error('Drive Upload Error:', error);
+    uiManager.showToast('ড্রাইভে আপলোড ব্যর্থ হয়েছে।', 'error');
+  } finally {
+    uiManager.hideLoading();
+  }
+}
+
+async function _handleDriveRestore() {
+  // 1. List JSON files
+  uiManager.showLoading('ব্যাকআপ ফাইল খোঁজা হচ্ছে...');
+  try {
+    const token = gapi.client.getToken();
+    const accessToken = token?.access_token || driveAccessToken;
+
+    if (!accessToken) {
+      uiManager.showToast('দয়া করে আবার কানেক্ট করুন।', 'error');
+      uiManager.hideLoading();
+      return;
+    }
+
+    // Get folder ID first
+    let folderId;
+    try {
+      folderId = await _getOrCreateBackupFolder(accessToken);
+    } catch (e) {
+      console.warn('Could not get backup folder for restore, falling back to root search', e);
+    }
+
+    let q = "mimeType = 'application/json' and trashed = false";
+    if (folderId) {
+      q += ` and '${folderId}' in parents`;
+    }
+
+    const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&orderBy=createdTime desc&pageSize=10&fields=files(id, name, createdTime)`, {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    });
+    
+    const result = await response.json();
+    const files = result.files;
+
+    if (!files || files.length === 0) {
+      uiManager.showToast('কোনো ব্যাকআপ ফাইল পাওয়া যায়নি।', 'info');
+      uiManager.hideLoading();
+      return;
+    }
+
+    // 2. Prompt to choose file
+    const latestFile = files[0];
+    const confirmMsg = `সর্বশেষ ব্যাকআপ ফাইল পাওয়া গেছে:\nনাম: ${latestFile.name}\nতারিখ: ${new Date(latestFile.createdTime).toLocaleString('bn-BD')}`;
+    
+    uiManager.hideLoading(); // Hide loading before showing modal
+
+    uiManager.showConfirmModal(
+      'ব্যাকআপ রিস্টোর',
+      confirmMsg,
+      async () => {
+        // Restore Logic inside callback
+        uiManager.showLoading('ডেটা রিস্টোর করা হচ্ছে...');
+        try {
+          const fileId = latestFile.id;
+          const downloadResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+          });
+          
+          if (!downloadResponse.ok) throw new Error('Download failed');
+          
+          const backupData = await downloadResponse.json();
+          await _performRestore(backupData); // Await _performRestore as it's async
+          uiManager.showToast('ডেটা সফলভাবে রিস্টোর হয়েছে!', 'success');
+          // Update last backup time
+          _fetchLastBackupTime(accessToken);
+        } catch (error) {
+          console.error('Restore Error:', error);
+          uiManager.showToast('রিস্টোর ব্যর্থ হয়েছে।', 'error');
+        } finally {
+          uiManager.hideLoading();
+        }
+      },
+      'রিস্টোর করুন',
+      'btn-warning'
+    );
+  } catch (error) {
+    console.error('Drive Restore Error:', error);
+    uiManager.showToast('ড্রাইভ থেকে রিস্টোর ব্যর্থ হয়েছে।', 'error');
+  } finally {
+    // To avoid double-hiding or hiding prematurely, we can remove this outer hideLoading
+    // or make it conditional, but for simplicity, the instruction implies it's handled by the modal flow.
+    // However, if an error occurs BEFORE the modal (e.g. fetch fails), we must hide it.
+    // Since hideLoading is safe to call multiple times, we will enable it here.
+    uiManager.hideLoading(); 
+  }
+}
+
+// --- Local Restore Logic ---
+
+async function _handleRestoreJSON(file) {
+  uiManager.showLoading('ব্যাকআপ ফাইল যাচাই করা হচ্ছে...');
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const json = JSON.parse(e.target.result);
+      await _performRestore(json);
+    } catch (error) {
+      console.error('JSON Parse Error:', error);
+      uiManager.showToast('অবৈধ JSON ফাইল।', 'error');
+      uiManager.hideLoading();
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function _performRestore(data) {
+  uiManager.showLoading('ডেটা রিস্টোর হচ্ছে... দয়া করে অপেক্ষা করুন।');
+  try {
+    // Validate structure
+    if (!data.students && !data.groups && !data.tasks) {
+      throw new Error('ব্যাকআপ ফাইলে প্রয়োজনীয় ডেটা নেই।');
+    }
+
+    // Restore Collections sequentially
+    if (data.groups) await dataService.restoreCollection('groups', data.groups);
+    if (data.students) await dataService.restoreCollection('students', data.students);
+    if (data.tasks) await dataService.restoreCollection('tasks', data.tasks);
+    if (data.evaluations) await dataService.restoreCollection('evaluations', data.evaluations);
+    if (data.admins) await dataService.restoreCollection('admins', data.admins);
+
+    uiManager.showToast('✅ ডেটা সফলভাবে রিস্টোর হয়েছে! পেজ রিফ্রেশ হচ্ছে...', 'success');
+    
+    // Reload after short delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+
+  } catch (error) {
+    console.error('Restore Error:', error);
+    uiManager.showToast(`রিস্টোর ব্যর্থ: ${error.message}`, 'error');
+    uiManager.hideLoading();
+  }
+}
+
+// --- Existing Export Handlers (Unchanged logic, just kept for completeness) ---
+
 function _updateStats() {
   const { students, groups, evaluations } = stateManager.getState();
   const setText = (el, val) => {
@@ -207,12 +772,6 @@ function _updateStats() {
   }
 }
 
-// --- Export Handlers ---
-
-/**
- * Exports students data as CSV.
- * @private
- */
 async function _handleExportStudentsCSV() {
   uiManager.showLoading('শিক্ষার্থী CSV এক্সপোর্ট হচ্ছে...');
   try {
@@ -250,10 +809,6 @@ async function _handleExportStudentsCSV() {
   }
 }
 
-/**
- * Exports groups data as CSV.
- * @private
- */
 async function _handleExportGroupsCSV() {
   uiManager.showLoading('গ্রুপ CSV এক্সপোর্ট হচ্ছে...');
   try {
@@ -284,10 +839,6 @@ async function _handleExportGroupsCSV() {
   }
 }
 
-/**
- * Exports detailed evaluations data as CSV.
- * @private
- */
 async function _handleExportEvaluationsCSV() {
   uiManager.showLoading('মূল্যায়ন CSV এক্সপোর্ট হচ্ছে...');
   try {
@@ -323,6 +874,8 @@ async function _handleExportEvaluationsCSV() {
             [EVAL_LABELS.GROUP_NAME]: groupName,
             [EVAL_LABELS.STUDENT_NAME]: student.name ?? '',
             [EVAL_LABELS.ROLL]: student.roll ?? '',
+            [EVAL_LABELS.ACADEMIC_GROUP]: student.academicGroup ?? '',
+            [EVAL_LABELS.STUDENT_ROLE]: student.role ?? '',
             [EVAL_LABELS.TASK_SCORE]: scoreData.taskScore ?? '',
             [EVAL_LABELS.TEAM_SCORE]: scoreData.teamScore ?? '',
             [EVAL_LABELS.MCQ_SCORE]: scoreData.mcqScore ?? '',
@@ -344,7 +897,6 @@ async function _handleExportEvaluationsCSV() {
       return;
     }
 
-    // Sort: newest date, then group name, then roll (numeric-aware)
     dataToExport.sort((a, b) => {
       const diff = (b.__sortDate ?? Number.NEGATIVE_INFINITY) - (a.__sortDate ?? Number.NEGATIVE_INFINITY);
       if (diff !== 0) return diff;
@@ -374,10 +926,6 @@ async function _handleExportEvaluationsCSV() {
   }
 }
 
-/**
- * Exports all core data as a single JSON file.
- * @private
- */
 function _handleExportAllDataJSON() {
   uiManager.showLoading('JSON ফাইল তৈরি হচ্ছে...');
   try {
@@ -388,11 +936,10 @@ function _handleExportAllDataJSON() {
       students,
       tasks,
       evaluations,
-      // Conditionally add admins if current user is super-admin
       admins: stateManager.get('currentUserData')?.type === 'super-admin' ? admins : undefined,
     };
 
-    const jsonString = JSON.stringify(allData, null, 2); // Pretty print
+    const jsonString = JSON.stringify(allData, null, 2);
     _triggerDownload(jsonString, 'smart_evaluator_backup.json', 'application/json;charset=utf-8;');
     uiManager.showToast('সমস্ত ডেটার JSON ফাইল ডাউনলোড শুরু হয়েছে।', 'success');
   } catch (error) {
@@ -404,12 +951,8 @@ function _handleExportAllDataJSON() {
   }
 }
 
-/**
- * Exports all data as separate CSVs within a single ZIP file.
- * @private
- */
 async function _handleExportAllDataZip() {
-  const JSZip = window.JSZip; // Get from global scope
+  const JSZip = window.JSZip;
   if (!JSZip) {
     uiManager.showToast('ZIP লাইব্রেরি (JSZip) লোড করা নেই।', 'error');
     console.error('JSZip library not found. Please include it in index.html');
@@ -420,7 +963,7 @@ async function _handleExportAllDataZip() {
   try {
     const zip = new JSZip();
     const { groups = [], students = [], tasks = [], evaluations = [] } = stateManager.getState();
-    const bom = '\uFEFF'; // BOM for Excel Bengali support
+    const bom = '\uFEFF';
 
     // 1. Students CSV
     const groupsMap = new Map(groups.map((g) => [g.id, g.name]));
@@ -472,7 +1015,7 @@ async function _handleExportAllDataZip() {
     tasksData.forEach((row) => delete row.__sortDate);
     if (tasksData.length > 0) zip.file('tasks.csv', bom + Papa.unparse(tasksData));
 
-    // 4. Evaluations CSV (Detailed) — same labels as single CSV
+    // 4. Evaluations CSV (Detailed)
     const studentsMap = new Map(students.map((s) => [s.id, s]));
     const tasksMap = new Map(tasks.map((t) => [t.id, t]));
     const evaluationsData = [];
@@ -498,6 +1041,8 @@ async function _handleExportAllDataZip() {
             [EVAL_LABELS.GROUP_NAME]: groupName,
             [EVAL_LABELS.STUDENT_NAME]: student.name ?? '',
             [EVAL_LABELS.ROLL]: student.roll ?? '',
+            [EVAL_LABELS.ACADEMIC_GROUP]: student.academicGroup ?? '',
+            [EVAL_LABELS.STUDENT_ROLE]: student.role ?? '',
             [EVAL_LABELS.TASK_SCORE]: scoreData.taskScore ?? '',
             [EVAL_LABELS.TEAM_SCORE]: scoreData.teamScore ?? '',
             [EVAL_LABELS.MCQ_SCORE]: scoreData.mcqScore ?? '',
@@ -536,7 +1081,6 @@ async function _handleExportAllDataZip() {
       zip.file('evaluations_detailed.csv', bom + Papa.unparse(evaluationsData));
     }
 
-    // Generate ZIP blob
     const content = await zip.generateAsync({ type: 'blob' });
     _triggerDownload(content, `smart_evaluator_backup_${new Date().toISOString().split('T')[0]}.zip`);
     uiManager.showToast('সমস্ত ডেটার ZIP ফাইল ডাউনলোড শুরু হয়েছে।', 'success');
@@ -548,8 +1092,6 @@ async function _handleExportAllDataZip() {
     _updateLastExportTime();
   }
 }
-
-// --- Helper Functions ---
 
 function _normalizeDateForExport(value) {
   if (value === null || value === undefined || value === '') {
@@ -595,17 +1137,8 @@ function _normalizeDateForExport(value) {
   return { display: display || '', sortValue };
 }
 
-/**
- * Creates and clicks a download link for a blob or string.
- * @param {Blob|string} content - The file content.
- * @param {string} fileName - The desired file name.
- * @param {string} [contentType] - MIME type.
- * @private
- */
 function _triggerDownload(content, fileName, contentType = '') {
-  // Add BOM for Excel UTF-8 support ONLY for CSV string content
   const finalContent = contentType.startsWith('text/csv') && typeof content === 'string' ? `\uFEFF${content}` : content;
-
   const blob = finalContent instanceof Blob ? finalContent : new Blob([finalContent], { type: contentType });
 
   const link = document.createElement('a');
@@ -615,17 +1148,12 @@ function _triggerDownload(content, fileName, contentType = '') {
   document.body.appendChild(link);
   link.click();
 
-  // Clean up
   setTimeout(() => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   }, 100);
 }
 
-/**
- * Updates the 'Last Export' time display and stores it.
- * @private
- */
 function _updateLastExportTime() {
   const now = new Date();
   const timeString = now.toLocaleTimeString('bn-BD', { hour: 'numeric', minute: '2-digit' });

@@ -57,6 +57,11 @@ class UIManager {
       'deleteModalText',
       'cancelDelete',
       'confirmDelete',
+      'confirmModal',
+      'confirmModalTitle',
+      'confirmModalText',
+      'cancelConfirm',
+      'actionConfirm',
       'editModal',
       'editModalTitle',
       'editModalContent',
@@ -97,6 +102,7 @@ class UIManager {
           'sidebar',
           'authModal',
           'deleteModal',
+          'confirmModal',
           'editModal',
           'adminModal',
           'profileModal',
@@ -147,6 +153,11 @@ class UIManager {
     this.addListener(this.elements.confirmDelete, 'click', () => {
       if (typeof this.onConfirmDelete === 'function') this.onConfirmDelete();
       this.hideModal(this.elements.deleteModal);
+    });
+    this.addListener(this.elements.cancelConfirm, 'click', () => this.hideModal(this.elements.confirmModal));
+    this.addListener(this.elements.actionConfirm, 'click', () => {
+      if (typeof this.onConfirmAction === 'function') this.onConfirmAction();
+      this.hideModal(this.elements.confirmModal);
     });
     this.addListener(this.elements.cancelEdit, 'click', () => this.hideModal(this.elements.editModal));
     this.addListener(this.elements.saveEdit, 'click', () => {
@@ -302,6 +313,24 @@ class UIManager {
       this.showModal(this.elements.deleteModal);
     } else {
       console.error('showDeleteModal: deleteModal element not found.');
+    }
+  }
+  showConfirmModal(title, text, confirmCallback, confirmBtnText = 'নিশ্চিত করুন', confirmBtnClass = 'btn-primary') {
+    if (this.elements.confirmModal) {
+      if (this.elements.confirmModalTitle) this.elements.confirmModalTitle.textContent = title;
+      if (this.elements.confirmModalText) this.elements.confirmModalText.textContent = text;
+      
+      const actionBtn = this.elements.actionConfirm;
+      if (actionBtn) {
+        actionBtn.textContent = confirmBtnText;
+        // Reset classes and add base btn class + specific class
+        actionBtn.className = `btn ${confirmBtnClass}`;
+      }
+
+      this.onConfirmAction = confirmCallback;
+      this.showModal(this.elements.confirmModal);
+    } else {
+      console.error('showConfirmModal: confirmModal element not found.');
     }
   }
   showEditModal(title, contentHTML, saveCallback) {

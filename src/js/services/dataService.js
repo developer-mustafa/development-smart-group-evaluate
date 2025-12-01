@@ -110,6 +110,97 @@ async function deleteDocument(collectionName, docId, cacheKey) {
   }
 }
 
+// --- Backup & Restore Helpers ---
+
+export async function restoreCollection(collectionName, dataArray) {
+  if (!Array.isArray(dataArray) || dataArray.length === 0) return;
+
+  const batchSize = 450; // Firestore limit is 500
+  const chunks = [];
+  
+  for (let i = 0; i < dataArray.length; i += batchSize) {
+    chunks.push(dataArray.slice(i, i + batchSize));
+  }
+
+  console.log(`Starting restore for ${collectionName}: ${dataArray.length} items in ${chunks.length} batches.`);
+
+  for (const chunk of chunks) {
+    const batch = db.batch();
+    chunk.forEach((item) => {
+      if (!item.id) return; // Skip invalid items
+      const docRef = db.collection(collectionName).doc(item.id);
+      // Use merge: true to update existing or create new, preserving other fields if any
+      batch.set(docRef, { ...item, updatedAt: serverTimestamp() }, { merge: true });
+    });
+
+    try {
+      await batch.commit();
+      console.log(`✅ Restored batch of ${chunk.length} items to ${collectionName}`);
+    } catch (error) {
+      console.error(`❌ Error restoring batch to ${collectionName}:`, error);
+      throw new Error(`Failed to restore data to ${collectionName}.`);
+    }
+  }
+  
+  // Clear cache for this collection
+  const cacheKeyMap = {
+    groups: CACHE_KEYS.GROUPS,
+    students: CACHE_KEYS.STUDENTS,
+    tasks: CACHE_KEYS.TASKS,
+    evaluations: CACHE_KEYS.EVALUATIONS,
+    admins: CACHE_KEYS.ADMINS,
+  };
+  if (cacheKeyMap[collectionName]) {
+    cacheManager.clear(cacheKeyMap[collectionName]);
+  }
+}
+
+export async function clearCollection(collectionName) {
+  // CAUTION: This deletes all documents in a collection.
+  // Firestore doesn't have a native "delete collection" method for web clients,
+  // so we must fetch and delete in batches.
+  try {
+    const snapshot = await db.collection(collectionName).get();
+    if (snapshot.empty) return;
+
+    const batchSize = 450;
+    const docs = snapshot.docs;
+    const chunks = [];
+
+    for (let i = 0; i < docs.length; i += batchSize) {
+      chunks.push(docs.slice(i, i + batchSize));
+    }
+
+    console.log(`Clearing ${collectionName}: ${docs.length} items...`);
+
+    for (const chunk of chunks) {
+      const batch = db.batch();
+      chunk.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    }
+    
+    console.log(`✅ Cleared collection ${collectionName}`);
+    
+    // Clear cache
+    const cacheKeyMap = {
+      groups: CACHE_KEYS.GROUPS,
+      students: CACHE_KEYS.STUDENTS,
+      tasks: CACHE_KEYS.TASKS,
+      evaluations: CACHE_KEYS.EVALUATIONS,
+      admins: CACHE_KEYS.ADMINS,
+    };
+    if (cacheKeyMap[collectionName]) {
+      cacheManager.clear(cacheKeyMap[collectionName]);
+    }
+
+  } catch (error) {
+    console.error(`❌ Error clearing collection ${collectionName}:`, error);
+    throw new Error(`Failed to clear ${collectionName}.`);
+  }
+}
+
 // --- Specific Data Functions ---
 
 // Groups
