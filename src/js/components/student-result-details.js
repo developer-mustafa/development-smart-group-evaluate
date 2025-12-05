@@ -1,4 +1,5 @@
-﻿import { firebase } from '../config/firebase.js';
+﻿import { db } from '../config/firebase.js';
+import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 
 /* global window, document */
 (() => {
@@ -216,23 +217,29 @@
     }
   }
 
-  // ---------- Firestore latest role (optional; no-op if Firebase not present) ----------
+  // ---------- Firestore latest role (optional) ----------
   async function fetchStudentRoleFromFirestore(studentId) {
     try {
-      const fb = firebase || window.firebase || window.Firebase || null;
-      if (!fb?.firestore) return null;
-      const db = fb.firestore();
-      const direct = await db.collection('students').doc(String(studentId)).get();
-      if (direct?.exists) {
-        const d = direct.data() || {};
+      if (!db) return null;
+      
+      // Try direct doc fetch first (most efficient)
+      const directSnap = await getDoc(doc(db, 'students', String(studentId)));
+      if (directSnap.exists()) {
+        const d = directSnap.data() || {};
         return d.role || d.duty || null;
       }
-      const q = await db.collection('students').where('id', '==', String(studentId)).limit(1).get();
-      if (!q.empty) {
-        const d = q.docs[0].data() || {};
+
+      // Fallback to query by 'id' field
+      const q = query(collection(db, 'students'), where('id', '==', String(studentId)), limit(1));
+      const querySnap = await getDocs(q);
+      
+      if (!querySnap.empty) {
+        const d = querySnap.docs[0].data() || {};
         return d.role || d.duty || null;
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Error fetching student role:', e);
+    }
     return null;
   }
 

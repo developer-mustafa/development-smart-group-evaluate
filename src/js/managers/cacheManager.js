@@ -1,4 +1,6 @@
 // js/managers/cacheManager.js
+import { db } from '../config/firebase.js';
+import { doc, getDoc } from 'firebase/firestore';
 
 /**
  * Manages caching data in localStorage to improve performance and reduce reads.
@@ -183,6 +185,116 @@ class CacheManager {
   setForceRefresh() {
     this.forceRefresh = true;
     console.log('Cache force refresh enabled for the next get() call.');
+  }
+
+  /**
+   * Smart Caching Strategy: "Metadata Check"
+   * 1. Fetches a lightweight "settings/status" doc to get the server's `lastUpdated` timestamp.
+   * 2. Compares it with the local cache's timestamp.
+   * 3. If match: Returns cached data (ZERO heavy reads).
+   * 4. If mismatch/empty: Executes `fetchFunction`, updates cache with new data AND server timestamp.
+   *
+   * @param {string} collectionName - The name of the collection (used as cache key).
+   * @param {Function} fetchFunction - The function to fetch full data if cache is stale.
+   * @returns {Promise<*>} The data (from cache or fresh fetch).
+   */
+  async getSmartData(collectionName, fetchFunction) {
+    if (!collectionName || typeof fetchFunction !== 'function') {
+      console.error('getSmartData: Invalid arguments.');
+      return null;
+    }
+
+    try {
+      // 1. Fetch lightweight metadata
+      // Assumes a document "settings/status" exists with a "lastUpdated" timestamp field.
+      const statusDoc = await getDoc(doc(db, 'settings', 'status'));
+      
+      let serverLastUpdated = 0;
+      if (statusDoc.exists()) {
+        const statusData = statusDoc.data();
+        // Handle Firestore Timestamp or number/string
+        if (statusData?.lastUpdated?.toMillis) {
+            serverLastUpdated = statusData.lastUpdated.toMillis();
+        } else if (statusData?.lastUpdated) {
+            serverLastUpdated = new Date(statusData.lastUpdated).getTime();
+        }
+      } else {
+        console.warn('SmartCache: "settings/status" doc not found. Creating it now...');
+        // Auto-heal: Create the document so future checks work
+        try {
+            const { setDoc, doc } = await import('firebase/firestore');
+            await setDoc(doc(db, 'settings', 'status'), { lastUpdated: Date.now() });
+            serverLastUpdated = Date.now();
+            console.log('SmartCache: Created "settings/status" with timestamp:', serverLastUpdated);
+        } catch (createErr) {
+            console.error('SmartCache: Failed to auto-create settings/status:', createErr);
+        }
+      }
+
+      // 2. Check local cache
+      const fullKey = this.PREFIX + collectionName;
+      const cachedString = localStorage.getItem(fullKey);
+      
+      let cachedData = null;
+      let cacheTimestamp = -1;
+
+      if (cachedString && !this.forceRefresh) {
+        try {
+          const cacheEntry = JSON.parse(cachedString);
+          if (cacheEntry && cacheEntry.serverLastUpdated) {
+             cacheTimestamp = cacheEntry.serverLastUpdated;
+             cachedData = cacheEntry.data;
+          }
+        } catch (e) {
+          console.warn('SmartCache: Error parsing local cache.', e);
+        }
+      }
+
+      // 3. Condition A: Timestamps match -> Return Cache
+      // We use a small buffer or direct equality. Since we save the server timestamp *into* the cache, equality is expected.
+      if (serverLastUpdated > 0 && serverLastUpdated === cacheTimestamp && cachedData) {
+        console.log(`[SmartCache] HIT for "${collectionName}". Server: ${serverLastUpdated} === Cache: ${cacheTimestamp}`);
+        return cachedData;
+      }
+
+      // 4. Condition B: Mismatch or Empty -> Fetch Fresh
+      console.log(`[SmartCache] MISS for "${collectionName}". Server: ${serverLastUpdated} !== Cache: ${cacheTimestamp}. Fetching...`);
+      
+      const freshData = await fetchFunction();
+      
+      // 5. Update Cache with new Data AND the Server's Timestamp
+      // We override the standard set() logic slightly to include 'serverLastUpdated'
+      const cacheEntry = {
+        data: freshData,
+        timestamp: Date.now(), // Local time of fetch
+        serverLastUpdated: serverLastUpdated, // The version of data we just fetched
+        expires: Date.now() + this.DEFAULT_CACHE_DURATION_MS, // Still respect a TTL if needed, or rely purely on metadata
+      };
+
+      try {
+        localStorage.setItem(fullKey, JSON.stringify(cacheEntry));
+      } catch (e) {
+        console.error('SmartCache: Error saving to localStorage', e);
+         if (e.name === 'QuotaExceededError' || (e.message && e.message.toLowerCase().includes('quota'))) {
+            this.clearOldest();
+            try {
+                localStorage.setItem(fullKey, JSON.stringify(cacheEntry));
+            } catch(retryE) {
+                console.error('SmartCache: Retry failed', retryE);
+            }
+         }
+      }
+      
+      // Reset forceRefresh if it was set
+      if (this.forceRefresh) this.forceRefresh = false;
+
+      return freshData;
+
+    } catch (error) {
+      console.error(`[SmartCache] Error in getSmartData for "${collectionName}":`, error);
+      // Fallback: try to execute fetchFunction anyway so app doesn't break
+      return await fetchFunction();
+    }
   }
 }
 

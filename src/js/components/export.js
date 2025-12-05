@@ -319,8 +319,6 @@ function _initGoogleDrive() {
   script1.src = "https://apis.google.com/js/api.js";
   script1.onload = () => {
     gapi.load('client', async () => {
-      // We don't initialize client here with API key yet, we wait for user action or config
-      // But we can set the flag
       gapiInited = true;
       _checkDriveReady();
     });
@@ -346,7 +344,7 @@ function _checkDriveReady() {
       driveAccessToken = storedToken;
       // Ideally we should check validity, but for now we'll assume it's valid or fail gracefully later
       // Set token for gapi if needed (though we use fetch mostly)
-      gapi.client.setToken({ access_token: storedToken });
+      // gapi.client.setToken({ access_token: storedToken }); // Removed to prevent TypeError on hard reload
       
       _updateDriveUI(true);
       _fetchUserInfo(storedToken);
@@ -422,21 +420,26 @@ function _handleDriveDisconnect() {
     'Disconnect Drive?', 
     'আপনি কি নিশ্চিত যে আপনি Google Drive ডিসকানেক্ট করতে চান?', 
     () => {
-      const token = gapi.client.getToken();
-      const tokenToRevoke = token?.access_token || driveAccessToken;
-      
-      if (tokenToRevoke) {
-        google.accounts.oauth2.revoke(tokenToRevoke, () => {
-          console.log('Access token revoked');
-        });
-      }
-      gapi.client.setToken(null);
-      driveAccessToken = null;
-      localStorage.removeItem('gdrive_access_token'); // Clear persisted token
-      _updateDriveUI(false);
+      _performDisconnect();
       uiManager.showToast('Google Drive ডিসকানেক্ট করা হয়েছে।', 'info');
     }
   );
+}
+
+function _performDisconnect() {
+  const token = gapi.client.getToken();
+  const tokenToRevoke = token?.access_token || driveAccessToken;
+  
+  if (tokenToRevoke) {
+    // Revoke can be async, but we don't strictly need to await it for UI update
+    google.accounts.oauth2.revoke(tokenToRevoke, () => {
+      console.log('Access token revoked');
+    });
+  }
+  gapi.client.setToken(null);
+  driveAccessToken = null;
+  localStorage.removeItem('gdrive_access_token'); // Clear persisted token
+  _updateDriveUI(false);
 }
 
 async function _fetchUserInfo(accessToken) {
@@ -445,30 +448,33 @@ async function _fetchUserInfo(accessToken) {
     const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { 'Authorization': 'Bearer ' + accessToken }
     });
+    
+    if (response.status === 401) {
+       console.warn('User info fetch 401: Token invalid. Disconnecting...');
+       _performDisconnect();
+       return;
+    }
+
     if (response.ok) {
       const userData = await response.json();
       console.log('User Data received:', userData);
       
       if (elements.gdriveUserEmail) {
-        console.log('Updating email element:', elements.gdriveUserEmail);
         elements.gdriveUserEmail.textContent = userData.email;
-        uiManager.showToast(`স্বাগতম, ${userData.name || userData.email}!`, 'success');
-      } else {
-        console.error('gdriveUserEmail element not found!');
-        uiManager.showToast('User email element not found', 'error');
+        // Only show toast if it's a fresh connection (heuristic: we might not want to spam on reload)
+        // But for now, keeping it simple.
       }
-
+      
       if (elements.gdriveUserAvatar) {
         elements.gdriveUserAvatar.src = userData.picture || '';
         elements.gdriveUserAvatar.classList.toggle('hidden', !userData.picture);
       }
     } else {
-      console.error('User info fetch failed:', response.status, response.statusText);
-      uiManager.showToast('User info fetch failed: ' + response.status, 'error');
+      console.warn('User info fetch failed:', response.status);
+      // Do not show toast for background checks to avoid annoyance
     }
   } catch (error) {
     console.error('Error fetching user info:', error);
-    uiManager.showToast('Error fetching user info', 'error');
   }
 }
 
@@ -482,6 +488,10 @@ async function _getOrCreateBackupFolder(accessToken) {
       headers: { 'Authorization': 'Bearer ' + accessToken }
     });
     
+    if (searchResp.status === 401) {
+        throw new Error('401 Unauthorized');
+    }
+
     if (!searchResp.ok) throw new Error('Folder search failed');
     
     const searchData = await searchResp.json();
@@ -524,6 +534,13 @@ async function _fetchLastBackupTime(accessToken) {
     try {
       folderId = await _getOrCreateBackupFolder(accessToken);
     } catch (e) {
+      // If folder search fails with 401, it will be caught here or in _getOrCreateBackupFolder
+      // We should check if the error was due to 401
+      if (e.message && e.message.includes('401')) {
+         console.warn('Backup folder check 401. Disconnecting...');
+         _performDisconnect();
+         return;
+      }
       console.warn('Could not get backup folder for checking time, falling back to root search', e);
     }
 
@@ -536,6 +553,12 @@ async function _fetchLastBackupTime(accessToken) {
       headers: { 'Authorization': 'Bearer ' + accessToken }
     });
     
+    if (response.status === 401) {
+        console.warn('Last backup fetch 401. Disconnecting...');
+        _performDisconnect();
+        return;
+    }
+
     if (response.ok) {
       const data = await response.json();
       if (data.files && data.files.length > 0) {

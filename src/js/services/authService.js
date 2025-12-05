@@ -1,6 +1,10 @@
 // js/services/authService.js
 
 import { auth, googleProvider, db, serverTimestamp } from '../config/firebase.js';
+import { 
+  onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut, deleteUser 
+} from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import stateManager from '../managers/stateManager.js';
 import uiManager from '../managers/uiManager.js';
 import { getAdminData } from './dataService.js';
@@ -19,7 +23,7 @@ class AuthService {
   _setupAuthStateListener() {
     if (this.unsubscribeAuthStateListener) this.unsubscribeAuthStateListener();
 
-    this.unsubscribeAuthStateListener = auth.onAuthStateChanged(
+    this.unsubscribeAuthStateListener = onAuthStateChanged(auth,
       async (user) => {
         console.log('Auth state changed. User:', user ? user.email : 'Logged out');
         stateManager.setAuthLoading(true);
@@ -39,7 +43,7 @@ class AuthService {
                 createdAt: serverTimestamp(),
               };
               // Use set with merge: true? Or just set?
-              await db.collection('admins').doc(user.uid).set(defaultData);
+              await setDoc(doc(db, 'admins', user.uid), defaultData);
               userData = { id: user.uid, ...defaultData };
               cacheManager.clear(`admin_${user.uid}`); // Clear cache after creation
             }
@@ -82,7 +86,7 @@ class AuthService {
     if (!email || !password) throw new Error('ইমেইল এবং পাসওয়ার্ড প্রয়োজন।');
     if (password.length < 6) throw new Error('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে।');
     try {
-      await auth.signInWithEmailAndPassword(email, password);
+      await signInWithEmailAndPassword(auth, email, password);
       uiManager.showToast(`স্বাগতম ${email}!`, 'success');
       uiManager.hideModal(uiManager.elements.authModal);
     } catch (error) {
@@ -99,7 +103,7 @@ class AuthService {
     if (!['user', 'admin'].includes(requestedType)) requestedType = 'user';
 
     try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       let permissions = { read: true, write: false, edit: false, delete: false };
       if (requestedType === 'admin') {
@@ -111,19 +115,19 @@ class AuthService {
         permissions,
         createdAt: serverTimestamp(),
       };
-      await db.collection('admins').doc(user.uid).set(adminData);
+      await setDoc(doc(db, 'admins', user.uid), adminData);
       console.log(`User registered: ${user.email}, Type: ${requestedType}, Doc created.`);
-      await auth.signOut(); // Force login after registration
+      await signOut(auth); // Force login after registration
       uiManager.showToast('রেজিস্ট্রেশন সফল! অনুগ্রহ করে লগইন করুন।', 'success');
     } catch (error) {
       console.error('Registration Error:', error);
       if (error.code !== 'auth/email-already-in-use' && auth.currentUser?.email === email) {
         try {
-          await auth.currentUser.delete();
+          await deleteUser(auth.currentUser);
         } catch (deleteError) {
           console.warn('Failed to delete partially registered auth user:', deleteError);
         }
-        await auth.signOut();
+        await signOut(auth);
       }
       const message = this._translateAuthError(error, 'রেজিস্ট্রেশন');
       uiManager.showToast(message, 'error');
@@ -133,7 +137,7 @@ class AuthService {
 
   async signInWithGoogle() {
     try {
-      const result = await auth.signInWithPopup(googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       // Ensure admin data exists (getAdminData handles creation if user is new)
       await getAdminData(user.uid);
@@ -150,7 +154,7 @@ class AuthService {
 
   async logout() {
     try {
-      await auth.signOut();
+      await signOut(auth);
       // Auth state listener handles state update & cache clearing
       uiManager.showToast('সফলভাবে লগআউট হয়েছেন।', 'info');
     } catch (error) {

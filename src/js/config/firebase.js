@@ -1,6 +1,6 @@
-﻿import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
-import "firebase/compat/firestore";
+﻿import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore, serverTimestamp as firestoreServerTimestamp } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAkw1kL7AU73Y9FWrPZ-ERv5xFvXGGILBA",
@@ -11,10 +11,10 @@ const firebaseConfig = {
   appId: "1:40318182466:web:c2ce0637f8f23afa95b9db",
 };
 
-const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+const serverTimestamp = firestoreServerTimestamp;
 
-export { app, auth, db, googleProvider, serverTimestamp, firebase };
+export { app, auth, db, googleProvider, serverTimestamp };
