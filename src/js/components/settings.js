@@ -1,5 +1,6 @@
 import stateManager from '../managers/stateManager.js';
 import uiManager from '../managers/uiManager.js';
+import * as dataService from '../services/dataService.js';
 
 // Default settings structure
 const DEFAULT_SETTINGS = {
@@ -252,10 +253,10 @@ export function toggleSidebarType(key) {
   }
 }
 
-export function toggleDashboardSection(section, isVisible) {
+export async function toggleDashboardSection(section, isVisible) {
   if (_settings.dashboardSections.hasOwnProperty(section)) {
     _settings.dashboardSections[section] = isVisible;
-    _saveSettings();
+    await _saveSettings(); // Save globally
     _applySettings();
   }
 }
@@ -269,22 +270,59 @@ export function isPagePublic(pageId) {
   return false; 
 }
 
-function _loadSettings() {
+async function _loadSettings() {
+  // 1. Load local preferences (Sidebar is still local for now, or hybrid)
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      _settings.dashboardSections = { ..._settings.dashboardSections, ...parsed.dashboardSections };
+      // We still load sidebar from local storage as it might be user-specific preference
       _settings.sidebar = { ..._settings.sidebar, ...parsed.sidebar };
     } catch (e) {
-      console.error('Failed to parse settings', e);
+      console.error('Failed to parse local settings', e);
     }
+  }
+
+  // 2. Load Global Settings (Dashboard Sections & Force Config)
+  try {
+    const globalSettings = await dataService.loadGlobalSettings();
+    if (globalSettings && globalSettings.dashboardSections) {
+      _settings.dashboardSections = { ..._settings.dashboardSections, ...globalSettings.dashboardSections };
+      console.log('🌍 Global dashboard settings loaded:', _settings.dashboardSections);
+    }
+    // Apply loaded settings immediately
+    _applySettings();
+    // Re-render if we are on the settings page
+    if (document.getElementById('settingsContent')) {
+      render();
+    }
+  } catch (error) {
+    console.error('Failed to load global settings:', error);
   }
 }
 
-function _saveSettings() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(_settings));
-  uiManager.showToast('সেটিং সেভ করা হয়েছে', 'success');
+async function _saveSettings() {
+  // 1. Save Sidebar locally (User preference)
+  const localData = {
+    sidebar: _settings.sidebar
+    // We don't save dashboardSections locally anymore, or we could as a fallback/cache
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
+
+  // 2. Save Dashboard Sections Globally (Admin only)
+  // We should check permission here, but the UI is already guarded. 
+  // The backend rules should also enforce this.
+  if (stateManager.get('currentUserData')?.type === 'super-admin' || stateManager.get('currentUserData')?.type === 'admin') {
+    try {
+      await dataService.saveGlobalSettings({
+        dashboardSections: _settings.dashboardSections
+      });
+      uiManager.showToast('গ্লোবাল সেটিং সেভ করা হয়েছে', 'success');
+    } catch (error) {
+      console.error('Failed to save global settings:', error);
+      uiManager.showToast('সেটিং সেভ করতে সমস্যা হয়েছে', 'error');
+    }
+  }
 }
 
 function _applySettings() {

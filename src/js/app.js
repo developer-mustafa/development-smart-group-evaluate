@@ -169,11 +169,12 @@ class SmartGroupEvaluator {
   async _loadInitialData() {
     console.log('⏳ Loading initial data...');
     try {
-      const [groupsData, studentsData, tasksData, evaluationsData] = await Promise.all([
+      const [groupsData, studentsData, tasksData, evaluationsData, globalSettings] = await Promise.all([
         this.services.dataService.loadGroups(),
         this.services.dataService.loadStudents(),
         this.services.dataService.loadTasks(),
         this.services.dataService.loadEvaluations(),
+        this.services.dataService.loadGlobalSettings(),
       ]);
 
       this.managers.stateManager.update({
@@ -182,6 +183,11 @@ class SmartGroupEvaluator {
         tasks: tasksData || [],
         evaluations: evaluationsData || [],
       });
+
+      if (globalSettings && globalSettings.dashboardConfig) {
+        console.log('🌍 Global Dashboard Config Loaded:', globalSettings.dashboardConfig);
+        this.managers.stateManager.setDashboardConfig(globalSettings.dashboardConfig);
+      }
 
       console.log('📊 Initial data loaded and state updated.');
     } catch (error) {

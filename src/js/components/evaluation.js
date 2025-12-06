@@ -830,21 +830,27 @@ function _renderDashboardConfig() {
   const saveBtn = elements.dashboardConfigContainer.querySelector('#saveDashboardConfigBtn');
   const select = elements.dashboardConfigContainer.querySelector('#forceAssignmentSelect');
 
-  toggle.addEventListener('change', (e) => {
+  toggle.addEventListener('change', async (e) => {
       const checked = e.target.checked;
       if (checked) {
           controls.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
       } else {
           controls.classList.add('hidden', 'opacity-50', 'pointer-events-none');
           // Auto-save when disabling
-          stateManager.setDashboardConfig({
-              isForced: false
-          });
-          uiManager.showToast('ম্যানুয়াল ফোর্স বন্ধ করা হয়েছে।', 'info');
+          const newConfig = { isForced: false, forceAssignmentId: null };
+          stateManager.setDashboardConfig(newConfig);
+          
+          try {
+            await dataService.saveGlobalSettings({ dashboardConfig: newConfig });
+            uiManager.showToast('ম্যানুয়াল ফোর্স বন্ধ করা হয়েছে (Global)।', 'info');
+          } catch (err) {
+            console.error(err);
+            uiManager.showToast('সেটিং সেভ করতে সমস্যা হয়েছে।', 'error');
+          }
       }
   });
 
-  saveBtn.addEventListener('click', () => {
+  saveBtn.addEventListener('click', async () => {
       const shouldForce = toggle.checked;
       const selectedId = select.value;
 
@@ -853,11 +859,22 @@ function _renderDashboardConfig() {
           return;
       }
 
-      stateManager.setDashboardConfig({
+      const newConfig = {
           isForced: shouldForce,
           forceAssignmentId: selectedId
-      });
+      };
 
-      uiManager.showToast('ড্যাশবোর্ড কনফিগারেশন সেভ হয়েছে।', 'success');
+      stateManager.setDashboardConfig(newConfig);
+
+      try {
+        uiManager.showLoading('সেভ হচ্ছে...');
+        await dataService.saveGlobalSettings({ dashboardConfig: newConfig });
+        uiManager.showToast('ড্যাশবোর্ড কনফিগারেশন সেভ হয়েছে (Global)।', 'success');
+      } catch (err) {
+        console.error(err);
+        uiManager.showToast('সেভ করতে সমস্যা হয়েছে।', 'error');
+      } finally {
+        uiManager.hideLoading();
+      }
   });
 }

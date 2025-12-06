@@ -191,21 +191,14 @@ class StateManager {
   // --- Dashboard Config Persistence ---
 
   getDashboardConfig() {
-    const stored = localStorage.getItem('dashboardConfig');
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        console.error('Failed to parse dashboardConfig from local storage', e);
-      }
-    }
+    // Return in-memory state which is populated from server on app init
     return this.state.dashboardConfig || { forceAssignmentId: null, isForced: false };
   }
 
   setDashboardConfig(config) {
     this.state.dashboardConfig = { ...this.state.dashboardConfig, ...config };
-    localStorage.setItem('dashboardConfig', JSON.stringify(this.state.dashboardConfig));
-    // console.log('Dashboard config updated:', this.state.dashboardConfig);
+    // We don't save to localStorage anymore to ensure global sync is the source of truth
+    console.log('Dashboard config updated (State):', this.state.dashboardConfig);
   }
 }
 
