@@ -1003,6 +1003,11 @@ function _updateDashboardForTask(taskId) {
             const stats = _calculateStats(groups, students, tasks, filteredEvaluations);
             summary = stats.latestAssignmentSummary;
             
+            // Re-render dynamic sections with filtered stats
+            _renderTopGroups(stats.groupPerformanceData);
+            _renderAcademicGroups(stats.academicGroupStats);
+            _renderGroupsRanking(stats.groupPerformanceData, stats.groupRankingMeta);
+
             // Update Label for Latest Task
             if (elements.latestAssignmentAverageLabelText) {
                 elements.latestAssignmentAverageLabelText.textContent = 'সর্বশেষ এসাইনমেন্ট গড়';
@@ -1247,18 +1252,41 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
     .map((group) => {
       const groupStudents = students.filter((s) => s.groupId === group.id);
       const groupEvals = evaluations.filter((e) => e.groupId === group.id);
-      let totalPercentageScore = 0;
+      
+      let totalScoreSum = 0;
+      let totalMaxScoreSum = 0;
       let validEvalsCount = 0;
+      
       const evaluatedMemberIds = new Set();
       const taskIds = new Set();
       let latestEvalMeta = { ts: 0, avgPct: null, participants: null, participationRate: null };
+      
       groupEvals.forEach((evaluation) => {
         const participantCount = evaluation?.scores ? Object.keys(evaluation.scores).length : 0;
-        const evalAvgPct = _getEvaluationAveragePercent(evaluation, taskMap);
-        if (typeof evalAvgPct === 'number' && !Number.isNaN(evalAvgPct)) {
-          totalPercentageScore += evalAvgPct;
-          validEvalsCount++;
+        
+        // Calculate total score and max score for this evaluation
+        let evalTotalScore = 0;
+        let evalStudentCount = 0;
+        if (evaluation?.scores) {
+           Object.values(evaluation.scores).forEach(scoreData => {
+               evalTotalScore += parseFloat(scoreData.totalScore) || 0;
+               evalStudentCount++;
+           });
         }
+        
+        const task = taskMap.get(evaluation.taskId);
+        const maxScorePerStudent = parseFloat(task?.maxScore) || parseFloat(evaluation.maxPossibleScore) || 100;
+        const evalMaxScore = maxScorePerStudent * evalStudentCount;
+
+        if (evalStudentCount > 0 && maxScorePerStudent > 0) {
+            totalScoreSum += evalTotalScore;
+            totalMaxScoreSum += evalMaxScore;
+            validEvalsCount++;
+        }
+
+        // Calculate Average Percent for Latest Eval Meta (keep as is for display if needed, or update)
+        const evalAvgPct = _getEvaluationAveragePercent(evaluation, taskMap);
+
         if (evaluation?.scores) {
           Object.keys(evaluation.scores).forEach((studentId) => {
             if (studentId) evaluatedMemberIds.add(studentId);
@@ -1281,7 +1309,10 @@ function _calculateGroupPerformance(groups, students, evaluations, tasks) {
           };
         }
       });
-      const averageScore = validEvalsCount > 0 ? totalPercentageScore / validEvalsCount : 0;
+
+      // Weighted Average Calculation
+      const averageScore = totalMaxScoreSum > 0 ? (totalScoreSum / totalMaxScoreSum) * 100 : 0;
+      
       const evaluatedMembers = evaluatedMemberIds.size;
       const taskCount = taskIds.size;
       const participationRate =
@@ -1321,7 +1352,6 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
     const ts =
       _normalizeTimestamp(evaluation.taskDate) ||
       _normalizeTimestamp(evaluation.updatedAt) ||
-      _normalizeTimestamp(evaluation.evaluationDate) ||
       _normalizeTimestamp(evaluation.createdAt);
     const scores = evaluation.scores || {};
     const countedGroups = new Set();
@@ -1334,7 +1364,6 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
           evalCount: 0,
           totalScore: 0,
           maxScoreSum: 0,
-          sumOfPercentages: 0, // Initialize for simple average calculation
           latestMs: null,
           participants: new Set(),
         };
@@ -1344,20 +1373,12 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
         rec.evalCount += 1;
         countedGroups.add(normalizedGroupId);
       }
-      // const rec = groupAgg[normalizedGroupId]; // Removed duplicate declaration
-      if (!countedGroups.has(normalizedGroupId)) {
-        rec.evalCount += 1;
-        countedGroups.add(normalizedGroupId);
-      }
       
-      // Calculate percentage for this specific evaluation
       const currentMaxScore = maxScore > 0 ? maxScore : 100;
       const currentTotalScore = parseFloat(scoreData?.totalScore) || 0;
-      const currentPercent = (currentTotalScore / currentMaxScore) * 100;
 
-      rec.totalScore += currentTotalScore; // Keep tracking total score for reference
+      rec.totalScore += currentTotalScore;
       rec.maxScoreSum += currentMaxScore;
-      rec.sumOfPercentages += currentPercent; // Track sum of percentages for simple average
       
       rec.participants.add(sid);
       if (ts) rec.latestMs = rec.latestMs ? Math.max(rec.latestMs, ts) : ts;
@@ -1368,14 +1389,14 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
     .map(([gid, agg]) => {
       if (agg.evalCount < MIN_EVALUATIONS_FOR_RANKING) return null;
       
-      // Use Simple Average: Sum of Percentages / Number of Evaluations
-      const efficiency = agg.evalCount > 0 ? (agg.sumOfPercentages / agg.evalCount) : 0;
+      // Use Weighted Average: Total Score / Total Max Score
+      const efficiency = agg.maxScoreSum > 0 ? (agg.totalScore / agg.maxScoreSum) * 100 : 0;
       
       const size = groupSize[gid] || 0;
       const participantsCount = agg.participants.size;
       return {
         groupId: gid,
-        efficiency, // This is now the Simple Average
+        efficiency,
         evalCount: agg.evalCount,
         totalScore: agg.totalScore,
         maxScoreSum: agg.maxScoreSum,
@@ -1389,7 +1410,7 @@ function _calculateLeaderboardRankingMeta(groups = [], students = [], evaluation
     .sort((a, b) => {
       if (b.efficiency !== a.efficiency) return b.efficiency - a.efficiency;
       if (b.evalCount !== a.evalCount) return b.evalCount - a.evalCount;
-      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore; // Secondary tie-breaker
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
       return (b.latestEvaluationMs || 0) - (a.latestEvaluationMs || 0);
     });
 
@@ -2239,25 +2260,16 @@ function _renderGroupsRanking(groupData, rankingMeta = null) {
     return;
   }
 
-  const normalizedRankingMap = rankingMeta && rankingMeta.map instanceof Map ? rankingMeta.map : new Map();
-  const normalizeId = (value) => _normalizeGroupId(value);
-
+  // Sort strictly by Average Score to match Elite Group logic
   const sortedGroups = [...evaluatedGroups].sort((a, b) => {
-    const aMeta = normalizedRankingMap.get(normalizeId(a.group?.id));
-    const bMeta = normalizedRankingMap.get(normalizeId(b.group?.id));
-    if (aMeta && bMeta) return aMeta.rank - bMeta.rank;
-    if (aMeta) return -1;
-    if (bMeta) return 1;
     if (b.averageScore !== a.averageScore) return b.averageScore - a.averageScore;
     if (b.evalCount !== a.evalCount) return b.evalCount - a.evalCount;
     return (a.groupName || '').localeCompare(b.groupName || '', 'bn');
   });
 
-  let fallbackRank = 0;
   const cards = sortedGroups
-    .map((data) => {
-      const meta = normalizedRankingMap.get(normalizeId(data.group?.id));
-      const rank = meta?.rank ?? ++fallbackRank;
+    .map((data, index) => {
+      const rank = index + 1;
       return _buildRankCard(data, rank);
     })
     .join('');
