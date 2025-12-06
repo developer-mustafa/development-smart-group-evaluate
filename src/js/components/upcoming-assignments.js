@@ -141,14 +141,12 @@ function _ensureTabStyles() {
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.75rem;
     padding: 0.6rem 1.2rem;
     border-radius: 12px;
     border: 1px solid rgba(148, 163, 184, 0.2);
     background: rgba(255, 255, 255, 0.6);
     color: #475569;
-    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     backdrop-filter: blur(8px);
@@ -171,7 +169,7 @@ function _ensureTabStyles() {
     background: rgba(30, 41, 59, 0.9);
   }
 
-  /* Active State with Animated Border */
+  /* Active State */
   .ua-tab[aria-selected="true"] {
     background: #fff;
     color: #0f172a;
@@ -190,12 +188,10 @@ function _ensureTabStyles() {
     position: absolute;
     inset: 0;
     border-radius: 12px;
-    padding: 2px; /* Border width */
+    padding: 2px;
     background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
     background-size: 300% 100%;
-    -webkit-mask: 
-       linear-gradient(#fff 0 0) content-box, 
-       linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     animation: borderFlow 3s linear infinite;
@@ -208,7 +204,7 @@ function _ensureTabStyles() {
     100% { background-position: 0% 50%; }
   }
 
-  /* Specific Theme Colors for Active Text/Icons */
+  /* Theme Colors */
   .ua-tab[aria-selected="true"][data-theme="sky"] { color: #0284c7; }
   .dark .ua-tab[aria-selected="true"][data-theme="sky"] { color: #38bdf8; }
 
@@ -218,11 +214,16 @@ function _ensureTabStyles() {
   .ua-tab[aria-selected="true"][data-theme="emerald"] { color: #059669; }
   .dark .ua-tab[aria-selected="true"][data-theme="emerald"] { color: #34d399; }
 
+  /* Elements */
+  .ua-tab-icon {
+    font-size: 1.1rem;
+    color: inherit;
+    opacity: 0.8;
+  }
+  
   .ua-tab-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     font-size: 0.95rem;
+    font-weight: 600;
     z-index: 1;
   }
 
@@ -233,6 +234,7 @@ function _ensureTabStyles() {
     background: rgba(0, 0, 0, 0.05);
     font-weight: 700;
     z-index: 1;
+    margin-left: auto;
   }
   .dark .ua-tab-count {
     background: rgba(255, 255, 255, 0.1);
@@ -244,33 +246,65 @@ function _ensureTabStyles() {
     opacity: 0.9;
   }
   .dark .ua-tab[aria-selected="true"] .ua-tab-count {
-    color: #1e293b; /* Contrast text for pill */
+    color: #1e293b;
   }
 
   .ua-tab-desc { display: none; }
 
+  /* Mobile Layout */
   @media (max-width: 640px) {
     .ua-tabbar {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
     .ua-tab {
-      padding: 0.75rem 0.5rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas: 
+        "icon count"
+        "label label";
+      align-items: center;
+      padding: 1rem;
       min-width: 0;
       width: 100%;
-      flex-direction: column;
-      justify-content: center;
       gap: 0.5rem;
-      text-align: center;
+      text-align: left;
     }
-    .ua-tab-label { 
-      font-size: 0.8rem; 
-      flex-direction: column;
-      gap: 0.35rem;
+    
+    .ua-tab-icon {
+      grid-area: icon;
+      justify-self: start;
+      font-size: 1.5rem;
+      margin: 0;
+      opacity: 1;
     }
-    .ua-tab-count { 
-      font-size: 0.75rem; 
+
+    .ua-tab-count {
+      grid-area: count;
+      justify-self: end;
+      font-size: 1.5rem;
+      background: transparent !important;
+      padding: 0;
+      border: none;
+      line-height: 1;
+      color: inherit !important;
+      opacity: 1 !important;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .ua-tab-label {
+      grid-area: label;
+      justify-self: start;
+      text-align: left;
+      font-size: 0.85rem;
+      opacity: 0.9;
+      font-weight: 600;
+      width: 100%;
+      margin: 0;
+      white-space: normal;
+      line-height: 1.3;
     }
   }
   `;
@@ -602,7 +636,8 @@ function _renderSummary(tasks) {
             data-tab="${key}"
             data-theme="${meta.theme}"
             aria-selected="${selected}">
-            <span class="ua-tab-label"><i class="${meta.icon}"></i>${meta.label}</span>
+            <i class="${meta.icon} ua-tab-icon"></i>
+            <span class="ua-tab-label">${meta.label}</span>
             <span class="ua-tab-count">${count}</span>
             <span class="ua-tab-desc">${meta.description}</span>
           </button>
