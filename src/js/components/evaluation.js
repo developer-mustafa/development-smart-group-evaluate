@@ -263,9 +263,16 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
                         <th scope="col" class="th text-center w-1/12">MCQ (${helpers.convertToBanglaNumber(
                           maxMcq
                         )})</th>
-                        <th scope="col" class="th text-center w-4/12">অতিরিক্ত ক্রাইটেরিয়া (সর্বোচ্চ ${helpers.convertToBanglaNumber(
-                          maxAdditional
-                        )})</th>
+                        <th scope="col" class="th text-center w-4/12">
+                          <div class="flex flex-col items-center gap-1">
+                            <span>অতিরিক্ত ক্রাইটেরিয়া (সর্বোচ্চ ${helpers.convertToBanglaNumber(
+                              maxAdditional
+                            )})</span>
+                            <button type="button" id="unmarkAllCriteriaBtn" class="px-2 py-0.5 text-[10px] font-medium bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 rounded border border-rose-200 dark:border-rose-800 transition-colors">
+                              <i class="fas fa-times-circle text-[9px]"></i> আনমার্কড অল
+                            </button>
+                          </div>
+                        </th>
                         <th scope="col" class="th text-center w-1/12">মন্তব্য</th>
                         <th scope="col" class="th text-center w-1/12">মোট (${helpers.convertToBanglaNumber(
                           totalMaxScore
@@ -283,6 +290,11 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
     const homeworkChecked = criteriaDetails.homework || false;
     const attendanceChecked = criteriaDetails.attendance || false;
     const comments = scoreData?.comments || '';
+    const problemRecovered = scoreData?.problemRecovered || false; // Load saved status
+
+    // Determine if checkbox should be visible initially
+    const showProblemRecovered = topicChoice === 'topic_none' || topicChoice === 'topic_understood';
+
     formHtml += `
             <tr class="${rowClass} border-b dark:border-gray-600 student-row" data-student-id="${student.id}">
                 <td class="td font-medium text-gray-900 dark:text-white">${helpers.convertToBanglaNumber(
@@ -291,6 +303,15 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
                 <td class="td">
                     <div class="font-semibold text-gray-900 dark:text-white">${helpers.ensureBengaliText ? helpers.ensureBengaliText(student.name || '') : student.name || ''}</div>
                     ${_renderStudentRoleBadge(student.role)}
+                    
+                    <!-- Problem Recovered Checkbox Container -->
+                    <div class="problem-recovered-container mt-2 ${showProblemRecovered ? '' : 'hidden'}">
+                        <label class="inline-flex items-center space-x-2 cursor-pointer bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded border border-red-100 dark:border-red-800">
+                            <input type="checkbox" class="form-checkbox h-3 w-3 text-red-600 rounded border-gray-300 focus:ring-red-500 problem-recovered-input" 
+                                   ${problemRecovered ? 'checked' : ''}>
+                            <span class="text-xs font-medium text-red-700 dark:text-red-300">প্রবলেম রিজলভড</span>
+                        </label>
+                    </div>
                 </td>
                 <td class="td"><input type="number" step="any" class="score-input task-score" min="0" max="${maxTask}" data-max="${maxTask}" value="${
       scoreData?.taskScore ?? ''
@@ -310,7 +331,7 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
                             <label class="flex items-center text-xs space-x-2 cursor-pointer">
                                 <input type="radio" name="topic-${student.id}" value="${opt.id}" data-marks="${
                               opt.marks
-                            }" ${topicChoice === opt.id ? 'checked' : ''} class="criteria-input">
+                            }" ${topicChoice === opt.id ? 'checked' : ''} class="criteria-input topic-radio">
                                 <span>${opt.text} (${opt.marks > 0 ? '+' : ''}${helpers.convertToBanglaNumber(
                               opt.marks
                             )})</span>
@@ -335,7 +356,7 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
                           .join('')}
                     </fieldset>
                 </td>
-                <td class="td"><textarea class="form-input text-xs p-1 comments-input" rows="3" placeholder="মন্তব্য..." aria-label="${
+                <td class="td"><textarea class="form-input text-xs p-1 comments-input" rows="3" placeholder="পাঠদান-মন্তব্য..." aria-label="${
                   student.name
                 } Comments">${comments}</textarea></td>
                 <td class="td text-center font-bold text-lg total-score-display dark:text-white" data-total-max="${totalMaxScore}">
@@ -372,6 +393,41 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
     </form>
     `;
   elements.evaluationFormContainer.innerHTML = formHtml;
+  
+  // Add event listener for Unmark All button
+  const unmarkAllBtn = document.getElementById('unmarkAllCriteriaBtn');
+  if (unmarkAllBtn) {
+    unmarkAllBtn.addEventListener('click', () => {
+      const form = document.getElementById('dynamicEvaluationForm');
+      if (!form) return;
+      
+      // Uncheck all checkboxes and radio buttons in criteria cells
+      form.querySelectorAll('.criteria-cell input[type="checkbox"]').forEach(checkbox => {
+        if (!checkbox.classList.contains('problem-recovered-input')) {
+          checkbox.checked = false;
+        }
+      });
+      
+      form.querySelectorAll('.criteria-cell input[type="radio"]').forEach(radio => {
+        radio.checked = false;
+      });
+      
+      // Hide all problem recovered containers since no topic is selected
+      form.querySelectorAll('.problem-recovered-container').forEach(container => {
+        container.classList.add('hidden');
+      });
+      
+      // Recalculate scores for all rows
+      form.querySelectorAll('.student-row').forEach(row => {
+        const anyInput = row.querySelector('.score-input');
+        if (anyInput) {
+          _handleScoreInput(anyInput);
+        }
+      });
+      
+      uiManager.showToast('সকল অতিরিক্ত ক্রাইটেরিয়া রিসেট করা হয়েছে', 'info', 2000);
+    });
+  }
 }
 
 /**
@@ -381,6 +437,21 @@ function _renderEvaluationForm(task, group, students, existingScores = null) {
 function _handleScoreInput(inputElement) {
   const row = inputElement.closest('.student-row');
   if (!row) return;
+
+  // --- Logic for Problem Recovered Visibility ---
+  if (inputElement.classList.contains('topic-radio')) {
+      const problemRecoveredContainer = row.querySelector('.problem-recovered-container');
+      const problemRecoveredInput = row.querySelector('.problem-recovered-input');
+      const selectedValue = inputElement.value;
+
+      if (selectedValue === 'topic_none' || selectedValue === 'topic_understood') {
+          problemRecoveredContainer.classList.remove('hidden');
+      } else {
+          problemRecoveredContainer.classList.add('hidden');
+          if (problemRecoveredInput) problemRecoveredInput.checked = false; // Uncheck if hidden
+      }
+  }
+  // ----------------------------------------------
 
   const totalDisplay = row.querySelector('.total-score-display');
   const totalMaxScore = parseFloat(totalDisplay?.dataset.totalMax || TOTAL_MAX_SCORE);
@@ -423,7 +494,10 @@ function _handleScoreInput(inputElement) {
     additionalScore += parseFloat(topicRadio.dataset.marks) || 0;
   }
   row.querySelectorAll('input[type="checkbox"]:checked').forEach((checkbox) => {
-    additionalScore += parseFloat(checkbox.dataset.marks) || 0;
+      // Exclude problem-recovered-input from score calculation
+      if (!checkbox.classList.contains('problem-recovered-input')) {
+         additionalScore += parseFloat(checkbox.dataset.marks) || 0;
+      }
   });
   additionalScore = Math.min(Math.max(additionalScore, -5), maxAdditional); // Cap
 
@@ -491,6 +565,10 @@ async function _handleSubmitEvaluation() {
     const topicRadio = row.querySelector('input[type="radio"]:checked');
     const homeworkCheck = row.querySelector('input[type="checkbox"][value="homework_done"]');
     const attendanceCheck = row.querySelector('input[type="checkbox"][value="attendance_regular"]');
+    
+    // Capture Problem Recovered status
+    const problemRecoveredInput = row.querySelector('.problem-recovered-input');
+    const problemRecovered = problemRecoveredInput ? problemRecoveredInput.checked : false;
 
     const taskScoreRaw = taskInput?.value;
     const teamScoreRaw = teamInput?.value;
@@ -560,6 +638,7 @@ async function _handleSubmitEvaluation() {
       totalScore: cappedTotalScore,
       additionalCriteria: additionalCriteriaDetails,
       comments,
+      problemRecovered, // Save the status
     };
     groupTotalScoreSum += cappedTotalScore;
     studentCount++; // This student has been scored

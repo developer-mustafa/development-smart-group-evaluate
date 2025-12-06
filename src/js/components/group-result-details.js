@@ -143,9 +143,21 @@
   }
 
   // ---------- render ----------
-  function renderGroupModal(groupId) {
+  async function renderGroupModal(groupId) {
     try {
       UI.state.currentGroupId = groupId;
+      
+      // Force reload fresh evaluation data from database to ensure sync
+      const app = window.smartEvaluator;
+      if (app?.managers?.cacheManager) {
+        try {
+          await app.managers.cacheManager.invalidate('evaluations_data');
+          await app.managers.cacheManager.forceReload('evaluations_data');
+        } catch (err) {
+          console.warn('Failed to reload evaluations:', err);
+        }
+      }
+      
       const state = getState();
       const group = state.groups.find((g) => String(g?.id) === String(groupId));
       if (!group) return;
@@ -224,7 +236,12 @@
                   name: s.name || s.id,
                   agName,
                   agClass,
-                  taskScore, teamScore, additional, mcq, total, pct, comment
+                  agName,
+                  agClass,
+                  taskScore, teamScore, additional, mcq, total, pct, comment,
+                  taskScore, teamScore, additional, mcq, total, pct, comment,
+                  problemRecovered: sc?.problemRecovered || false,
+                  topic: sc?.additionalCriteria?.topic || null
                 };
               })
               .filter(r => Number.isFinite(r.total))
@@ -238,7 +255,9 @@
 
               tr.innerHTML = `
                 <td class="px-3 py-2 whitespace-nowrap">${bn(r.roll ?? '-')}</td>
-                <td class="px-3 py-2 whitespace-nowrap">${r.badge}</td>
+                <td class="px-3 py-2 whitespace-nowrap">
+                  ${r.badge}
+                </td>
                 <td class="px-3 py-2 whitespace-nowrap">
                   <span class="font-medium">${escHtml(r.name)}</span>
                   ${r.agName ? `<span class="ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${r.agClass}"><i class="fas fa-graduation-cap"></i>${escHtml(r.agName)}</span>` : ''}
@@ -249,6 +268,25 @@
                 <td class="px-3 py-2 text-right">${r.mcq.toFixed(2)}</td>
                 <td class="px-3 py-2 text-right font-semibold">${r.total.toFixed(2)}</td>
                 <td class="px-3 py-2 text-right"><span class="inline-block rounded px-2 py-0.5 text-xs font-semibold ${pctCls}">${r.pct.toFixed(1)}%</span></td>
+                <td class="px-3 py-2 text-center whitespace-nowrap">
+                  ${(() => {
+                     // Logic for Status in Group Member List
+                     const topic = r.topic;
+                     const isProblematic = (topic === 'topic_understood' || topic === 'topic_none');
+                     
+                     if (isProblematic) {
+                        return r.problemRecovered 
+                            ? `<span class="inline-flex items-center gap-1 rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300"><i class="fas fa-check-circle text-[10px]"></i> প্রবলেম রিজলভড</span>`
+                            : `<span class="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"><i class="fas fa-exclamation-circle text-[10px]"></i> সমস্যা আছে</span>`;
+                     }
+                     
+                     if (topic === 'topic_learned_well' && r.problemRecovered) {
+                         return `<span class="inline-flex items-center gap-1 rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300"><i class="fas fa-check-circle text-[10px]"></i> প্রবলেম রিজলভড</span>`;
+                     }
+
+                     return '-';
+                  })()}
+                </td>
                 <td class="px-3 py-2 comments-cell">${escHtml(shortC)}</td>`;
               frag2.appendChild(tr);
             });

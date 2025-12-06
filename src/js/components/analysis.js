@@ -1219,6 +1219,7 @@ function _buildAnalysisData(filters) {
             dateMs: detail.dateMs,
             dateLabel: detail.dateLabel,
             comments: _formatText(comments),
+            problemRecovered: Boolean(scoreData.problemRecovered),
           });
           // End of inner try-catch
         } catch (scoreError) {
@@ -1816,6 +1817,9 @@ function _buildCriteriaContext(groupMetrics, studentMap, groupMap) {
           maxScore: record.maxScore,
           groupId: metric.groupId,
           groupName,
+          studentId: record.studentId, // Add studentId for debugging
+          taskScore: record.taskScore,
+          problemRecovered: record.problemRecovered,
         };
 
         if (record.topicId) {
@@ -2146,6 +2150,30 @@ function _renderCriteriaHistoryRow(record) {
         <span class="inline-flex items-center rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-100 px-3 py-1 font-medium">${topicLabel}</span>
         <span class="inline-flex items-center rounded-full px-3 py-1 font-medium ${attendanceClass}">${attendanceLabel}</span>
         <span class="inline-flex items-center rounded-full px-3 py-1 font-medium ${homeworkClass}">${homeworkLabel}</span>
+        ${(() => {
+          // Use topicKey for logic as taskScore might be 0
+          const topicKey = record.topicKey;
+          const isProblematic = (topicKey === 'understood' || topicKey === 'notYet');
+          
+          // DEBUG LOG
+          console.log(`Student: ${record.studentId}, TopicKey: ${topicKey}, ProblemRecovered: ${record.problemRecovered}, IsProblematic: ${isProblematic}`);
+
+          if (isProblematic) {
+             const html = record.problemRecovered
+                ? '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100">Problem Resolved</span>'
+                : '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-100">Have a problem</span>';
+             console.log('Generating Tag HTML:', html);
+             return html;
+          }
+          
+          if (topicKey === 'learnedWell' && record.problemRecovered) {
+             const html = '<span class="inline-flex items-center rounded-full px-3 py-1 font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-100">Problem Resolved</span>';
+             console.log('Generating Tag HTML (Resolved 10):', html);
+             return html;
+          }
+          
+          return '';
+        })()}
       </div>
     </div>
   `;

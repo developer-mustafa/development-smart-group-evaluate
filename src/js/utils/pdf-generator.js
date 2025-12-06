@@ -478,37 +478,6 @@ export async function generateAssignmentResultPDF(assignmentIndex, groups, stude
     // Calculate group stats for this assignment
     let totalScore = 0;
     let studentCount = 0;
-    
-    const studentRows = students
-      .filter(s => s.groupId === group.id)
-      .map(s => {
-        const sc = scores[s.id];
-        if (!sc) return null; // Skip students not evaluated? Or show as absent? Modal shows only evaluated usually.
-        
-        const taskScore = parseFloat(sc.taskScore) || 0;
-        const teamScore = parseFloat(sc.teamScore) || 0;
-        const additional = parseFloat(sc.additionalScore) || 0;
-        const mcq = parseFloat(sc.mcqScore) || 0;
-        const total = parseFloat(sc.totalScore) || (taskScore + teamScore + additional + mcq);
-        const pct = max > 0 ? (total / max) * 100 : 0;
-        
-        totalScore += total;
-        studentCount++;
-
-        return {
-          roll: s.roll || s.studentRoll || '-',
-          name: s.name,
-          role: s.role,
-          total,
-          pct,
-          comment: sc.comments || ''
-        };
-      })
-      .filter(r => r !== null)
-      .sort((a, b) => b.pct - a.pct);
-
-    if (studentRows.length === 0) continue;
-
     const groupAvg = max > 0 ? ((totalScore / studentCount) / max) * 100 : 0;
 
     const rowsHtml = studentRows.map(r => `
@@ -518,7 +487,25 @@ export async function generateAssignmentResultPDF(assignmentIndex, groups, stude
         <td class="px-2 py-1 text-xs text-gray-500">${_prettyRoleBn(r.role)}</td>
         <td class="px-2 py-1 text-right font-bold">${r.total.toFixed(2)}</td>
         <td class="px-2 py-1 text-right"><span class="px-1 py-0.5 rounded text-xs ${_pctBadgeClass(r.pct)}">${r.pct.toFixed(1)}%</span></td>
-        <td class="px-2 py-1 text-xs text-gray-500 truncate max-w-[150px]">${r.comment}</td>
+        <td class="px-2 py-1 text-center">
+             ${(() => {
+                // Logic for Status
+                const topic = r.topic;
+                const isProblematic = (topic === 'topic_understood' || topic === 'topic_none');
+                
+                if (isProblematic) {
+                    return r.problemRecovered 
+                        ? '<span class="text-[9px] text-green-600 font-bold whitespace-nowrap">Problem Resolved</span>' 
+                        : '<span class="text-[9px] text-red-600 font-bold whitespace-nowrap">Have a problem</span>';
+                }
+                
+                if (topic === 'topic_learned_well' && r.problemRecovered) {
+                    return '<span class="text-[9px] text-green-600 font-bold whitespace-nowrap">Problem Resolved</span>';
+                }
+
+                return '-';
+             })()}
+        </td>
       </tr>
     `).join('');
 
@@ -536,7 +523,7 @@ export async function generateAssignmentResultPDF(assignmentIndex, groups, stude
               <th class="px-2 py-1 text-left">Role</th>
               <th class="px-2 py-1 text-right">Total</th>
               <th class="px-2 py-1 text-right">%</th>
-              <th class="px-2 py-1 text-left">Comment</th>
+              <th class="px-2 py-1 text-center">Status</th>
             </tr>
           </thead>
           <tbody>${rowsHtml}</tbody>
@@ -596,7 +583,9 @@ export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, e
       teamScore: 0,
       additionalScore: 0,
       mcqScore: 0,
-      comment: ''
+      comment: '',
+      problemRecovered: false,
+      topic: null
     });
   });
 
@@ -622,9 +611,11 @@ export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, e
           data.additionalScore += parseFloat(sc.additionalScore) || 0;
           data.mcqScore += parseFloat(sc.mcqScore) || 0;
           
-          // For single task, keep the comment
+          // For single task, keep the comment and problem recovered status
           if (isSingleTask) {
             data.comment = sc.comments || '';
+            data.problemRecovered = sc.problemRecovered || false;
+            data.topic = sc.additionalCriteria?.topic || null;
           }
         }
       });
@@ -698,10 +689,30 @@ export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, e
         <td class="px-2 py-2 text-center text-gray-600 border-r border-gray-100">${s.displayStats.add}</td>
         <td class="px-2 py-2 text-center text-gray-600 border-r border-gray-100">${s.displayStats.mcq}</td>
         <td class="px-2 py-2 text-right font-mono text-gray-800 font-bold border-r border-gray-100">${s.displayStats.total} / ${s.displayStats.max}</td>
-        <td class="px-2 py-2 text-right">
+        <td class="px-2 py-2 text-right border-r border-gray-100">
           <span class="font-bold ${_pctBadgeClass(s.avgPct)} px-1.5 py-0.5 rounded">
             ${s.avgPct.toFixed(1)}%
           </span>
+        </td>
+        <td class="px-2 py-2 text-center border-r border-gray-100">
+          ${(() => {
+             // Logic for Status
+             if (isSingleTask) {
+                const topic = s.stats.topic;
+                const isProblematic = (topic === 'topic_understood' || topic === 'topic_none');
+                
+                if (isProblematic) {
+                    return s.stats.problemRecovered 
+                        ? '<span class="text-[9px] text-green-600 font-bold whitespace-nowrap">Problem Resolved</span>' 
+                        : '<span class="text-[9px] text-red-600 font-bold whitespace-nowrap">Have a problem</span>';
+                }
+                
+                if (topic === 'topic_learned_well' && s.stats.problemRecovered) {
+                    return '<span class="text-[9px] text-green-600 font-bold whitespace-nowrap">Problem Resolved</span>';
+                }
+             }
+             return '-';
+          })()}
         </td>
       </tr>
     `).join('');
@@ -744,7 +755,8 @@ export async function generateGroupWiseFullDetailsPDF(groups, students, tasks, e
               <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">অতিরিক্ত</th>
               <th class="px-2 py-3 text-center font-bold w-[8%] border-r border-indigo-500/30">MCQ</th>
               <th class="px-2 py-3 text-right font-bold w-[9%] border-r border-indigo-500/30">মোট</th>
-              <th class="px-2 py-3 text-right font-bold w-[9%]">গড় %</th>
+              <th class="px-2 py-3 text-right font-bold w-[9%] border-r border-indigo-500/30">গড় %</th>
+              <th class="px-2 py-3 text-center font-bold w-[10%] border-r border-indigo-500/30">অবস্থা</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -926,7 +938,10 @@ export async function generateSingleGroupAnalysisPDF(groupData, uiManager) {
       <td class="px-3 py-2 text-center">${e.dateLabel}</td>
       <td class="px-3 py-2 text-center">${_bn(e.assessedCount)} / ${_bn(e.assessedCount + e.pendingCount)}</td>
       <td class="px-3 py-2 text-center">${e.avgTaskScore.toFixed(1)}</td>
-      <td class="px-3 py-2 text-center font-bold text-indigo-700">${e.averagePercentage.toFixed(1)}%</td>
+      <td class="px-3 py-2 text-center font-bold text-indigo-700">
+        ${e.averagePercentage.toFixed(1)}%
+        ${e.problemRecovered ? '<div class="mt-1 text-[9px] text-red-600 font-semibold"><i class="fas fa-check-circle text-[8px]"></i> Problem Resolved</div>' : ''}
+      </td>
     </tr>
   `).join('');
 

@@ -182,6 +182,8 @@ import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/
           max,
           pct,
           comments: typeof sc?.comments === 'string' ? sc.comments.trim() : '',
+          problemRecovered: sc?.problemRecovered || false,
+          topic: sc?.additionalCriteria?.topic || null
         };
       })
       .filter(Boolean)
@@ -410,14 +412,37 @@ import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/
       const tr = document.createElement('tr');
       const pal = palette(h.pct);
       const dateLabel = h.date ? toLocaleDate(h.date) : '-';
+      
+      
+      // Status Logic - using topic criteria
+      let statusHtml = '-';
+      const topic = h.topic; // Get topic from evaluation data
+      const isProblematic = (topic === 'topic_understood' || topic === 'topic_none');
+      
+      if (isProblematic) {
+        if (h.problemRecovered) {
+          statusHtml = `<span class="inline-flex items-center gap-1 rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300"><i class="fas fa-check-circle text-[10px]"></i> প্রবলেম রিজলভড</span>`;
+        } else {
+          statusHtml = `<span class="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"><i class="fas fa-exclamation-circle text-[10px]"></i> সমস্যা আছে</span>`;
+        }
+      }
+      
+      if (topic === 'topic_learned_well' && h.problemRecovered) {
+        statusHtml = `<span class="inline-flex items-center gap-1 rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300"><i class="fas fa-check-circle text-[10px]"></i> প্রবলেম রিজলভড</span>`;
+      }
+
+
       tr.innerHTML = `
-        <td class="px-3 py-2">${escHtml(h.taskName || '-')}</td>
+        <td class="px-3 py-2">
+            ${escHtml(h.taskName || '-')}
+        </td>
         <td class="px-3 py-2"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300">${fmt(h.taskScore)}</span></td>
         <td class="px-3 py-2"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">${fmt(h.teamScore)}</span></td>
         <td class="px-3 py-2"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">${fmt(h.additional)}</span></td>
         <td class="px-3 py-2"><span class="inline-block rounded px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300">${fmt(h.mcq)}</span></td>
         <td class="px-3 py-2">${fmt(h.total)}</td>
         <td class="px-3 py-2"><span class="inline-block rounded px-2 py-0.5 text-xs font-semibold ${pal.badge}">${fmt(h.pct,1)}%</span></td>
+        <td class="px-3 py-2 whitespace-nowrap">${statusHtml}</td>
         <td class="px-3 py-2">${escHtml(h.comments || '')}</td>
         <td class="px-3 py-2">${escHtml(dateLabel)}</td>`;
       frag.appendChild(tr);
@@ -628,19 +653,28 @@ import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/
     y += infoH + 14;
 
     // table
-    const head = [['Assignment','Task','Team','Additional','MCQ','Total','%','Comments','Date']];
+    const head = [['Assignment','Task','Team','Additional','MCQ','Total','%','Status','Date']];
     const body = evs.map((h,i) => {
       const c = (h.comments || '').replace(/\r?\n/g,' ').trim();
       const short = c.length > 240 ? 'Comment too long. See in app.' : c;
+      const taskName = h.taskName || '';
+      
+      let statusText = '-';
+      const isProblematic = (h.taskScore === 5 || h.taskScore === -5);
+      if (isProblematic) {
+        statusText = h.problemRecovered ? 'Problem Resolved' : 'Have a problem';
+      }
+
       return [
         `Assignment-${i+1}`,
+        taskName,
         Number(h.taskScore || 0).toFixed(2),
         Number(h.teamScore || 0).toFixed(2),
         Number(h.additional || 0).toFixed(2),
         Number(h.mcq || 0).toFixed(2),
         Number(h.total || 0).toFixed(2),
         Number(h.pct || 0).toFixed(1),
-        short,
+        statusText,
         h.date ? new Date(h.date).toISOString().slice(0,10) : '',
       ];
     });
@@ -652,10 +686,10 @@ import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/
       headStyles: { fillColor: BRAND_BG, textColor: 255, halign: 'left' },
       alternateRowStyles: { fillColor: [248,250,252] },
       columnStyles: {
-        0: { cellWidth: 64 }, 1: { cellWidth: 44, halign: 'right' }, 2: { cellWidth: 44, halign: 'right' },
-        3: { cellWidth: 50, halign: 'right' }, 4: { cellWidth: 40, halign: 'right' },
-        5: { cellWidth: 48, halign: 'right' }, 6: { cellWidth: 30, halign: 'right' },
-        7: { cellWidth: 120 }, 8: { cellWidth: 90, halign: 'center' },
+        0: { cellWidth: 60 }, 1: { cellWidth: 60 }, 2: { cellWidth: 35, halign: 'right' },
+        3: { cellWidth: 35, halign: 'right' }, 4: { cellWidth: 40, halign: 'right' },
+        5: { cellWidth: 35, halign: 'right' }, 6: { cellWidth: 40, halign: 'right' },
+        7: { cellWidth: 40, halign: 'center' }, 8: { cellWidth: 60 }, 9: { cellWidth: 80 },
       },
       margin: { left: M, right: M, top: M + headerH, bottom: footerH + 6 },
       tableWidth: PAGE_W - M * 2,
