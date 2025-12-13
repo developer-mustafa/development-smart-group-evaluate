@@ -229,4 +229,9 @@ class AuthService {
 
 const authService = new AuthService();
 export default authService;
-export const { loginWithEmail, registerWithEmail, signInWithGoogle, logout } = authService;
+
+// Bind methods to preserve 'this' context when called independently
+export const loginWithEmail = authService.loginWithEmail.bind(authService);
+export const registerWithEmail = authService.registerWithEmail.bind(authService);
+export const signInWithGoogle = authService.signInWithGoogle.bind(authService);
+export const logout = authService.logout.bind(authService);

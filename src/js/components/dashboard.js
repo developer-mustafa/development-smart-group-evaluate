@@ -1045,12 +1045,25 @@ function _updateDashboardForTask(taskId) {
 
   // Fallback summary if calculation returns null (e.g. no timestamp or no evaluations)
   if (!summary) {
+      // Count how many groups have evaluations for this specific task
+      const evaluatedGroupIdsForTask = new Set();
+      filteredEvaluations.forEach(e => {
+          if (e.groupId) evaluatedGroupIdsForTask.add(e.groupId);
+      });
+      
+      // Count evaluated students for this task
+      let evaluatedStudentCount = 0;
+      filteredEvaluations.forEach(e => {
+          if (e.scores) evaluatedStudentCount += Object.keys(e.scores).length;
+      });
+      
       summary = {
           taskId: targetTask.id,
           taskTitle: targetTask.name,
-          evaluated: 0, // Correct key
-          total: students.length, // Correct key
-          evaluatedGroupCount: 0,
+          evaluated: evaluatedStudentCount,
+          total: students.length,
+          groupsEvaluated: evaluatedGroupIdsForTask.size,
+          groupTotal: groups.length,
       };
   }
 
@@ -1118,11 +1131,9 @@ function _updateDashboardForTask(taskId) {
   if (elements.latestAssignmentStudentTotal) elements.latestAssignmentStudentTotal.textContent = helpers.convertToBanglaNumber(totalStudentCount);
 
   // Update Group Stats
-  const evaluatedGroupCount = summary.evaluatedGroupCount || 0;
-  // Note: summary.totalGroupCount might differ from groups.length if assignment is scoped. 
-  // But for consistency with "Latest" logic which often uses global groups count for "Total", we'll stick to groups.length or summary.totalGroupCount if available.
-  // The original code used groups.length for total.
-  const totalGroupCount = groups.length; 
+  // FIX: Use 'groupsEvaluated' and 'groupTotal' keys as returned by _calculateLatestAssignmentSummary
+  const evaluatedGroupCount = summary.groupsEvaluated !== undefined ? summary.groupsEvaluated : (summary.evaluatedGroupCount || 0);
+  const totalGroupCount = summary.groupTotal !== undefined ? summary.groupTotal : groups.length; 
   
   if (elements.latestAssignmentGroupEvaluated) elements.latestAssignmentGroupEvaluated.textContent = helpers.convertToBanglaNumber(evaluatedGroupCount);
   if (elements.latestAssignmentGroupPending) elements.latestAssignmentGroupPending.textContent = helpers.convertToBanglaNumber(totalGroupCount - evaluatedGroupCount);
