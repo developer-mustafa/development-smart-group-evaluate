@@ -403,12 +403,20 @@ function _setupEventListeners() {
     });
 
     // Event delegation for edit/delete buttons in the list
-    uiManager.addListener(elements.studentsListContainer, 'click', (e) => {
-      const editBtn = e.target.closest('.edit-student-btn');
-      const deleteBtn = e.target.closest('.delete-student-btn');
-      if (editBtn) _handleEditStudent(editBtn.dataset.id);
-      else if (deleteBtn) _handleDeleteStudent(deleteBtn.dataset.id);
-    });
+    // Using capture phase (true) to catch clicks before stopPropagation in inline onclick
+    if (elements.studentsListContainer) {
+      elements.studentsListContainer.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-student-btn');
+        const deleteBtn = e.target.closest('.delete-student-btn');
+        if (editBtn) {
+          e.stopPropagation();
+          _handleEditStudent(editBtn.dataset.id);
+        } else if (deleteBtn) {
+          e.stopPropagation();
+          _handleDeleteStudent(deleteBtn.dataset.id);
+        }
+      }, true); // capture phase
+    }
   }
 
   // All Students Cards Page Listeners
@@ -798,10 +806,10 @@ function _renderStudentsList() {
               <div class="mt-4 flex justify-end gap-2">
                 <button data-id="${
                   student.id
-                }" class="edit-student-btn btn btn-light btn-sm py-1 px-2" aria-label="সম্পাদনা" onclick="event.stopPropagation()"><i class="fas fa-edit pointer-events-none"></i></button>
+                }" class="edit-student-btn btn btn-light btn-sm py-1 px-2" aria-label="সম্পাদনা"><i class="fas fa-edit pointer-events-none"></i></button>
                 <button data-id="${
                   student.id
-                }" class="delete-student-btn btn btn-danger btn-sm py-1 px-2" aria-label="ডিলিট" onclick="event.stopPropagation()"><i class="fas fa-trash pointer-events-none"></i></button>
+                }" class="delete-student-btn btn btn-danger btn-sm py-1 px-2" aria-label="ডিলিট"><i class="fas fa-trash pointer-events-none"></i></button>
               </div>
             </article>
           `;
